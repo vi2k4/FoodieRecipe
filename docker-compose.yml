@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: foodie-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: foodie_user
+      POSTGRES_PASSWORD: foodie_password
+      POSTGRES_DB: foodie_db
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - foodie_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U foodie_user -d foodie_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  foodie_postgres_data:

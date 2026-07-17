@@ -1,0 +1,480 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ======================================================
+// ENUMS
+// ======================================================
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum RecipeDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum RecipeImageType {
+  THUMBNAIL
+  INGREDIENT
+  STEP
+  RESULT
+  AI_GENERATED
+  OTHER
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  REPORT
+  AI_GENERATION
+  SYSTEM
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  REJECTED
+}
+
+enum AIGenerationStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
+// ======================================================
+// 1. USERS
+// ======================================================
+
+model User {
+  id           BigInt    @id @default(autoincrement())
+  username     String    @unique @db.VarChar(50)
+  email        String    @unique @db.VarChar(255)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  avatarUrl    String?   @map("avatar_url") @db.Text
+  bio          String?   @db.Text
+  role         UserRole  @default(USER)
+  isVerified   Boolean   @default(false) @map("is_verified")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  otpVerifications OTPVerification[]
+  refreshTokens    RefreshToken[]
+  recipes          Recipe[]
+
+  favorites   Favorite[]
+  recipeLikes RecipeLike[]
+  ratings     Rating[]
+  comments    Comment[]
+
+  notifications Notification[]
+
+  following UserFollow[] @relation("UserFollowing")
+  followers UserFollow[] @relation("UserFollowers")
+
+  submittedReports Report[] @relation("ReportReporter")
+  handledReports   Report[] @relation("ReportHandler")
+
+  searchHistories     SearchHistory[]
+  aiGenerationHistory AIGenerationHistory[]
+
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+// ======================================================
+// 2. OTP_VERIFICATIONS
+// ======================================================
+
+model OTPVerification {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  otpCode   String   @map("otp_code") @db.VarChar(255)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  isUsed    Boolean  @default(false) @map("is_used")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("otp_verifications")
+}
+
+// ======================================================
+// 3. REFRESH_TOKENS
+// ======================================================
+
+model RefreshToken {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  token     String   @unique @db.Text
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revoked])
+  @@map("refresh_tokens")
+}
+
+// ======================================================
+// 4. RECIPE_CATEGORIES
+// ======================================================
+
+model RecipeCategory {
+  id          BigInt   @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  description String?  @db.Text
+  icon        String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  recipes Recipe[]
+
+  @@map("recipe_categories")
+}
+
+// ======================================================
+// 5. RECIPES
+// ======================================================
+
+model Recipe {
+  id            BigInt           @id @default(autoincrement())
+  userId        BigInt           @map("user_id")
+  categoryId    BigInt?          @map("category_id")
+  title         String           @db.VarChar(200)
+  description   String?          @db.Text
+  calories      Decimal?         @db.Decimal(10, 2)
+  cookTime      Int?             @map("cook_time")
+  difficulty    RecipeDifficulty @default(EASY)
+  servings      Int?
+  thumbnail     String?          @db.Text
+  source        String?          @db.Text
+  isPublic      Boolean          @default(true) @map("is_public")
+  viewCount     BigInt           @default(0) @map("view_count")
+  likeCount     BigInt           @default(0) @map("like_count")
+  favoriteCount BigInt           @default(0) @map("favorite_count")
+  averageRating Decimal          @default(0) @map("average_rating") @db.Decimal(3, 2)
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?        @map("deleted_at") @db.Timestamptz(6)
+
+  author   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category RecipeCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  ingredients RecipeIngredient[]
+  steps       RecipeStep[]
+  images      RecipeImage[]
+  recipeTags  RecipeTag[]
+
+  favorites Favorite[]
+  likes     RecipeLike[]
+  ratings   Rating[]
+  comments  Comment[]
+  reports   Report[]
+
+  aiGenerationHistory AIGenerationHistory[]
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([title])
+  @@index([createdAt])
+  @@index([isPublic, deletedAt])
+  @@index([viewCount])
+  @@index([likeCount])
+  @@index([averageRating])
+  @@map("recipes")
+}
+
+// ======================================================
+// 6. RECIPE_INGREDIENTS
+// ======================================================
+
+model RecipeIngredient {
+  id             BigInt   @id @default(autoincrement())
+  recipeId       BigInt   @map("recipe_id")
+  ingredientName String   @map("ingredient_name") @db.VarChar(150)
+  quantity       Decimal? @db.Decimal(10, 2)
+  unit           String?  @db.VarChar(50)
+  displayOrder   Int      @default(1) @map("display_order")
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, displayOrder])
+  @@index([recipeId])
+  @@map("recipe_ingredients")
+}
+
+// ======================================================
+// 7. RECIPE_STEPS
+// ======================================================
+
+model RecipeStep {
+  id         BigInt @id @default(autoincrement())
+  recipeId   BigInt @map("recipe_id")
+  stepNumber Int    @map("step_number")
+  content    String @db.Text
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, stepNumber])
+  @@index([recipeId])
+  @@map("recipe_steps")
+}
+
+// ======================================================
+// 8. RECIPE_IMAGES
+// ======================================================
+
+model RecipeImage {
+  id           BigInt          @id @default(autoincrement())
+  recipeId     BigInt          @map("recipe_id")
+  imageUrl     String          @map("image_url") @db.Text
+  type         RecipeImageType @default(OTHER)
+  displayOrder Int             @default(1) @map("display_order")
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, displayOrder])
+  @@index([recipeId])
+  @@map("recipe_images")
+}
+
+// ======================================================
+// 9. TAGS
+// ======================================================
+
+model Tag {
+  id   BigInt @id @default(autoincrement())
+  name String @unique @db.VarChar(50)
+
+  recipeTags RecipeTag[]
+
+  @@map("tags")
+}
+
+// ======================================================
+// 10. RECIPE_TAG
+// ======================================================
+
+model RecipeTag {
+  recipeId BigInt @map("recipe_id")
+  tagId    BigInt @map("tag_id")
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, tagId])
+  @@index([tagId])
+  @@map("recipe_tags")
+}
+
+// ======================================================
+// 11. FAVORITES
+// ======================================================
+
+model Favorite {
+  userId    BigInt   @map("user_id")
+  recipeId  BigInt   @map("recipe_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, recipeId])
+  @@index([recipeId])
+  @@index([createdAt])
+  @@map("favorites")
+}
+
+// ======================================================
+// 12. RECIPE_LIKES
+// ======================================================
+
+model RecipeLike {
+  userId    BigInt   @map("user_id")
+  recipeId  BigInt   @map("recipe_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, recipeId])
+  @@index([recipeId])
+  @@index([createdAt])
+  @@map("recipe_likes")
+}
+
+// ======================================================
+// 13. RATINGS
+// ======================================================
+
+model Rating {
+  userId    BigInt   @map("user_id")
+  recipeId  BigInt   @map("recipe_id")
+  rating    Int      @db.SmallInt
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, recipeId])
+  @@index([recipeId])
+  @@map("ratings")
+}
+
+// ======================================================
+// 14. COMMENTS
+// ======================================================
+
+model Comment {
+  id              BigInt    @id @default(autoincrement())
+  recipeId        BigInt    @map("recipe_id")
+  userId          BigInt    @map("user_id")
+  parentCommentId BigInt?   @map("parent_comment_id")
+  content         String    @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  parentComment Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: SetNull)
+  replies       Comment[] @relation("CommentReplies")
+
+  @@index([recipeId])
+  @@index([userId])
+  @@index([parentCommentId])
+  @@index([createdAt])
+  @@map("comments")
+}
+
+// ======================================================
+// 15. NOTIFICATIONS
+// ======================================================
+
+model Notification {
+  id          BigInt           @id @default(autoincrement())
+  userId      BigInt           @map("user_id")
+  title       String           @db.VarChar(200)
+  content     String           @db.Text
+  type        NotificationType
+  referenceId BigInt?          @map("reference_id")
+  isRead      Boolean          @default(false) @map("is_read")
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ======================================================
+// 16. USER_FOLLOW
+// ======================================================
+
+model UserFollow {
+  followerId  BigInt   @map("follower_id")
+  followingId BigInt   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followingId])
+  @@index([createdAt])
+  @@map("user_follows")
+}
+
+// ======================================================
+// 17. REPORTS
+// ======================================================
+
+model Report {
+  id          BigInt       @id @default(autoincrement())
+  recipeId    BigInt       @map("recipe_id")
+  reporterId  BigInt       @map("reporter_id")
+  reason      String       @db.VarChar(100)
+  description String?      @db.Text
+  status      ReportStatus @default(PENDING)
+  handledBy   BigInt?      @map("handled_by")
+  handledAt   DateTime?    @map("handled_at") @db.Timestamptz(6)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  reporter User   @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  handler  User?  @relation("ReportHandler", fields: [handledBy], references: [id], onDelete: SetNull)
+
+  @@unique([recipeId, reporterId])
+  @@index([reporterId])
+  @@index([handledBy])
+  @@index([status])
+  @@index([createdAt])
+  @@map("reports")
+}
+
+// ======================================================
+// 18. SEARCH_HISTORY
+// ======================================================
+
+model SearchHistory {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt?  @map("user_id")
+  keyword   String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([keyword])
+  @@index([createdAt])
+  @@map("search_history")
+}
+
+// ======================================================
+// 19. AI_GENERATION_HISTORY
+// ======================================================
+
+model AIGenerationHistory {
+  id             BigInt             @id @default(autoincrement())
+  userId         BigInt             @map("user_id")
+  recipeId       BigInt?            @map("recipe_id")
+  imageUrl       String?            @map("image_url") @db.Text
+  detectedLabels Json?              @map("detected_labels") @db.JsonB
+  prompt         String?            @db.Text
+  model          String?            @db.VarChar(100)
+  status         AIGenerationStatus @default(PENDING)
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe? @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([recipeId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("ai_generation_history")
+}
