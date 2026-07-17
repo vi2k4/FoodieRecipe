@@ -1,0 +1,132 @@
+# Hướng dẫn chạy Frontend và Backend
+
+Tài liệu này hướng dẫn cách khởi động cả frontend (Next.js) và backend (NestJS) cho dự án FoodiRecipe.
+
+## 1. Yêu cầu trước khi chạy
+
+Cài đặt sẵn:
+
+- Node.js (khuyến nghị phiên bản mới)
+- pnpm
+- Docker Desktop (nếu dùng PostgreSQL qua Docker)
+
+## 2. Cài đặt dependency
+
+### Cài dependency cho backend
+
+```bash
+cd api
+pnpm install
+```
+
+### Cài dependency cho frontend
+
+```bash
+cd web
+pnpm install
+```
+
+## 3. Cấu hình môi trường
+
+### Backend
+
+Tạo file môi trường cho API:
+
+```bash
+cd api
+copy .env.example .env
+```
+
+Nếu bạn dùng PostgreSQL qua Docker, file `.env` nên có nội dung giống như:
+
+```env
+DATABASE_URL=postgresql://foodie_user:foodie_password@localhost:5433/foodie_db
+PORT=3001
+NODE_ENV=development
+JWT_SECRET=change-this-secret
+JWT_EXPIRES_IN=7d
+```
+
+### Frontend
+
+Tạo file môi trường cho web:
+
+```bash
+cd web
+copy .env.example .env.local
+```
+
+Nội dung mẫu:
+
+```env
+NEXT_PUBLIC_APP_NAME=FoodiRecipe
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
+```
+
+## 4. Chạy database bằng Docker
+
+Từ thư mục gốc:
+
+```bash
+docker compose up -d
+```
+
+Kiểm tra container:
+
+```bash
+docker compose ps
+```
+
+## 5. Chạy backend
+
+```bash
+cd api
+pnpm start:dev
+```
+
+Backend sẽ chạy ở:
+
+- http://localhost:3001
+- API prefix mặc định: http://localhost:3001/api
+
+## 6. Chạy frontend
+
+```bash
+cd web
+pnpm dev
+```
+
+Frontend sẽ chạy ở:
+
+- http://localhost:3000
+
+## 7. Các lệnh hữu ích
+
+### Backend
+
+```bash
+cd api
+pnpm build
+pnpm test
+pnpm prisma migrate dev
+pnpm prisma studio
+```
+
+### Frontend
+
+```bash
+cd web
+pnpm build
+pnpm lint
+```
+
+## 8. Lưu ý
+
+- Nếu backend không kết nối được database, hãy kiểm tra Docker container đang chạy và `DATABASE_URL` đúng.
+- Nếu frontend không gọi được API, hãy kiểm tra `NEXT_PUBLIC_API_URL` trong `.env.local`.
+- Nếu bạn vừa đổi schema Prisma, chạy:
+
+```bash
+cd api
+pnpm prisma migrate dev --name <ten_migration>
+```
