@@ -94,7 +94,7 @@ importers:
         specifier: ^4
         version: 4.3.3
       typescript:
-        specifier: ^7
+        specifier: ^7.0.2
         version: 7.0.2
       vitest:
         specifier: latest
