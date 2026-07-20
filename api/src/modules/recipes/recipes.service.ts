@@ -13,4 +13,27 @@ export class RecipesService {
       },
     });
   }
+
+  async findOne(id: bigint) {
+    return this.prisma.recipe.findUnique({
+      where: { id },
+      include: {
+        author: true,
+        ingredients: {
+          orderBy: { displayOrder: 'asc' },
+        },
+        steps: {
+          orderBy: { stepNumber: 'asc' },
+        },
+        images: {
+          orderBy: { displayOrder: 'asc' },
+        },
+        recipeTags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
+    });
+  }
 }
