@@ -17,6 +17,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { SearchHistoryModule } from './modules/search-history/search-history.module';
 import { AIGenerationModule } from './modules/ai-generation/ai-generation.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -36,6 +37,11 @@ import { AdminModule } from './modules/admin/admin.module';
     SearchHistoryModule,
     AIGenerationModule,
     AdminModule,
+    ConfigModule.forRoot({
+
+    isGlobal:true,
+
+  }),
   ],
   controllers: [AppController],
   providers: [AppService],
