@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FavoritesService } from './favorites.service';
-import { PrismaService } from '../../database/prisma.service';
+import { PrismaService } from '../../../database/prisma.service';
 import { NotFoundException } from '@nestjs/common';
 
 describe('FavoritesService', () => {

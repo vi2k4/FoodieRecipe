@@ -1,8 +1,8 @@
 import { Controller, Post, Delete, Get, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { FollowsService } from './follows.service';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 
 @ApiTags('Follows')
 @Controller('users')
@@ -29,6 +29,24 @@ export class FollowsController {
   @ApiResponse({ status: 401, description: 'Chưa xác thực' })
   async getMyFollowers(@CurrentUser() user: any) {
     return this.followsService.getFollowers(BigInt(user.id));
+  }
+
+  @Get(':id/following')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Lấy danh sách người dùng một người đang theo dõi' })
+  @ApiParam({ name: 'id', description: 'ID của người dùng', type: String })
+  @ApiResponse({ status: 200, description: 'Trả về danh sách người đang theo dõi' })
+  async getFollowing(@Param('id') id: string) {
+    return this.followsService.getFollowing(BigInt(id));
+  }
+
+  @Get(':id/followers')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Lấy danh sách người dùng đang theo dõi một người' })
+  @ApiParam({ name: 'id', description: 'ID của người dùng', type: String })
+  @ApiResponse({ status: 200, description: 'Trả về danh sách người theo dõi' })
+  async getFollowers(@Param('id') id: string) {
+    return this.followsService.getFollowers(BigInt(id));
   }
 
   @Post(':id/follow')

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FollowsService } from './follows.service';
-import { PrismaService } from '../../database/prisma.service';
+import { PrismaService } from '../../../database/prisma.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('FollowsService', () => {

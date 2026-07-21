@@ -7,12 +7,7 @@ import { UsersModule } from './modules/users/users.module';
 import { RecipesModule } from './modules/recipes/recipes.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { TagsModule } from './modules/tags/tags.module';
-import { CommentsModule } from './modules/comments/comments.module';
-import { FavoritesModule } from './modules/favorites/favorites.module';
-import { LikesModule } from './modules/likes/likes.module';
-import { RatingsModule } from './modules/ratings/ratings.module';
-import { FollowsModule } from './modules/follows/follows.module';
-import { NotificationsModule } from './modules/notifications/notifications.module';
+import { SocialModule } from './modules/social/social.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { SearchHistoryModule } from './modules/search-history/search-history.module';
 import { AIGenerationModule } from './modules/ai-generation/ai-generation.module';
@@ -26,12 +21,7 @@ import { AdminModule } from './modules/admin/admin.module';
     RecipesModule,
     CategoriesModule,
     TagsModule,
-    CommentsModule,
-    FavoritesModule,
-    LikesModule,
-    RatingsModule,
-    FollowsModule,
-    NotificationsModule,
+    SocialModule,
     ReportsModule,
     SearchHistoryModule,
     AIGenerationModule,

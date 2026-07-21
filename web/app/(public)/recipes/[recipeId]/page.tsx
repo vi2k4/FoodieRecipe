@@ -1,6 +1,29 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Clock, Flame, Users, Star, MessageSquare, ChevronRight, CheckCircle2, Tag, Calendar, User, Heart, Utensils } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { socialApi } from "@/lib/social-api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { 
+  Clock, 
+  Flame, 
+  Users, 
+  Star, 
+  MessageSquare, 
+  ChevronRight, 
+  CheckCircle2, 
+  Tag, 
+  Calendar, 
+  User, 
+  Heart, 
+  Utensils, 
+  AlertCircle,
+  ThumbsUp
+} from "lucide-react";
 
 interface Recipe {
   id: number;
@@ -13,6 +36,8 @@ interface Recipe {
   thumbnail: string | null;
   source: string | null;
   averageRating: number;
+  likeCount: number;
+  favoriteCount: number;
   createdAt: string;
   author: {
     username: string;
@@ -35,197 +60,194 @@ interface Recipe {
       name: string;
     };
   }[];
-  comments: {
+}
+
+interface Comment {
+  id: number;
+  content: string;
+  createdAt: string;
+  parentCommentId: number | null;
+  user: {
     id: number;
-    content: string;
-    createdAt: string;
-    user: {
-      username: string;
-      avatarUrl: string | null;
-    };
-  }[];
+    username: string;
+    avatarUrl: string | null;
+  };
+  replies: Comment[];
 }
 
-const MOCK_RECIPES_DB: Record<number, Recipe> = {
-  1: {
-    id: 1,
-    title: "Bánh Flan Truyền Thống Caramels",
-    description: "Công thức làm bánh flan caramel siêu mịn, thơm ngậy mùi trứng sữa và không bị rỗ.",
-    calories: 250,
-    cookTime: 45,
-    difficulty: "EASY",
-    servings: 4,
-    thumbnail: "https://images.unsplash.com/photo-1541783245831-57d6fb0926d3?auto=format&fit=crop&w=800&q=80",
-    source: "Đầu bếp Nguyễn",
-    averageRating: 4.8,
-    createdAt: "2026-07-18T09:24:47.493Z",
-    author: {
-      username: "chef_nguyen",
-      avatarUrl: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=150&q=80",
-      bio: "Đầu bếp chuyên nghiệp với hơn 10 năm kinh nghiệm trong ẩm thực Việt Nam",
-    },
-    ingredients: [
-      { id: 1, ingredientName: "Trứng gà", quantity: 5, unit: "quả" },
-      { id: 2, ingredientName: "Sữa tươi không đường", quantity: 500, unit: "ml" },
-      { id: 3, ingredientName: "Đường cát", quantity: 100, unit: "g" },
-      { id: 4, ingredientName: "Vani", quantity: 1, unit: "ống" },
-    ],
-    steps: [
-      { id: 1, stepNumber: 1, content: "Đun đường với một chút nước lọc đến khi chuyển màu cánh gián caramel, đổ một lớp mỏng vào đáy các khuôn bánh." },
-      { id: 2, stepNumber: 2, content: "Đánh nhẹ trứng gà cho tan và hạn chế tạo bọt khí, đun sữa tươi ấm rồi từ từ rót sữa vào trứng, khuấy nhẹ đều tay cùng với vani." },
-      { id: 3, stepNumber: 3, content: "Lọc hỗn hợp qua rây mịn từ 2 đến 3 lần để bánh được mịn hoàn toàn, sau đó rót từ từ vào khuôn đã nguội caramel." },
-      { id: 4, stepNumber: 4, content: "Xếp khuôn vào nồi hấp cách thủy ở lửa nhỏ nhất trong 30-40 phút. Nên che mặt khuôn bằng giấy bạc để tránh nước đọng nhỏ vào bánh." },
-      { id: 5, stepNumber: 5, content: "Để bánh nguội hoàn toàn rồi cho vào ngăn mát tủ lạnh từ 2-3 tiếng trước khi úp ngược ra đĩa thưởng thức." },
-    ],
-    recipeTags: [
-      { tag: { name: "Dễ làm" } },
-      { tag: { name: "Ít calo" } },
-    ],
-    comments: [
-      {
-        id: 1,
-        content: "Nhìn ngon quá anh ơi! Cho em hỏi nếu hấp bằng nồi cơm điện thì có được không ạ?",
-        createdAt: "2026-07-18T09:24:47.493Z",
-        user: {
-          username: "member_lan",
-          avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-        }
-      }
-    ]
-  },
-  2: {
-    id: 2,
-    title: "Phở Bò Hà Nội Cổ Truyền",
-    description: "Hương vị phở bò truyền thống tinh tế với nước dùng trong vắt, ngọt thanh từ xương bò ninh kỹ và thơm lừng hồi quế thảo quả.",
-    calories: 450,
-    cookTime: 180,
-    difficulty: "HARD",
-    servings: 4,
-    thumbnail: "https://images.unsplash.com/photo-1583224964978-2257b960c3d3?auto=format&fit=crop&w=800&q=80",
-    source: "Bí kíp gia truyền Chef Nguyễn",
-    averageRating: 4.9,
-    createdAt: "2026-07-18T09:24:47.493Z",
-    author: {
-      username: "chef_nguyen",
-      avatarUrl: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=150&q=80",
-      bio: "Đầu bếp chuyên nghiệp với hơn 10 năm kinh nghiệm trong ẩm thực Việt Nam",
-    },
-    ingredients: [
-      { id: 5, ingredientName: "Bánh phở tươi", quantity: 500, unit: "g" },
-      { id: 6, ingredientName: "Thịt thăn bò", quantity: 300, unit: "g" },
-      { id: 7, ingredientName: "Xương ống bò", quantity: 1000, unit: "g" },
-      { id: 8, ingredientName: "Hành tây, gừng", quantity: 1, unit: "củ" },
-      { id: 9, ingredientName: "Gia vị phở gồm quế, hồi và thảo quả", quantity: 1, unit: "gói" },
-      { id: 10, ingredientName: "Hành lá, rau thơm", quantity: 50, unit: "g" },
-    ],
-    steps: [
-      { id: 6, stepNumber: 1, content: "Xương ống rửa sạch, luộc bỏ nước đầu rồi ninh trong nồi áp suất hoặc nồi thường khoảng 2-3 tiếng để ngọt nước." },
-      { id: 7, stepNumber: 2, content: "Nướng hành tây, gừng nguyên vỏ cho thơm, cạo sạch phần cháy đen rồi đập dập, thả vào nồi nước dùng." },
-      { id: 8, stepNumber: 3, content: "Rang thơm quế, hồi, thảo quả rồi cho vào túi lọc vải, thả vào nồi ninh xương trước khi tắt bếp khoảng 1 tiếng." },
-      { id: 9, stepNumber: 4, content: "Trần bánh phở qua nước sôi rồi xếp vào tô, xếp thịt bò thái lát mỏng cùng hành hoa xắt nhỏ lên trên." },
-      { id: 10, stepNumber: 5, content: "Chan nước dùng đang sôi sùng sục vào tô phở cho thịt bò chín tái và dậy mùi hành thơm. Ăn kèm quẩy và chanh ớt." },
-    ],
-    recipeTags: [
-      { tag: { name: "Truyền thống" } },
-    ],
-    comments: [
-      {
-        id: 2,
-        content: "Bí quyết nước dùng ngon quá ạ! Em đã thử nấu tại nhà và cả nhà đều khen.",
-        createdAt: "2026-07-18T09:24:47.493Z",
-        user: {
-          username: "member_lan",
-          avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-        }
-      }
-    ]
-  },
-  3: {
-    id: 3,
-    title: "Salad Ức Gà Sốt Mè Rang Giảm Cân",
-    description: "Lựa chọn hoàn hảo cho những bữa ăn Eat-clean thanh đạm, giàu protein tốt và các loại vitamin từ rau quả tươi mát.",
-    calories: 320,
-    cookTime: 15,
-    difficulty: "EASY",
-    servings: 2,
-    thumbnail: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80",
-    source: "Kitchen Eaters",
-    averageRating: 4.6,
-    createdAt: "2026-07-18T09:24:47.493Z",
-    author: {
-      username: "member_lan",
-      avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-      bio: "Người đam mê làm bánh và nấu các món ăn tốt cho sức khỏe",
-    },
-    ingredients: [
-      { id: 11, ingredientName: "Ức gà phi lê", quantity: 200, unit: "g" },
-      { id: 12, ingredientName: "Rau xà lách sạch", quantity: 150, unit: "g" },
-      { id: 13, ingredientName: "Cà chua bi", quantity: 50, unit: "g" },
-      { id: 14, ingredientName: "Quả bơ chín", quantity: 0.5, unit: "quả" },
-      { id: 15, ingredientName: "Nước sốt mè rang Kewpie", quantity: 3, unit: "muỗng canh" },
-    ],
-    steps: [
-      { id: 11, stepNumber: 1, content: "Ức gà rửa sạch, luộc chín cùng một chút gừng đập dập và muối để khử mùi. Sau khi chín, xé gà thành sợi vừa ăn." },
-      { id: 12, stepNumber: 2, content: "Rau xà lách rửa sạch xắt khúc nhỏ. Cà chua bi cắt đôi. Dưa chuột thái mỏng. Bơ lột vỏ cắt lát dày." },
-      { id: 13, stepNumber: 3, content: "Cho xà lách, cà chua, dưa chuột và bơ vào tô trộn lớn." },
-      { id: 14, stepNumber: 4, content: "Rải ức gà xé sợi lên trên cùng, rưới nước sốt mè rang đều khắp bề mặt tô salad." },
-      { id: 15, stepNumber: 5, content: "Trộn đều nhẹ tay trước khi ăn để các nguyên liệu ngấm sốt mà bơ không bị nát. Dùng lạnh ngon hơn." },
-    ],
-    recipeTags: [
-      { tag: { name: "Healthy" } },
-      { tag: { name: "Nhanh" } },
-      { tag: { name: "Ít calo" } },
-    ],
-    comments: []
-  }
-};
-
-async function getRecipeDetails(recipeId: string): Promise<Recipe> {
-  const numericId = parseInt(recipeId, 10);
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-    const res = await fetch(`${apiUrl}/recipes/${recipeId}`, {
-      cache: "no-store",
-      headers: {
-        "Accept": "application/json"
-      }
-    });
-    if (!res.ok) throw new Error("Failed to fetch recipe details");
-    const data = await res.json();
-    if (!data) throw new Error("Empty recipe response");
-    
-    // If the comments or other relationships are missing in backend, map them or fallback
-    return {
-      ...data,
-      ingredients: data.ingredients || MOCK_RECIPES_DB[numericId]?.ingredients || [],
-      steps: data.steps || MOCK_RECIPES_DB[numericId]?.steps || [],
-      recipeTags: data.recipeTags || MOCK_RECIPES_DB[numericId]?.recipeTags || [],
-      comments: data.comments || MOCK_RECIPES_DB[numericId]?.comments || [],
-    };
-  } catch (error) {
-    console.error(`Backend fetch failed for recipe ${recipeId}, using mock:`, error);
-    if (MOCK_RECIPES_DB[numericId]) {
-      return MOCK_RECIPES_DB[numericId];
-    }
-    throw error;
-  }
-}
-
-interface RecipeDetailPageProps {
-  params: Promise<{
-    recipeId: string;
-  }>;
-}
-
-export default async function RecipeDetailPage({ params }: RecipeDetailPageProps) {
-  const { recipeId } = await params;
+export default function RecipeDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const recipeId = params?.recipeId as string;
   
-  let recipe: Recipe;
-  try {
-    recipe = await getRecipeDetails(recipeId);
-  } catch (err) {
-    notFound();
+  const [token, setToken] = useState<string | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteCount, setFavoriteCount] = useState(0);
+  const [commentContent, setCommentContent] = useState("");
+  const [userRating, setUserRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setToken(localStorage.getItem("token"));
+    }
+  }, []);
+
+  // 1. Query Recipe details
+  const recipeQuery = useQuery<Recipe>({
+    queryKey: ["recipeDetails", recipeId],
+    queryFn: async () => {
+      const data = await socialApi.getRecipeDetails(recipeId);
+      setLikeCount(Number(data.likeCount || 0));
+      setFavoriteCount(Number(data.favoriteCount || 0));
+      return {
+        ...data,
+        averageRating: Number(data.averageRating || 0),
+        ingredients: data.ingredients || [],
+        steps: data.steps || [],
+        recipeTags: data.recipeTags || [],
+      };
+    },
+    enabled: !!recipeId,
+  });
+
+  const recipe = recipeQuery.data;
+
+  // 2. Query Comments Tree
+  const commentsQuery = useQuery<Comment[]>({
+    queryKey: ["recipeComments", recipeId],
+    queryFn: async () => {
+      return socialApi.getComments(recipeId);
+    },
+    enabled: !!recipeId,
+  });
+
+  // 3. Query user's favorites to see if this recipe is in it
+  const favoritesQuery = useQuery<any[]>({
+    queryKey: ["myFavorites"],
+    queryFn: async () => {
+      if (!token) return [];
+      return socialApi.getMyFavorites();
+    },
+    enabled: !!token,
+  });
+
+  useEffect(() => {
+    if (recipe && favoritesQuery.data) {
+      const hasFav = favoritesQuery.data.some((fav: any) => Number(fav.id) === Number(recipe.id));
+      setIsFavorited(hasFav);
+    }
+  }, [recipe, favoritesQuery.data]);
+
+  const triggerAlert = (msg: string) => {
+    setAlertMessage(msg);
+    setTimeout(() => {
+      setAlertMessage(null);
+    }, 4000);
+  };
+
+  const handleLikeToggle = async () => {
+    if (!token) {
+      triggerAlert("Vui lòng đăng nhập để thích công thức này!");
+      return;
+    }
+    const nextLiked = !isLiked;
+    setIsLiked(nextLiked);
+    setLikeCount(prev => nextLiked ? prev + 1 : prev - 1);
+    try {
+      await socialApi.toggleLike(recipeId, nextLiked);
+      recipeQuery.refetch();
+    } catch (e) {
+      // Revert local state on failure
+      setIsLiked(!nextLiked);
+      setLikeCount(prev => nextLiked ? prev - 1 : prev + 1);
+    }
+  };
+
+  const handleFavoriteToggle = async () => {
+    if (!token) {
+      triggerAlert("Vui lòng đăng nhập để lưu công thức yêu thích!");
+      return;
+    }
+    const nextFav = !isFavorited;
+    setIsFavorited(nextFav);
+    setFavoriteCount(prev => nextFav ? prev + 1 : prev - 1);
+    try {
+      await socialApi.toggleFavorite(recipeId, nextFav);
+      favoritesQuery.refetch();
+      recipeQuery.refetch();
+    } catch (e) {
+      setIsFavorited(!nextFav);
+      setFavoriteCount(prev => nextFav ? prev - 1 : prev + 1);
+    }
+  };
+
+  const handleRate = async (score: number) => {
+    if (!token) {
+      triggerAlert("Vui lòng đăng nhập để đánh giá sao công thức này!");
+      return;
+    }
+    setUserRating(score);
+    try {
+      await socialApi.submitRating(recipeId, score);
+      recipeQuery.refetch();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handlePostComment = async () => {
+    if (!token) {
+      triggerAlert("Vui lòng đăng nhập để gửi bình luận!");
+      return;
+    }
+    if (!commentContent.trim()) return;
+
+    try {
+      await socialApi.postComment(recipeId, commentContent);
+      setCommentContent("");
+      commentsQuery.refetch();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  if (recipeQuery.isError) {
+    return (
+      <div className="min-h-screen bg-[#fffaf5] flex items-center justify-center p-4">
+        <div className="bg-white border border-red-100 rounded-3xl py-12 px-6 text-center space-y-4 shadow-sm flex flex-col items-center justify-center max-w-md w-full">
+          <div className="p-3 bg-red-50 rounded-full border border-red-100 text-red-500">
+            <AlertCircle className="w-8 h-8" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-bold text-lg text-neutral-800">Không tìm thấy công thức</h3>
+            <p className="text-neutral-500 text-sm">
+              Công thức này không tồn tại hoặc đã bị gỡ bỏ khỏi hệ thống.
+            </p>
+          </div>
+          <button
+            onClick={() => router.push("/recipes")}
+            className="px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs rounded-xl shadow-sm transition-colors block w-full text-center"
+          >
+            Quay lại danh sách công thức
+          </button>
+        </div>
+      </div>
+    );
   }
+
+  if (recipeQuery.isLoading || !recipe) {
+    return (
+      <div className="min-h-screen bg-[#fffaf5] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-600"></div>
+      </div>
+    );
+  }
+
+  const comments = commentsQuery.data || [];
 
   const formattedDate = new Date(recipe.createdAt).toLocaleDateString("vi-VN", {
     year: "numeric",
@@ -234,7 +256,16 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 relative">
+      
+      {/* Toast Alert popup */}
+      {alertMessage && (
+        <div className="fixed top-24 right-4 z-50 flex items-center gap-2 bg-neutral-900 text-white px-4 py-3 rounded-2xl shadow-xl border border-neutral-800 animate-in slide-in-from-top-4 duration-200">
+          <AlertCircle className="w-5 h-5 text-orange-500" />
+          <span className="text-xs font-semibold">{alertMessage}</span>
+        </div>
+      )}
+
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-2 text-xs sm:text-sm text-neutral-500">
         <Link href="/" className="hover:text-neutral-900 transition-colors">
@@ -264,17 +295,20 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
 
         <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs text-neutral-500 pt-2">
           {recipe.author && (
-            <div className="flex items-center gap-2">
+            <button 
+              onClick={() => router.push(`/users/${recipe.author?.username}`)}
+              className="flex items-center gap-2 text-left group"
+            >
               <img 
-                src={recipe.author.avatarUrl || "/default-avatar.png"} 
+                src={recipe.author.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"} 
                 alt={recipe.author.username}
-                className="w-8 h-8 rounded-full object-cover border border-neutral-200"
+                className="w-8 h-8 rounded-full object-cover border border-neutral-200 group-hover:scale-105 transition-transform"
               />
               <div>
-                <p className="font-semibold text-neutral-800">{recipe.author.username}</p>
+                <p className="font-semibold text-neutral-800 group-hover:text-orange-600 transition-colors">@{recipe.author.username}</p>
                 <p className="text-[10px]">Tác giả</p>
               </div>
-            </div>
+            </button>
           )}
 
           <div className="h-6 w-px bg-neutral-200 hidden sm:block" />
@@ -305,12 +339,12 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
           {/* Main Cover Image */}
           <div className="relative aspect-[16/10] w-full rounded-3xl overflow-hidden bg-neutral-100 shadow-sm border border-neutral-200/50">
             <img 
-              src={recipe.thumbnail || "/placeholder.jpg"} 
+              src={recipe.thumbnail || "https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=800&q=80"} 
               alt={recipe.title}
               className="object-cover w-full h-full"
             />
             <span className="absolute top-4 right-4 bg-orange-600 text-white font-bold text-xs uppercase px-3.5 py-1.5 rounded-full shadow-md">
-              {recipe.difficulty}
+              {recipe.difficulty === "EASY" ? "Dễ" : recipe.difficulty === "MEDIUM" ? "Vừa" : "Khó"}
             </span>
           </div>
 
@@ -329,7 +363,7 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
                 <Flame className="w-4 h-4" />
               </div>
               <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Lượng Calo</p>
-              <p className="text-sm font-extrabold text-neutral-800">{recipe.calories || "--"} kcal</p>
+              <p className="text-sm font-extrabold text-neutral-800">{recipe.calories ? Math.round(Number(recipe.calories)) : "--"} kcal</p>
             </div>
 
             <div className="space-y-1">
@@ -359,7 +393,7 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
                     />
                     <span className="text-sm text-neutral-700 group-hover:text-neutral-900 transition-colors">
                       <span className="font-semibold text-neutral-900">
-                        {ing.quantity && `${ing.quantity} `}
+                        {ing.quantity && `${Number(ing.quantity)} `}
                         {ing.unit && `${ing.unit} `}
                       </span>
                       {ing.ingredientName}
@@ -411,21 +445,63 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
             </h3>
             
             <div className="flex items-center justify-between">
-              <span className="text-sm text-neutral-500 font-medium">Điểm đánh giá</span>
+              <span className="text-sm text-neutral-500 font-medium">Điểm đánh giá trung bình</span>
               <div className="flex items-center gap-1 text-amber-500 font-extrabold bg-amber-50 border border-amber-100 px-3 py-1 rounded-full text-sm">
-                <Star className="w-4 h-4 fill-amber-500" /> {recipe.averageRating.toFixed(1)}
+                <Star className="w-4 h-4 fill-amber-500" /> {recipe.averageRating ? Number(recipe.averageRating).toFixed(1) : "0.0"}
+              </div>
+            </div>
+
+            {/* Interactive Rating Pick */}
+            <div className="flex flex-col gap-2 pt-2 border-t border-neutral-100">
+              <span className="text-xs text-neutral-500 font-medium">Đánh giá của bạn</span>
+              <div className="flex items-center gap-1.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => handleRate(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="p-1 hover:scale-110 transition-transform"
+                  >
+                    <Star 
+                      className={`w-6 h-6 transition-colors ${
+                        star <= (hoverRating || userRating)
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-neutral-300"
+                      }`}
+                    />
+                  </button>
+                ))}
               </div>
             </div>
 
             <div className="h-px bg-neutral-100" />
 
+            {/* Like and Favorite Toggle Action Buttons */}
             <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-neutral-200 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition-all duration-200 text-sm font-semibold text-neutral-700 cursor-not-allowed">
-                <Heart className="w-4.5 h-4.5" /> Yêu thích
-              </button>
-              <button className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-neutral-200 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition-all duration-200 text-sm font-semibold text-neutral-700 cursor-not-allowed">
-                <MessageSquare className="w-4.5 h-4.5" /> Bình luận
-              </button>
+              <Button 
+                onClick={handleLikeToggle}
+                variant={isLiked ? "secondary" : "outline"}
+                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border transition-all duration-200 text-sm font-semibold h-auto ${
+                  isLiked
+                    ? "bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100"
+                    : "border-neutral-200 hover:bg-rose-50/50 hover:text-rose-500 text-neutral-700"
+                }`}
+              >
+                <ThumbsUp className="w-4.5 h-4.5" /> Thích ({likeCount})
+              </Button>
+              
+              <Button 
+                onClick={handleFavoriteToggle}
+                variant={isFavorited ? "secondary" : "outline"}
+                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border transition-all duration-200 text-sm font-semibold h-auto ${
+                  isFavorited
+                    ? "bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100"
+                    : "border-neutral-200 hover:bg-orange-50/50 hover:text-orange-500 text-neutral-700"
+                }`}
+              >
+                <Heart className={`w-4.5 h-4.5 ${isFavorited ? "fill-orange-600" : ""}`} /> Lưu ({favoriteCount})
+              </Button>
             </div>
           </div>
 
@@ -437,12 +513,13 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
             <div className="flex flex-wrap gap-2">
               {recipe.recipeTags.length > 0 ? (
                 recipe.recipeTags.map((rt, idx) => (
-                  <span 
+                  <Badge 
                     key={idx} 
+                    variant="secondary"
                     className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200 transition-colors cursor-pointer"
                   >
                     #{rt.tag.name}
-                  </span>
+                  </Badge>
                 ))
               ) : (
                 <span className="text-neutral-400 text-xs italic">Không có tag nào</span>
@@ -455,12 +532,12 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
             <div className="bg-gradient-to-br from-neutral-50 to-white border border-neutral-200/60 rounded-3xl p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3">
                 <img 
-                  src={recipe.author.avatarUrl || "/default-avatar.png"} 
+                  src={recipe.author.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"} 
                   alt={recipe.author.username}
                   className="w-12 h-12 rounded-full object-cover border border-neutral-200"
                 />
                 <div>
-                  <h4 className="font-bold text-neutral-900 text-sm">{recipe.author.username}</h4>
+                  <h4 className="font-bold text-neutral-900 text-sm">@{recipe.author.username}</h4>
                   <p className="text-[10px] text-neutral-400">Đầu bếp đóng góp</p>
                 </div>
               </div>
@@ -477,51 +554,98 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
       {/* Comments section */}
       <section className="space-y-6 pt-10 border-t border-neutral-200/60 max-w-4xl">
         <h2 className="text-2xl font-bold text-neutral-950 flex items-center gap-2">
-          <MessageSquare className="w-5.5 h-5.5 text-neutral-400" /> Bình luận - {recipe.comments.length}
+          <MessageSquare className="w-5.5 h-5.5 text-neutral-400" /> Bình luận ({comments.length})
         </h2>
 
-        {/* Comment input mockup */}
+        {/* Comment input field */}
         <div className="flex gap-4 p-5 bg-neutral-50 border border-neutral-200 rounded-3xl">
           <div className="flex-shrink-0 w-9 h-9 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-sm">
-            K
+            C
           </div>
           <div className="flex-1 space-y-3">
             <textarea 
               rows={3} 
-              placeholder="Chia sẻ ý kiến của bạn về món ăn này..." 
+              value={commentContent}
+              onChange={(e) => setCommentContent(e.target.value)}
+              placeholder={token ? "Chia sẻ ý kiến của bạn về món ăn này..." : "Vui lòng đăng nhập để chia sẻ bình luận..."} 
               className="w-full p-4 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white"
-              disabled
+              disabled={!token}
             />
-            <button className="bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors cursor-not-allowed">
+            <Button 
+              onClick={handlePostComment}
+              disabled={!token || !commentContent.trim()}
+              variant="default"
+              className={`text-xs font-bold px-5 py-2.5 rounded-xl transition-all shadow-sm h-auto ${
+                token && commentContent.trim()
+                  ? "bg-neutral-900 hover:bg-neutral-800 text-white hover:scale-105 active:scale-95"
+                  : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+              }`}
+            >
               Gửi bình luận
-            </button>
+            </Button>
           </div>
         </div>
 
-        {/* List of comments */}
-        <div className="space-y-4">
-          {recipe.comments.length > 0 ? (
-            recipe.comments.map((comm) => (
-              <div key={comm.id} className="flex gap-4 p-5 bg-white border border-neutral-100 rounded-3xl shadow-sm">
-                <img 
-                  src={comm.user.avatarUrl || "/default-avatar.png"} 
-                  alt={comm.user.username}
-                  className="w-9 h-9 rounded-full object-cover border border-neutral-200"
-                />
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-neutral-900">{comm.user.username}</span>
-                    <span className="text-[10px] text-neutral-400">
-                      {new Date(comm.createdAt).toLocaleDateString("vi-VN", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
+        {/* List of comments (with support for nested replies) */}
+        <div className="space-y-6">
+          {comments.length > 0 ? (
+            comments.map((comm) => (
+              <div key={comm.id} className="space-y-4">
+                {/* Main Comment */}
+                <div className="flex gap-4 p-5 bg-white border border-neutral-100 rounded-3xl shadow-sm">
+                  <Avatar className="w-9 h-9 border border-neutral-200">
+                    <AvatarImage 
+                      src={comm.user.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"} 
+                      className="object-cover"
+                    />
+                    <AvatarFallback>{comm.user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-neutral-900">@{comm.user.username}</span>
+                      <span className="text-[10px] text-neutral-400">
+                        {new Date(comm.createdAt).toLocaleDateString("vi-VN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-neutral-700 leading-relaxed">
+                      {comm.content}
+                    </p>
                   </div>
-                  <p className="text-sm text-neutral-700 leading-relaxed">
-                    {comm.content}
-                  </p>
                 </div>
+
+                {/* Indented Replies */}
+                {comm.replies && comm.replies.length > 0 && (
+                  <div className="pl-12 space-y-3">
+                    {comm.replies.map((reply) => (
+                      <div key={reply.id} className="flex gap-3 p-4 bg-orange-50/20 border border-orange-100/50 rounded-2xl shadow-sm">
+                        <Avatar className="w-8 h-8 border border-neutral-200">
+                          <AvatarImage 
+                            src={reply.user.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"} 
+                            className="object-cover"
+                          />
+                          <AvatarFallback>{reply.user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="space-y-1 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-neutral-900">@{reply.user.username}</span>
+                            <span className="text-[9px] text-neutral-400">
+                              {new Date(reply.createdAt).toLocaleDateString("vi-VN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-xs text-neutral-700 leading-relaxed">
+                            {reply.content}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))
           ) : (

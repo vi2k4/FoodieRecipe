@@ -2,8 +2,8 @@ import { Controller, Post, Patch, Delete, Param, Body, UseGuards, HttpCode, Http
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { RatingsService } from './ratings.service';
 import { RatingDto } from './dto/rating.dto';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 
 @ApiTags('Ratings')
 @Controller('recipes/:id/rating')
