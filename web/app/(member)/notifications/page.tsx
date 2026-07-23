@@ -212,17 +212,13 @@ export default function NotificationsPage() {
                   {/* Right Actions */}
                   <div className="flex items-center gap-2 self-center">
                     {item.recipeId && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
+                      <Link
+                        href={`/recipes/${item.recipeId}`}
                         className="hidden sm:inline-flex text-xs font-semibold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors h-auto"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Link href={`/recipes/${item.recipeId}`}>
-                          Xem món
-                        </Link>
-                      </Button>
+                        Xem món
+                      </Link>
                     )}
                     <Button
                       variant="ghost"
