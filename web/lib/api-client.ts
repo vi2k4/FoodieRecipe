@@ -1,15 +1,28 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+import { env } from "./env";
 
-export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err?.message || `HTTP ${res.status}`);
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "ApiError";
   }
-  return res.json() as Promise<T>;
+}
+
+export async function apiClient<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${env.apiUrl}${path}`, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  });
+
+  const data = (await response.json().catch(() => ({}))) as { message?: string | string[] } & T;
+  if (!response.ok) {
+    const message = Array.isArray(data.message) ? data.message.join(", ") : data.message;
+    throw new ApiError(message || "Có lỗi xảy ra, vui lòng thử lại", response.status);
+  }
+  return data;
 }
 
 export const api = {
@@ -21,23 +34,23 @@ export const api = {
       } else if (params) {
         q = '?' + new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
       }
-      return apiFetch<any>(`/recipes${q}`);
+      return apiClient<any>(`/recipes${q}`);
     },
-    get: (id: string | number) => apiFetch<any>(`/recipes/${id}`),
+    get: (id: string | number) => apiClient<any>(`/recipes/${id}`),
     create: (body: Record<string, unknown>) =>
-      apiFetch<any>('/recipes', {
+      apiClient<any>('/recipes', {
         method: 'POST',
         body: JSON.stringify(body),
         headers: body?.userId ? { 'x-user-id': String(body.userId) } : undefined,
       }),
     update: (id: string | number, body: Record<string, unknown>) =>
-      apiFetch<any>(`/recipes/${id}`, {
+      apiClient<any>(`/recipes/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(body),
         headers: body?.userId ? { 'x-user-id': String(body.userId) } : undefined,
       }),
     remove: (id: string | number, userId?: string | number) =>
-      apiFetch<any>(`/recipes/${id}`, {
+      apiClient<any>(`/recipes/${id}`, {
         method: 'DELETE',
         headers: userId ? { 'x-user-id': String(userId) } : undefined,
       }),
@@ -45,7 +58,7 @@ export const api = {
   ingredients: {
     add: (recipeId: string | number, body: Record<string, unknown>, userId?: string | number) => {
       const uid = userId || body?.userId;
-      return apiFetch<any>(`/recipes/${recipeId}/ingredients`, {
+      return apiClient<any>(`/recipes/${recipeId}/ingredients`, {
         method: 'POST',
         body: JSON.stringify({ ...body, userId: uid }),
         headers: uid ? { 'x-user-id': String(uid) } : undefined,
@@ -53,14 +66,14 @@ export const api = {
     },
     update: (id: string | number, body: Record<string, unknown>, userId?: string | number) => {
       const uid = userId || body?.userId;
-      return apiFetch<any>(`/recipes/ingredients/${id}`, {
+      return apiClient<any>(`/recipes/ingredients/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ ...body, userId: uid }),
         headers: uid ? { 'x-user-id': String(uid) } : undefined,
       });
     },
     remove: (id: string | number, userId?: string | number) =>
-      apiFetch<any>(`/recipes/ingredients/${id}`, {
+      apiClient<any>(`/recipes/ingredients/${id}`, {
         method: 'DELETE',
         headers: userId ? { 'x-user-id': String(userId) } : undefined,
       }),
@@ -68,7 +81,7 @@ export const api = {
   steps: {
     add: (recipeId: string | number, body: Record<string, unknown>, userId?: string | number) => {
       const uid = userId || body?.userId;
-      return apiFetch<any>(`/recipes/${recipeId}/steps`, {
+      return apiClient<any>(`/recipes/${recipeId}/steps`, {
         method: 'POST',
         body: JSON.stringify({ ...body, userId: uid }),
         headers: uid ? { 'x-user-id': String(uid) } : undefined,
@@ -76,14 +89,14 @@ export const api = {
     },
     update: (id: string | number, body: Record<string, unknown>, userId?: string | number) => {
       const uid = userId || body?.userId;
-      return apiFetch<any>(`/recipes/steps/${id}`, {
+      return apiClient<any>(`/recipes/steps/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ ...body, userId: uid }),
         headers: uid ? { 'x-user-id': String(uid) } : undefined,
       });
     },
     remove: (id: string | number, userId?: string | number) =>
-      apiFetch<any>(`/recipes/steps/${id}`, {
+      apiClient<any>(`/recipes/steps/${id}`, {
         method: 'DELETE',
         headers: userId ? { 'x-user-id': String(userId) } : undefined,
       }),
@@ -91,44 +104,42 @@ export const api = {
   images: {
     add: (recipeId: string | number, body: Record<string, unknown>, userId?: string | number) => {
       const uid = userId || body?.userId;
-      return apiFetch<any>(`/recipes/${recipeId}/images`, {
+      return apiClient<any>(`/recipes/${recipeId}/images`, {
         method: 'POST',
         body: JSON.stringify({ ...body, userId: uid }),
         headers: uid ? { 'x-user-id': String(uid) } : undefined,
       });
     },
     remove: (id: string | number, userId?: string | number) =>
-      apiFetch<any>(`/recipes/images/${id}`, {
+      apiClient<any>(`/recipes/images/${id}`, {
         method: 'DELETE',
         headers: userId ? { 'x-user-id': String(userId) } : undefined,
       }),
   },
   recipeTags: {
     add: (recipeId: string | number, tagId: string | number, userId?: string | number) => {
-      return apiFetch<any>(`/recipes/${recipeId}/tags`, {
+      return apiClient<any>(`/recipes/${recipeId}/tags`, {
         method: 'POST',
         body: JSON.stringify({ tagId, userId }),
         headers: userId ? { 'x-user-id': String(userId) } : undefined,
       });
     },
     remove: (recipeId: string | number, tagId: string | number, userId?: string | number) =>
-      apiFetch<any>(`/recipes/${recipeId}/tags/${tagId}`, {
+      apiClient<any>(`/recipes/${recipeId}/tags/${tagId}`, {
         method: 'DELETE',
         headers: userId ? { 'x-user-id': String(userId) } : undefined,
       }),
   },
   categories: {
-    list: () => apiFetch<any>('/categories'),
-    get: (id: string | number) => apiFetch<any>(`/categories/${id}`),
-    create: (body: Record<string, unknown>) => apiFetch<any>('/categories', { method: 'POST', body: JSON.stringify(body) }),
-    update: (id: string | number, body: Record<string, unknown>) => apiFetch<any>(`/categories/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-    remove: (id: string | number) => apiFetch<any>(`/categories/${id}`, { method: 'DELETE' }),
+    list: () => apiClient<any>('/categories'),
+    get: (id: string | number) => apiClient<any>(`/categories/${id}`),
+    create: (body: Record<string, unknown>) => apiClient<any>('/categories', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id: string | number, body: Record<string, unknown>) => apiClient<any>(`/categories/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+    remove: (id: string | number) => apiClient<any>(`/categories/${id}`, { method: 'DELETE' }),
   },
   tags: {
-    list: () => apiFetch<any>('/tags'),
-    create: (name: string) => apiFetch<any>('/tags', { method: 'POST', body: JSON.stringify({ name }) }),
-    remove: (id: string | number) => apiFetch<any>(`/tags/${id}`, { method: 'DELETE' }),
+    list: () => apiClient<any>('/tags'),
+    create: (name: string) => apiClient<any>('/tags', { method: 'POST', body: JSON.stringify({ name }) }),
+    remove: (id: string | number) => apiClient<any>(`/tags/${id}`, { method: 'DELETE' }),
   },
 };
-
-export const apiClient = api;

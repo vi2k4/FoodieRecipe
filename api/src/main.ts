@@ -1,10 +1,14 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
+import { json } from 'express';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Cho phép profile nhận ảnh data URL tối đa khoảng 2MB.
+  app.use(json({ limit: '5mb' }));
 
   app.setGlobalPrefix('api');
 
