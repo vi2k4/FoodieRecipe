@@ -11,6 +11,7 @@ import { AuthField } from "@/components/auth/AuthField";
 import { auth } from "@/lib/auth";
 import { toast } from "sonner";
 import { registerSchema, type RegisterFormValues } from "@/lib/validations/auth";
+import { GuestOnly } from "@/components/auth/GuestOnly";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function RegisterPage() {
     catch (error) { toast.error("Không thể tạo tài khoản", { description: error instanceof Error ? error.message : "Vui lòng thử lại." }); setError(error instanceof Error ? error.message : "Không thể tạo tài khoản"); }
   }
 
-  return <AuthCard title="Tạo tài khoản mới" description="Tham gia cộng đồng FoodiRecipe hôm nay." footer={<>Đã có tài khoản? <Link className="font-semibold text-orange-600 hover:underline" href="/login">Đăng nhập</Link></>}>
+  return <GuestOnly><AuthCard title="Tạo tài khoản mới" description="Tham gia cộng đồng FoodiRecipe hôm nay." footer={<>Đã có tài khoản? <Link className="font-semibold text-orange-600 hover:underline" href="/login">Đăng nhập</Link></>}>
     <form className="space-y-4" onSubmit={handleSubmit(submit)} noValidate>
       <AuthField id="username" label="Tên người dùng" placeholder="chef-linh" error={errors.username?.message} {...register("username")} />
       <AuthField id="email" label="Email" type="email" placeholder="you@example.com" error={errors.email?.message} {...register("email")} />
@@ -42,5 +43,5 @@ export default function RegisterPage() {
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
       <Button type="submit" size="lg" className="h-11 w-full bg-orange-500 hover:bg-orange-600" disabled={isSubmitting}>{isSubmitting ? "Đang tạo tài khoản..." : "Tạo tài khoản"}</Button>
     </form>
-  </AuthCard>;
+  </AuthCard></GuestOnly>;
 }
