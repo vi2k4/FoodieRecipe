@@ -11,6 +11,7 @@ import { AuthField } from "@/components/auth/AuthField";
 import { auth } from "@/lib/auth";
 import { toast } from "sonner";
 import { loginSchema, type LoginFormValues } from "@/lib/validations/auth";
+import { GuestOnly } from "@/components/auth/GuestOnly";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function LoginPage() {
     }
   }
 
-  return <AuthCard title="Chào mừng trở lại" description="Đăng nhập để tiếp tục hành trình bếp núc của bạn." footer={<>Chưa có tài khoản? <Link className="font-semibold text-orange-600 hover:underline" href="/register">Đăng ký ngay</Link></>}>
+  return <GuestOnly><AuthCard title="Chào mừng trở lại" description="Đăng nhập để tiếp tục hành trình bếp núc của bạn." footer={<>Chưa có tài khoản? <Link className="font-semibold text-orange-600 hover:underline" href="/register">Đăng ký ngay</Link></>}>
     <form className="space-y-5" onSubmit={handleSubmit(submit)} noValidate>
       <AuthField id="email" label="Email" type="email" autoComplete="email" placeholder="you@example.com" error={errors.email?.message} {...register("email")} />
       <div className="space-y-2">
@@ -44,5 +45,5 @@ export default function LoginPage() {
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
       <Button type="submit" size="lg" className="h-11 w-full bg-orange-500 hover:bg-orange-600" disabled={isSubmitting}>{isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}</Button>
     </form>
-  </AuthCard>;
+  </AuthCard></GuestOnly>;
 }
