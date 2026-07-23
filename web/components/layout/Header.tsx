@@ -1,6 +1,38 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { LogOut, UserRound } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { auth, type AuthSession } from "@/lib/auth";
+import { toast } from "sonner";
 
 export function Header() {
+  const router = useRouter();
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    const syncSession = () => {
+      setSession(auth.getSession());
+      setHydrated(true);
+    };
+    window.addEventListener("foodirecipe:auth-change", syncSession);
+    window.addEventListener("storage", syncSession);
+    auth.bootstrap().then(syncSession).catch(syncSession);
+    return () => {
+      window.removeEventListener("foodirecipe:auth-change", syncSession);
+      window.removeEventListener("storage", syncSession);
+    };
+  }, []);
+
+  async function logout() {
+    await auth.logout();
+    toast.success("Đã đăng xuất");
+    router.push("/login");
+  }
+
   return (
     <header className="border-b border-neutral-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -11,25 +43,34 @@ export function Header() {
           FoodiRecipe
         </Link>
 
-        <nav className="flex items-center gap-6 text-sm text-neutral-600">
+        <nav className="flex items-center gap-4 text-sm text-neutral-600">
           <Link
             href="/recipes"
             className="transition-colors hover:text-neutral-900"
           >
             Recipes
           </Link>
-          <Link
-            href="/login"
-            className="transition-colors hover:text-neutral-900"
-          >
-            Login
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-full bg-neutral-900 px-4 py-2 font-medium text-white transition-colors hover:bg-neutral-700"
-          >
-            Sign up
-          </Link>
+          {!hydrated ? (
+            <div className="h-9 w-28 animate-pulse rounded-full bg-orange-50" aria-label="Đang tải phiên đăng nhập" />
+          ) : session ? (
+            <>
+              <Link href="/profile" className="flex items-center gap-2 rounded-full px-2 py-1.5 font-medium text-neutral-700 transition-colors hover:bg-orange-50 hover:text-orange-600">
+                <Avatar size="sm" className="size-8 bg-orange-100 text-xs font-bold text-orange-600">
+                  <AvatarImage src={session.user.avatarUrl || undefined} alt={session.user.username} />
+                  <AvatarFallback>{session.user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <span className="hidden max-w-28 truncate sm:inline">{session.user.username}</span>
+              </Link>
+              <button type="button" onClick={logout} className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-neutral-500 transition-colors hover:bg-red-50 hover:text-red-600" aria-label="Đăng xuất">
+                <LogOut className="size-4" /><span className="hidden sm:inline">Đăng xuất</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="inline-flex items-center gap-1.5 transition-colors hover:text-orange-600"><UserRound className="size-4" />Đăng nhập</Link>
+              <Link href="/register" className="rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition-colors hover:bg-orange-600">Đăng ký</Link>
+            </>
+          )}
         </nav>
       </div>
     </header>
