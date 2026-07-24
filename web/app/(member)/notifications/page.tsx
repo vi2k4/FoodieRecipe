@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,80 +16,79 @@ import {
   ChevronRight,
   Clock
 } from "lucide-react";
+import { socialApi } from "@/lib/social-api";
 
 interface NotificationItem {
-  id: number;
-  type: "LIKE" | "COMMENT" | "FOLLOW" | "AI_GENERATION";
+  id: number | string;
+  type: "LIKE" | "COMMENT" | "FOLLOW" | "REPORT" | "AI_GENERATION" | "SYSTEM";
+  title: string;
   content: string;
-  time: string;
+  createdAt: string;
   isRead: boolean;
-  sender: {
+  referenceId?: number | string | null;
+  sender?: {
     name: string;
     avatarUrl: string | null;
   } | null;
-  recipeId?: number;
 }
 
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 1,
-    type: "LIKE",
-    content: "member_lan đã thích công thức Bánh Flan Truyền Thống Caramels của bạn.",
-    time: "5 phút trước",
-    isRead: false,
-    sender: {
-      name: "member_lan",
-      avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-    },
-    recipeId: 1
-  },
-  {
-    id: 2,
-    type: "COMMENT",
-    content: "member_lan đã bình luận: 'Bí quyết nước dùng ngon quá ạ!...' trên công thức Phở Bò Hà Nội Cổ Truyền.",
-    time: "2 giờ trước",
-    isRead: false,
-    sender: {
-      name: "member_lan",
-      avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-    },
-    recipeId: 2
-  },
-  {
-    id: 3,
-    type: "FOLLOW",
-    content: "chef_nguyen đã bắt đầu theo dõi bạn.",
-    time: "Hôm qua",
-    isRead: true,
-    sender: {
-      name: "chef_nguyen",
-      avatarUrl: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=150&q=80",
-    }
-  },
-  {
-    id: 4,
-    type: "AI_GENERATION",
-    content: "Công thức AI 'Gà Nướng Mật Ong Tỏi' đã được tạo thành công từ ảnh nguyên liệu của bạn.",
-    time: "3 ngày trước",
-    isRead: true,
-    sender: null
-  }
-];
+const formatTimeAgo = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return "Vừa xong";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
+  return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
+};
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleMarkAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      setIsLoading(true);
+      const data = await socialApi.getNotifications();
+      setNotifications(data);
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleMarkAsRead = (id: number) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+  const handleMarkAllRead = async () => {
+    try {
+      await socialApi.markAllNotificationsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleDeleteNotification = (id: number, e: React.MouseEvent) => {
+  const handleMarkAsRead = async (id: number | string) => {
+    try {
+      await socialApi.markNotificationRead(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteNotification = async (id: number | string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    try {
+      await socialApi.deleteNotification(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const getNotificationIcon = (type: NotificationItem["type"]) => {
@@ -116,6 +115,12 @@ export default function NotificationsPage() {
         return (
           <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center flex-shrink-0">
             <Sparkles className="w-5 h-5 fill-current" />
+          </div>
+        );
+      default:
+        return (
+          <div className="w-10 h-10 rounded-full bg-neutral-50 text-neutral-500 flex items-center justify-center flex-shrink-0">
+            <Bell className="w-5 h-5 fill-current" />
           </div>
         );
     }
@@ -154,7 +159,12 @@ export default function NotificationsPage() {
         </div>
 
         {/* List */}
-        {notifications.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-20 bg-white rounded-3xl border border-neutral-100 p-8 shadow-sm">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+            <p className="mt-4 text-neutral-500">Đang tải thông báo...</p>
+          </div>
+        ) : notifications.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-neutral-100 p-8 shadow-sm">
             <div className="w-16 h-16 bg-neutral-50 text-neutral-300 rounded-full flex items-center justify-center mx-auto mb-6">
               <Bell className="w-8 h-8" />
@@ -205,19 +215,19 @@ export default function NotificationsPage() {
                     {/* Time metadata */}
                     <div className="flex items-center gap-1.5 text-xs text-neutral-400 font-medium">
                       <Clock className="w-3.5 h-3.5" />
-                      <span>{item.time}</span>
+                      <span>{formatTimeAgo(item.createdAt)}</span>
                     </div>
                   </div>
 
                   {/* Right Actions */}
                   <div className="flex items-center gap-2 self-center">
-                    {item.recipeId && (
+                    {item.referenceId && (
                       <Link
-                        href={`/recipes/${item.recipeId}`}
+                        href={`/recipes/${item.referenceId}`}
                         className="hidden sm:inline-flex text-xs font-semibold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors h-auto"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        Xem món
+                        Xem
                       </Link>
                     )}
                     <Button

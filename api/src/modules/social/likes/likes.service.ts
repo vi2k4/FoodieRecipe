@@ -1,9 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '@prisma/client';
 
 @Injectable()
 export class LikesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async likeRecipe(userId: bigint, recipeId: bigint) {
     // 1. Check if recipe exists
@@ -45,6 +50,18 @@ export class LikesService {
         },
       }),
     ]);
+
+    // 4. Create Notification
+    if (recipe.userId !== userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      await this.notificationsService.createNotification({
+        userId: recipe.userId,
+        title: 'Lượt thích mới',
+        content: `${user?.username || 'Một người dùng'} đã thích công thức "${recipe.title}" của bạn.`,
+        type: NotificationType.LIKE,
+        referenceId: recipe.id,
+      });
+    }
 
     return { message: 'Recipe liked successfully', liked: true };
   }

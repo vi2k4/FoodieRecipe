@@ -1,9 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '@prisma/client';
 
 @Injectable()
 export class FollowsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async followUser(followerId: bigint, followingId: bigint) {
     if (followerId === followingId) {
@@ -38,6 +43,15 @@ export class FollowsService {
         followerId,
         followingId,
       },
+    });
+
+    // 4. Create notification
+    const follower = await this.prisma.user.findUnique({ where: { id: followerId } });
+    await this.notificationsService.createNotification({
+      userId: followingId,
+      title: 'Người theo dõi mới',
+      content: `${follower?.username || 'Một người dùng'} đã bắt đầu theo dõi bạn.`,
+      type: NotificationType.FOLLOW,
     });
 
     return { message: 'User followed successfully', followed: true };

@@ -2,10 +2,15 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../../../database/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '@prisma/client';
 
 @Injectable()
 export class CommentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async createComment(
     userId: bigint,
@@ -54,6 +59,32 @@ export class CommentsService {
         },
       },
     });
+
+    // 4. Create Notification
+    let targetUserId = recipe.userId;
+    let title = 'Bình luận mới';
+    let msgContent = `${newComment.user.username} đã bình luận về công thức "${recipe.title}" của bạn.`;
+
+    if (parentCommentId) {
+      const parentComment = await this.prisma.comment.findUnique({
+        where: { id: parentCommentId },
+      });
+      if (parentComment && parentComment.userId !== userId) {
+        targetUserId = parentComment.userId;
+        title = 'Trả lời bình luận';
+        msgContent = `${newComment.user.username} đã trả lời bình luận của bạn trong công thức "${recipe.title}".`;
+      }
+    }
+
+    if (targetUserId !== userId) {
+      await this.notificationsService.createNotification({
+        userId: targetUserId,
+        title,
+        content: msgContent,
+        type: NotificationType.COMMENT,
+        referenceId: recipe.id,
+      });
+    }
 
     return newComment;
   }
