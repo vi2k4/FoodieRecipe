@@ -22,4 +22,6 @@ async function bootstrap() {
   console.log(`Backend đang chạy tại http://localhost:${port}/api`);
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Failed to bootstrap app', err);
+});

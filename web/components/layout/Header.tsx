@@ -34,21 +34,30 @@ export function Header() {
   }
 
   return (
-    <header className="border-b border-neutral-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-50 w-full border-b border-orange-100 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="text-lg font-semibold tracking-tight text-neutral-900"
+          className="flex items-center gap-2"
         >
-          FoodiRecipe
+          <span className="text-xl">🍜</span>
+          <span className="font-bold text-lg bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent">
+            FoodieRecipe
+          </span>
         </Link>
 
         <nav className="flex items-center gap-4 text-sm text-neutral-600">
           <Link
+            href="/"
+            className="transition-colors hover:text-neutral-900"
+          >
+            Trang chủ
+          </Link>
+          <Link
             href="/recipes"
             className="transition-colors hover:text-neutral-900"
           >
-            Recipes
+            Công thức
           </Link>
           {!hydrated ? (
             <div className="h-9 w-28 animate-pulse rounded-full bg-orange-50" aria-label="Đang tải phiên đăng nhập" />

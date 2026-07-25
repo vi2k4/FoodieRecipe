@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosError } from "axios";
 import { env } from "./env";
 
@@ -40,5 +41,133 @@ apiClient.interceptors.response.use(
   },
 );
 
-
-
+export const api = {
+  recipes: {
+    list: async (params?: Record<string, any> | string) => {
+      if (typeof params === 'string') {
+        const { data } = await apiClient.get<any>(`/recipes${params ? (params.startsWith('?') ? params : '?' + params) : ''}`);
+        return data;
+      }
+      const { data } = await apiClient.get<any>('/recipes', { params });
+      return data;
+    },
+    get: async (id: string | number) => {
+      const { data } = await apiClient.get<any>(`/recipes/${id}`);
+      return data;
+    },
+    create: async (body: Record<string, unknown>) => {
+      const headers = body?.userId ? { 'x-user-id': String(body.userId) } : undefined;
+      const { data } = await apiClient.post<any>('/recipes', body, { headers });
+      return data;
+    },
+    update: async (id: string | number, body: Record<string, unknown>) => {
+      const headers = body?.userId ? { 'x-user-id': String(body.userId) } : undefined;
+      const { data } = await apiClient.patch<any>(`/recipes/${id}`, body, { headers });
+      return data;
+    },
+    remove: async (id: string | number, userId?: string | number) => {
+      const headers = userId ? { 'x-user-id': String(userId) } : undefined;
+      const { data } = await apiClient.delete<any>(`/recipes/${id}`, { headers });
+      return data;
+    },
+  },
+  ingredients: {
+    add: async (recipeId: string | number, body: Record<string, unknown>, userId?: string | number) => {
+      const uid = userId || body?.userId;
+      const headers = uid ? { 'x-user-id': String(uid) } : undefined;
+      const { data } = await apiClient.post<any>(`/recipes/${recipeId}/ingredients`, { ...body, userId: uid }, { headers });
+      return data;
+    },
+    update: async (id: string | number, body: Record<string, unknown>, userId?: string | number) => {
+      const uid = userId || body?.userId;
+      const headers = uid ? { 'x-user-id': String(uid) } : undefined;
+      const { data } = await apiClient.patch<any>(`/recipes/ingredients/${id}`, { ...body, userId: uid }, { headers });
+      return data;
+    },
+    remove: async (id: string | number, userId?: string | number) => {
+      const headers = userId ? { 'x-user-id': String(userId) } : undefined;
+      const { data } = await apiClient.delete<any>(`/recipes/ingredients/${id}`, { headers });
+      return data;
+    },
+  },
+  steps: {
+    add: async (recipeId: string | number, body: Record<string, unknown>, userId?: string | number) => {
+      const uid = userId || body?.userId;
+      const headers = uid ? { 'x-user-id': String(uid) } : undefined;
+      const { data } = await apiClient.post<any>(`/recipes/${recipeId}/steps`, { ...body, userId: uid }, { headers });
+      return data;
+    },
+    update: async (id: string | number, body: Record<string, unknown>, userId?: string | number) => {
+      const uid = userId || body?.userId;
+      const headers = uid ? { 'x-user-id': String(uid) } : undefined;
+      const { data } = await apiClient.patch<any>(`/recipes/steps/${id}`, { ...body, userId: uid }, { headers });
+      return data;
+    },
+    remove: async (id: string | number, userId?: string | number) => {
+      const headers = userId ? { 'x-user-id': String(userId) } : undefined;
+      const { data } = await apiClient.delete<any>(`/recipes/steps/${id}`, { headers });
+      return data;
+    },
+  },
+  images: {
+    add: async (recipeId: string | number, body: Record<string, unknown>, userId?: string | number) => {
+      const uid = userId || body?.userId;
+      const headers = uid ? { 'x-user-id': String(uid) } : undefined;
+      const { data } = await apiClient.post<any>(`/recipes/${recipeId}/images`, { ...body, userId: uid }, { headers });
+      return data;
+    },
+    remove: async (id: string | number, userId?: string | number) => {
+      const headers = userId ? { 'x-user-id': String(userId) } : undefined;
+      const { data } = await apiClient.delete<any>(`/recipes/images/${id}`, { headers });
+      return data;
+    },
+  },
+  recipeTags: {
+    add: async (recipeId: string | number, tagId: string | number, userId?: string | number) => {
+      const headers = userId ? { 'x-user-id': String(userId) } : undefined;
+      const { data } = await apiClient.post<any>(`/recipes/${recipeId}/tags`, { tagId, userId }, { headers });
+      return data;
+    },
+    remove: async (recipeId: string | number, tagId: string | number, userId?: string | number) => {
+      const headers = userId ? { 'x-user-id': String(userId) } : undefined;
+      const { data } = await apiClient.delete<any>(`/recipes/${recipeId}/tags/${tagId}`, { headers });
+      return data;
+    },
+  },
+  categories: {
+    list: async () => {
+      const { data } = await apiClient.get<any>('/categories');
+      return data;
+    },
+    get: async (id: string | number) => {
+      const { data } = await apiClient.get<any>(`/categories/${id}`);
+      return data;
+    },
+    create: async (body: Record<string, unknown>) => {
+      const { data } = await apiClient.post<any>('/categories', body);
+      return data;
+    },
+    update: async (id: string | number, body: Record<string, unknown>) => {
+      const { data } = await apiClient.patch<any>(`/categories/${id}`, body);
+      return data;
+    },
+    remove: async (id: string | number) => {
+      const { data } = await apiClient.delete<any>(`/categories/${id}`);
+      return data;
+    },
+  },
+  tags: {
+    list: async () => {
+      const { data } = await apiClient.get<any>('/tags');
+      return data;
+    },
+    create: async (name: string) => {
+      const { data } = await apiClient.post<any>('/tags', { name });
+      return data;
+    },
+    remove: async (id: string | number) => {
+      const { data } = await apiClient.delete<any>(`/tags/${id}`);
+      return data;
+    },
+  },
+};

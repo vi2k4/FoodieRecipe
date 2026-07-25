@@ -12,7 +12,10 @@ export class EmailService {
       throw new ServiceUnavailableException('Email service chưa được cấu hình');
     }
 
-    const subject = purpose === 'register' ? 'Xác minh email FoodiRecipe' : 'Đặt lại mật khẩu FoodiRecipe';
+    const subject =
+      purpose === 'register'
+        ? 'Xác minh email FoodiRecipe'
+        : 'Đặt lại mật khẩu FoodiRecipe';
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {

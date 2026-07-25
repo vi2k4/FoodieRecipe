@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Headers, Patch, Post, Res, UnauthorizedException } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Patch,
+  Post,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -19,14 +29,20 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) response: Response) {
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const session = await this.authService.login(dto);
     this.setRefreshCookie(response, session.refreshToken);
     return this.withoutRefreshToken(session);
   }
 
   @Post('refresh')
-  async refresh(@Headers('cookie') cookieHeader: string | undefined, @Res({ passthrough: true }) response: Response) {
+  async refresh(
+    @Headers('cookie') cookieHeader: string | undefined,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const refreshToken = this.readRefreshCookie(cookieHeader);
     if (!refreshToken) throw new UnauthorizedException('Thiếu refresh token');
     const session = await this.authService.refreshSession(refreshToken);
@@ -47,7 +63,11 @@ export class AuthController {
 
   @Post('verify-otp')
   verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.authService.verifyOtp(dto.email, dto.otp, dto.purpose || 'register');
+    return this.authService.verifyOtp(
+      dto.email,
+      dto.otp,
+      dto.purpose || 'register',
+    );
   }
 
   @Post('resend-verification')
@@ -67,7 +87,10 @@ export class AuthController {
   }
 
   @Patch('me')
-  async updateMe(@Headers('authorization') authorization: string | undefined, @Body() dto: UpdateProfileDto) {
+  async updateMe(
+    @Headers('authorization') authorization: string | undefined,
+    @Body() dto: UpdateProfileDto,
+  ) {
     const userId = this.getUserId(authorization);
     return { user: await this.authService.updateProfile(userId, dto) };
   }
@@ -84,7 +107,10 @@ export class AuthController {
     return {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? ('none' as const) : ('lax' as const),
+      sameSite:
+        process.env.NODE_ENV === 'production'
+          ? ('none' as const)
+          : ('lax' as const),
       path: '/api/auth',
     };
   }
@@ -97,7 +123,13 @@ export class AuthController {
   }
 
   private readRefreshCookie(cookieHeader?: string) {
-    return cookieHeader?.split(';').map((part) => part.trim()).find((part) => part.startsWith(`${this.refreshCookieName}=`))?.split('=').slice(1).join('=');
+    return cookieHeader
+      ?.split(';')
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(`${this.refreshCookieName}=`))
+      ?.split('=')
+      .slice(1)
+      .join('=');
   }
 
   private withoutRefreshToken<T extends { refreshToken: string }>(session: T) {
