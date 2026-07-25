@@ -1,6 +1,14 @@
 import { PrismaClient, UserRole, RecipeDifficulty, RecipeImageType, NotificationType, ReportStatus, AIGenerationStatus } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import { scryptSync, randomBytes } from 'crypto';
+
+function hashPassword(password: string) {
+  const salt = randomBytes(16).toString('hex');
+  const hash = scryptSync(password, salt, 64).toString('hex');
+  return `scrypt:${salt}:${hash}`;
+}
+
 
 function subDays(date: Date, days: number): Date {
   const result = new Date(date);
@@ -42,7 +50,7 @@ async function main() {
       id: 1n,
       username: 'dung_admin',
       email: 'dung@foodie.com',
-      passwordHash: 'dung_secret_hash',
+      passwordHash: hashPassword('12345678'),
       bio: 'Quản trị viên hệ thống FoodiRecipe.',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
       role: UserRole.ADMIN,
@@ -56,7 +64,7 @@ async function main() {
       id: 2n,
       username: 'hoang_chef',
       email: 'hoang@chef.com',
-      passwordHash: 'hoang_secret_hash',
+      passwordHash: hashPassword('12345678'),
       bio: 'Đam mê ẩm thực truyền thống Việt Nam.',
       avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
       role: UserRole.USER,
@@ -70,7 +78,7 @@ async function main() {
       id: 3n,
       username: 'lan_anh',
       email: 'lananh@food.com',
-      passwordHash: 'lananh_secret_hash',
+      passwordHash: hashPassword('12345678'),
       bio: 'Yêu thích làm bánh và các món ăn ngọt.',
       avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
       role: UserRole.USER,
@@ -84,7 +92,7 @@ async function main() {
       id: 4n,
       username: 'minh_chay',
       email: 'minhchay@vegan.com',
-      passwordHash: 'minh_secret_hash',
+      passwordHash: hashPassword('12345678'),
       bio: 'Chuyên gia ẩm thực chay vì sức khỏe.',
       avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
       role: UserRole.USER,
@@ -98,7 +106,7 @@ async function main() {
       id: 5n,
       username: 'huong_giang',
       email: 'giang@example.com',
-      passwordHash: 'giang_secret_hash',
+      passwordHash: hashPassword('12345678'),
       bio: 'Sinh viên thiết kế, thích nấu ăn nhanh gọn.',
       avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200',
       role: UserRole.USER,
@@ -114,7 +122,7 @@ async function main() {
         id: 6n,
         username: 'quoc_bao',
         email: 'bao@example.com',
-        passwordHash: 'bao_secret',
+        passwordHash: hashPassword('12345678'),
         role: UserRole.USER,
         createdAt: subDays(new Date(), 1),
       },
@@ -122,7 +130,7 @@ async function main() {
         id: 7n,
         username: 'thu_thao',
         email: 'thao@example.com',
-        passwordHash: 'thao_secret',
+        passwordHash: hashPassword('12345678'),
         role: UserRole.USER,
         createdAt: subDays(new Date(), 1),
       },
@@ -130,7 +138,7 @@ async function main() {
         id: 8n,
         username: 'viet_anh',
         email: 'viet@example.com',
-        passwordHash: 'viet_secret',
+        passwordHash: hashPassword('12345678'),
         role: UserRole.USER,
         createdAt: new Date(),
       },

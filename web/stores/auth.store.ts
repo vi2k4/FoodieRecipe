@@ -6,9 +6,10 @@ export type MockUser = {
   id: string;
   username: string;
   email: string;
-  role: "ADMIN" | "USER";
-  avatarUrl?: string;
-  bio?: string;
+  role: string;
+  avatarUrl?: string | null;
+  bio?: string | null;
+  isVerified?: boolean;
 };
 
 export const MOCK_USERS: MockUser[] = [
@@ -50,7 +51,7 @@ type AuthStore = {
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
-      currentUser: MOCK_USERS[0], // default: Admin Dũng
+      currentUser: null, // default: null, will be populated on bootstrap or login
       setCurrentUser: (user) => set({ currentUser: user }),
       isAdmin: () => get().currentUser?.role === "ADMIN",
     }),

@@ -1,4 +1,5 @@
 import { apiClient, setAccessToken } from "./api-client";
+import { useAuthStore } from "@/stores/auth.store";
 
 export type AuthUser = {
   id: string;
@@ -49,6 +50,9 @@ export const auth = {
       .catch(() => {
         memorySession = null;
         setAccessToken(null);
+        if (typeof window !== "undefined") {
+          useAuthStore.getState().setCurrentUser(null);
+        }
         return null;
       })
       .finally(() => {
@@ -98,6 +102,7 @@ export const auth = {
     if (typeof window !== "undefined") {
       memorySession = session;
       setAccessToken(session.accessToken);
+      useAuthStore.getState().setCurrentUser(session.user);
       window.dispatchEvent(new Event("foodirecipe:auth-change"));
     }
   },
@@ -109,6 +114,7 @@ export const auth = {
       await apiClient.post("/auth/logout").catch(() => undefined);
       memorySession = null;
       setAccessToken(null);
+      useAuthStore.getState().setCurrentUser(null);
       window.dispatchEvent(new Event("foodirecipe:auth-change"));
     }
   },

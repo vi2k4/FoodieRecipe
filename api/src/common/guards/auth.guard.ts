@@ -7,12 +7,14 @@ import {
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../database/prisma.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { AuthService } from '../../modules/auth/auth.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly prisma: PrismaService,
+    private readonly authService: AuthService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -25,17 +27,31 @@ export class AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const userIdHeader = request.headers['x-user-id'];
+    const authorization = request.headers['authorization'];
 
-    if (!userIdHeader) {
-      throw new UnauthorizedException('Thiếu header x-user-id để xác thực');
+    if (!authorization) {
+      throw new UnauthorizedException('Thiếu access token để xác thực');
+    }
+
+    const token = authorization.replace(/^Bearer\s+/i, '');
+    if (!token) {
+      throw new UnauthorizedException('Access token không hợp lệ');
+    }
+
+    let userIdStr: string;
+    try {
+      userIdStr = this.authService.verifyAccessToken(token);
+    } catch (e) {
+      throw new UnauthorizedException(
+        e instanceof Error ? e.message : 'Access token không hợp lệ hoặc đã hết hạn',
+      );
     }
 
     let userId: bigint;
     try {
-      userId = BigInt(userIdHeader);
+      userId = BigInt(userIdStr);
     } catch {
-      throw new UnauthorizedException('x-user-id không hợp lệ');
+      throw new UnauthorizedException('Access token không hợp lệ');
     }
 
     const user = await this.prisma.user.findUnique({
