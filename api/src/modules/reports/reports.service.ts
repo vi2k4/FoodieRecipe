@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationsService } from '../social/notifications/notifications.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { ReportStatus, NotificationType } from '../../generated/prisma/client';
@@ -63,13 +63,13 @@ export class ReportsService {
     });
 
     for (const admin of admins) {
-      await this.notificationsService.createNotification(
-        admin.id,
-        'Báo cáo vi phạm mới',
-        `Công thức "${recipe.title}" bị báo cáo vì lý do: ${dto.reason}`,
-        NotificationType.REPORT,
-        report.id,
-      );
+      await this.notificationsService.createNotification({
+        userId: admin.id,
+        title: 'Báo cáo vi phạm mới',
+        content: `Công thức "${recipe.title}" bị báo cáo vì lý do: ${dto.reason}`,
+        type: NotificationType.REPORT,
+        referenceId: report.id,
+      });
     }
 
     return report;
@@ -142,13 +142,13 @@ export class ReportsService {
       });
 
       // Notify recipe author
-      await this.notificationsService.createNotification(
-        report.recipe.userId,
-        'Công thức của bạn đã bị ẩn',
-        `Công thức "${report.recipe.title}" đã bị ẩn do vi phạm tiêu chuẩn cộng đồng (Lý do: ${report.reason}).`,
-        NotificationType.SYSTEM,
-        report.recipeId,
-      );
+      await this.notificationsService.createNotification({
+        userId: report.recipe.userId,
+        title: 'Công thức của bạn đã bị ẩn',
+        content: `Công thức "${report.recipe.title}" đã bị ẩn do vi phạm tiêu chuẩn cộng đồng (Lý do: ${report.reason}).`,
+        type: NotificationType.SYSTEM,
+        referenceId: report.recipeId,
+      });
     }
 
     return updatedReport;
