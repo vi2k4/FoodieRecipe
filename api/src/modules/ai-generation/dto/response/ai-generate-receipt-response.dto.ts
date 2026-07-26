@@ -1,11 +1,9 @@
-// response/generate-recipe-response.dto.ts
-
-import { AIGenerationStatus } from '../../enums/ai-generation-status.enum';
+import { SavedRecipeDto } from './analyze-image-response.dto';
 
 export class GenerateRecipeResponseDto {
-  jobId!: string;
+  ingredients!: string[];
 
-  status!: AIGenerationStatus;
+  recipe!: SavedRecipeDto;
 
-  message!: string;
+  historyId!: number;
 }

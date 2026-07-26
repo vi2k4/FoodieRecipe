@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './database/prisma.module';
@@ -17,10 +18,11 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { SearchHistoryModule } from './modules/search-history/search-history.module';
 import { AIGenerationModule } from './modules/ai-generation/ai-generation.module';
 import { AdminModule } from './modules/admin/admin.module';
-import { ConfigModule } from '@nestjs/config';
-
+import { S3Module } from './common/storage/s3.module';
 @Module({
   imports: [
+    S3Module,
+    ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -37,11 +39,6 @@ import { ConfigModule } from '@nestjs/config';
     SearchHistoryModule,
     AIGenerationModule,
     AdminModule,
-    ConfigModule.forRoot({
-
-    isGlobal:true,
-
-  }),
   ],
   controllers: [AppController],
   providers: [AppService],
