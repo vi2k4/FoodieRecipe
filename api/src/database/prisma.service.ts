@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import { PrismaClient } from '../generated/prisma/client';
 
 @Injectable()
@@ -14,8 +15,11 @@ export class PrismaService
       throw new Error('DATABASE_URL is not configured');
     }
 
-    // Prisma 7 requires a driver adapter when using a direct database URL.
-    super({ adapter: new PrismaPg(databaseUrl) });
+    const pool = new Pool({
+      connectionString: databaseUrl,
+    });
+    const adapter = new PrismaPg(pool);
+    super({ adapter });
   }
 
   async onModuleInit() {
