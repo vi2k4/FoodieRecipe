@@ -3,7 +3,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function LoadingPage() {
   return (
-    <main aria-busy="true" aria-label="Đang tải nội dung" className="min-h-[calc(100vh-9rem)] bg-[#fffaf5] px-5 py-10 sm:py-16">
+    <main
+      aria-busy="true"
+      aria-label="Đang tải nội dung"
+      className="min-h-[calc(100vh-9rem)] bg-[#fffaf5] px-5 py-10 sm:py-16"
+    >
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center">
         <div className="mb-10 flex flex-col items-center gap-3 text-center">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-orange-100 text-orange-500">
@@ -26,7 +30,10 @@ export default function LoadingPage() {
 
         <div className="mt-10 grid w-full gap-4 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
+            <div
+              key={index}
+              className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm"
+            >
               <Skeleton className="aspect-[4/3] w-full rounded-xl bg-orange-50" />
               <Skeleton className="mt-4 h-4 w-3/4 rounded-full bg-orange-100" />
               <Skeleton className="mt-3 h-3 w-1/2 rounded-full bg-orange-50" />

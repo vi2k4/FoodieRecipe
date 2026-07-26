@@ -1,4 +1,4 @@
-import { apiClient } from "./api-client";
+import { apiClient, setAccessToken } from "./api-client";
 
 export type AuthUser = {
   id: string;
@@ -28,23 +28,16 @@ let bootstrapPromise: Promise<AuthSession | null> | null = null;
 
 export const auth = {
   async login(email: string, password: string) {
-    const session = await apiClient<AuthSession>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
+    const { data: session } = await apiClient.post<AuthSession>("/auth/login", { email, password });
     this.saveSession(session);
     return session;
   },
   async register(username: string, email: string, password: string) {
-    return apiClient<PendingRegistration>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ username, email, password }),
-    });
+    const { data } = await apiClient.post<PendingRegistration>("/auth/register", { username, email, password });
+    return data;
   },
   async refresh() {
-    const session = await apiClient<AuthSession>("/auth/refresh", {
-      method: "POST",
-    });
+    const { data: session } = await apiClient.post<AuthSession>("/auth/refresh");
     this.saveSession(session);
     return session;
   },
@@ -55,6 +48,7 @@ export const auth = {
     bootstrapPromise = this.refresh()
       .catch(() => {
         memorySession = null;
+        setAccessToken(null);
         return null;
       })
       .finally(() => {
@@ -65,9 +59,7 @@ export const auth = {
   async getProfile() {
     const current = this.getSession();
     if (!current?.accessToken) return null;
-    const result = await apiClient<{ user: AuthUser }>("/auth/me", {
-      headers: { Authorization: `Bearer ${current.accessToken}` },
-    });
+    const { data: result } = await apiClient.get<{ user: AuthUser }>("/auth/me");
     return result.user;
   },
   async updateProfile(data: {
@@ -78,51 +70,34 @@ export const auth = {
     const current = this.getSession();
     if (!current?.accessToken)
       throw new Error("Bạn cần đăng nhập để cập nhật hồ sơ");
-    const result = await apiClient<{ user: AuthUser }>("/auth/me", {
-      method: "PATCH",
-      headers: { Authorization: `Bearer ${current.accessToken}` },
-      body: JSON.stringify(data),
-    });
+    const { data: result } = await apiClient.patch<{ user: AuthUser }>("/auth/me", data);
     this.saveSession({ ...current, user: result.user });
     return result.user;
   },
   async forgotPassword(email: string) {
-    return apiClient<{ message: string; developmentOtp?: string }>(
-      "/auth/forgot-password",
-      {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      },
-    );
+    const { data } = await apiClient.post<{ message: string; developmentOtp?: string }>("/auth/forgot-password", { email });
+    return data;
   },
   async resendVerification(email: string) {
-    return apiClient<{ message: string; developmentOtp?: string }>(
-      "/auth/resend-verification",
-      {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      },
-    );
+    const { data } = await apiClient.post<{ message: string; developmentOtp?: string }>("/auth/resend-verification", { email });
+    return data;
   },
   async verifyOtp(
     email: string,
     otp: string,
     purpose: "register" | "reset" = "register",
   ) {
-    return apiClient<{ valid: boolean }>("/auth/verify-otp", {
-      method: "POST",
-      body: JSON.stringify({ email, otp, purpose }),
-    });
+    const { data } = await apiClient.post<{ valid: boolean }>("/auth/verify-otp", { email, otp, purpose });
+    return data;
   },
   async resetPassword(email: string, otp: string, newPassword: string) {
-    return apiClient<{ message: string }>("/auth/reset-password", {
-      method: "POST",
-      body: JSON.stringify({ email, otp, newPassword }),
-    });
+    const { data } = await apiClient.post<{ message: string }>("/auth/reset-password", { email, otp, newPassword });
+    return data;
   },
   saveSession(session: AuthSession) {
     if (typeof window !== "undefined") {
       memorySession = session;
+      setAccessToken(session.accessToken);
       window.dispatchEvent(new Event("foodirecipe:auth-change"));
     }
   },
@@ -131,10 +106,9 @@ export const auth = {
   },
   async logout() {
     if (typeof window !== "undefined") {
-      await apiClient("/auth/logout", { method: "POST" }).catch(
-        () => undefined,
-      );
+      await apiClient.post("/auth/logout").catch(() => undefined);
       memorySession = null;
+      setAccessToken(null);
       window.dispatchEvent(new Event("foodirecipe:auth-change"));
     }
   },

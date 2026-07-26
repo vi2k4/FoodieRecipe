@@ -1,5 +1,13 @@
 export class CreateRecipeDto {
-  title!: string;
+  userId?: bigint | number | string;
+  title: string;
   description?: string;
-  categoryId?: number;
+  categoryId?: bigint | number;
+  calories?: number;
+  cookTime?: number;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
+  servings?: number;
+  thumbnail?: string;
+  source?: string;
+  isPublic?: boolean;
 }

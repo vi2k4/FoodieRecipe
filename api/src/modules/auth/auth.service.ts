@@ -1,10 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
 import {
   ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { resolveMx } from 'node:dns/promises';
-import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import {
+  createHmac,
+  randomBytes,
+  scryptSync,
+  timingSafeEqual,
+} from 'node:crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
@@ -24,7 +30,8 @@ type SafeUser = {
 
 @Injectable()
 export class AuthService {
-  private readonly jwtSecret = process.env.JWT_SECRET || 'development-only-secret';
+  private readonly jwtSecret =
+    process.env.JWT_SECRET || 'development-only-secret';
   private readonly accessTokenTtlSeconds = 60 * 60 * 24 * 7;
 
   constructor(
@@ -88,7 +95,9 @@ export class AuthService {
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
     }
     if (!user.isVerified) {
-      throw new UnauthorizedException('Email chưa được xác minh. Vui lòng xác minh bằng mã OTP trước.');
+      throw new UnauthorizedException(
+        'Email chưa được xác minh. Vui lòng xác minh bằng mã OTP trước.',
+      );
     }
 
     return this.createSession(user);
@@ -100,7 +109,9 @@ export class AuthService {
       include: { user: true },
     });
     if (!current || current.revoked || current.expiresAt <= new Date()) {
-      throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn');
+      throw new UnauthorizedException(
+        'Refresh token không hợp lệ hoặc đã hết hạn',
+      );
     }
 
     await this.prisma.refreshToken.update({
@@ -139,7 +150,9 @@ export class AuthService {
     const email = emailInput?.trim().toLowerCase();
     const user = email ? await this.usersService.findByEmail(email) : null;
     if (!user || user.isVerified) {
-      return { message: 'Nếu tài khoản chưa xác minh, mã OTP mới đã được gửi.' };
+      return {
+        message: 'Nếu tài khoản chưa xác minh, mã OTP mới đã được gửi.',
+      };
     }
 
     const otp = this.createOtp();
@@ -158,7 +171,11 @@ export class AuthService {
     };
   }
 
-  async verifyOtp(emailInput: string, otp: string, purpose: 'register' | 'reset' = 'register') {
+  async verifyOtp(
+    emailInput: string,
+    otp: string,
+    purpose: 'register' | 'reset' = 'register',
+  ) {
     const user = await this.findUser(emailInput);
     const verification = await this.prisma.oTPVerification.findFirst({
       where: {
@@ -176,8 +193,14 @@ export class AuthService {
 
     if (purpose === 'register') {
       await this.prisma.$transaction([
-        this.prisma.user.update({ where: { id: user.id }, data: { isVerified: true } }),
-        this.prisma.oTPVerification.update({ where: { id: verification.id }, data: { isUsed: true } }),
+        this.prisma.user.update({
+          where: { id: user.id },
+          data: { isVerified: true },
+        }),
+        this.prisma.oTPVerification.update({
+          where: { id: verification.id },
+          data: { isUsed: true },
+        }),
       ]);
     }
 
@@ -220,21 +243,33 @@ export class AuthService {
   }
 
   async getProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: BigInt(userId) } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: BigInt(userId) },
+    });
     if (!user) throw new UnauthorizedException('Tài khoản không tồn tại');
     return this.toSafeUser(user);
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const username = dto.username?.trim();
-    if (username !== undefined && (username.length < 3 || username.length > 50)) {
+    if (
+      username !== undefined &&
+      (username.length < 3 || username.length > 50)
+    ) {
       throw new ConflictException('Tên người dùng phải có từ 3 đến 50 ký tự');
     }
 
-    if (dto.avatarUrl && !/^https?:\/\//i.test(dto.avatarUrl) && !/^data:image\/(jpeg|png|webp|gif);base64,/i.test(dto.avatarUrl)) {
+    if (
+      dto.avatarUrl &&
+      !/^https?:\/\//i.test(dto.avatarUrl) &&
+      !/^data:image\/(jpeg|png|webp|gif);base64,/i.test(dto.avatarUrl)
+    ) {
       throw new ConflictException('Ảnh đại diện không hợp lệ');
     }
-    if (dto.avatarUrl?.startsWith('data:') && dto.avatarUrl.length > 2_800_000) {
+    if (
+      dto.avatarUrl?.startsWith('data:') &&
+      dto.avatarUrl.length > 2_800_000
+    ) {
       throw new ConflictException('Ảnh đại diện không được lớn hơn 2MB');
     }
 
@@ -243,7 +278,9 @@ export class AuthService {
       data: {
         ...(username !== undefined ? { username } : {}),
         ...(dto.bio !== undefined ? { bio: dto.bio?.trim() || null } : {}),
-        ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl?.trim() || null } : {}),
+        ...(dto.avatarUrl !== undefined
+          ? { avatarUrl: dto.avatarUrl?.trim() || null }
+          : {}),
       },
     });
     return this.toSafeUser(user);
@@ -251,19 +288,30 @@ export class AuthService {
 
   verifyAccessToken(token: string) {
     const [header, payload, signature] = token.split('.');
-    if (!header || !payload || !signature) throw new UnauthorizedException('Access token không hợp lệ');
+    if (!header || !payload || !signature)
+      throw new UnauthorizedException('Access token không hợp lệ');
 
-    const expected = createHmac('sha256', this.jwtSecret).update(`${header}.${payload}`).digest('base64url');
-    if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+    const expected = createHmac('sha256', this.jwtSecret)
+      .update(`${header}.${payload}`)
+      .digest('base64url');
+    if (
+      signature.length !== expected.length ||
+      !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+    ) {
       throw new UnauthorizedException('Access token không hợp lệ');
     }
 
     try {
-      const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString()) as { sub?: string; exp?: number };
-      if (!decoded.sub || !decoded.exp || decoded.exp < Date.now() / 1000) throw new Error();
+      const decoded = JSON.parse(
+        Buffer.from(payload, 'base64url').toString(),
+      ) as { sub?: string; exp?: number };
+      if (!decoded.sub || !decoded.exp || decoded.exp < Date.now() / 1000)
+        throw new Error();
       return decoded.sub;
     } catch {
-      throw new UnauthorizedException('Access token đã hết hạn hoặc không hợp lệ');
+      throw new UnauthorizedException(
+        'Access token đã hết hạn hoặc không hợp lệ',
+      );
     }
   }
 
@@ -279,13 +327,19 @@ export class AuthService {
 
     return {
       user: this.toSafeUser(user),
-      accessToken: this.signToken({ sub: user.id.toString(), email: user.email, role: user.role }),
+      accessToken: this.signToken({
+        sub: user.id.toString(),
+        email: user.email,
+        role: user.role,
+      }),
       refreshToken,
     };
   }
 
   private async findUser(emailInput: string) {
-    const user = await this.usersService.findByEmail(emailInput?.trim().toLowerCase());
+    const user = await this.usersService.findByEmail(
+      emailInput?.trim().toLowerCase(),
+    );
     if (!user) throw new UnauthorizedException('Email không tồn tại');
     return user;
   }
@@ -313,11 +367,15 @@ export class AuthService {
     if (!salt || !hash) return false;
     const derived = scryptSync(password, salt, 64);
     const expected = Buffer.from(hash, 'hex');
-    return expected.length === derived.length && timingSafeEqual(expected, derived);
+    return (
+      expected.length === derived.length && timingSafeEqual(expected, derived)
+    );
   }
 
   private hashOtp(otp: string, purpose: 'register' | 'reset') {
-    return createHmac('sha256', this.jwtSecret).update(`${purpose}:${otp}`).digest('hex');
+    return createHmac('sha256', this.jwtSecret)
+      .update(`${purpose}:${otp}`)
+      .digest('hex');
   }
 
   private createOtp() {
@@ -337,24 +395,33 @@ export class AuthService {
     };
 
     if (domain && suggestions[domain]) {
-      throw new ConflictException(`Tên miền có thể bị gõ sai. Bạn có muốn dùng ${suggestions[domain]} không?`);
+      throw new ConflictException(
+        `Tên miền có thể bị gõ sai. Bạn có muốn dùng ${suggestions[domain]} không?`,
+      );
     }
 
     try {
       const records = await resolveMx(domain);
       if (!records.length) throw new Error('NO_MX');
     } catch {
-      throw new ConflictException('Tên miền email không tồn tại hoặc không thể nhận thư');
+      throw new ConflictException(
+        'Tên miền email không tồn tại hoặc không thể nhận thư',
+      );
     }
   }
-
 
   private signToken(payload: Record<string, string>) {
     const header = this.base64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
     const body = this.base64Url(
-      JSON.stringify({ ...payload, iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + this.accessTokenTtlSeconds }),
+      JSON.stringify({
+        ...payload,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + this.accessTokenTtlSeconds,
+      }),
     );
-    const signature = createHmac('sha256', this.jwtSecret).update(`${header}.${body}`).digest('base64url');
+    const signature = createHmac('sha256', this.jwtSecret)
+      .update(`${header}.${body}`)
+      .digest('base64url');
     return `${header}.${body}.${signature}`;
   }
 
