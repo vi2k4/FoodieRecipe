@@ -1,6 +1,5 @@
-export class CreateRecipeDto {
-  userId?: bigint | number | string;
-  title: string;
+export class UpdateRecipeDto {
+  title?: string;
   description?: string;
   categoryId?: bigint | number;
   calories?: number;

@@ -58,4 +58,6 @@ async function bootstrap() {
   console.log(`Tài liệu API Swagger tại http://localhost:${port}/api/docs`);
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Failed to bootstrap app', err);
+});
