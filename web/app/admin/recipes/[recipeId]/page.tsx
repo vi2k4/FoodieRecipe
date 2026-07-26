@@ -62,9 +62,7 @@ type Recipe = {
     stepNumber: number;
     content: string;
   }[];
-  recipeTags: {
-    tag: { id: string; name: string };
-  }[];
+  tags?: { id: string; name: string }[];
   _count: {
     comments: number;
     likes: number;
@@ -398,7 +396,7 @@ export default function AdminRecipeDetailPage() {
                 </div>
                 <div className="flex items-center gap-1 text-sm" style={{ color: "var(--text-secondary)" }}>
                   <MessageCircle className="h-4 w-4" style={{ color: "#3b82f6" }} />
-                  <span>{recipe._count.comments}</span>
+                  <span>{recipe._count?.comments ?? 0}</span>
                 </div>
                 <div className="flex items-center gap-1 text-sm" style={{ color: "var(--text-secondary)" }}>
                   <Eye className="h-4 w-4" />
@@ -453,7 +451,7 @@ export default function AdminRecipeDetailPage() {
             </div>
 
             {/* Tags */}
-            {recipe.recipeTags.length > 0 && (
+            {recipe.tags && recipe.tags.length > 0 && (
               <div
                 className="rounded-2xl p-5"
                 style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
@@ -463,7 +461,7 @@ export default function AdminRecipeDetailPage() {
                   Tags
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {recipe.recipeTags.map(({ tag }) => (
+                  {recipe.tags.map((tag) => (
                     <span
                       key={tag.id}
                       className="rounded-full px-3 py-1 text-xs font-medium"

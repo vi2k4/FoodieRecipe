@@ -112,6 +112,13 @@ export class RecipesService {
         category: {
           select: { id: true, name: true, icon: true },
         },
+        _count: {
+          select: {
+            comments: true,
+            likes: true,
+            favorites: true,
+          },
+        },
       },
     });
     if (!recipe) throw new NotFoundException('Recipe not found');
