@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType } from '@prisma/client';
+import { NotificationType } from '../../../generated/prisma/client';
 
 @Injectable()
 export class FollowsService {
@@ -46,7 +50,9 @@ export class FollowsService {
     });
 
     // 4. Create notification
-    const follower = await this.prisma.user.findUnique({ where: { id: followerId } });
+    const follower = await this.prisma.user.findUnique({
+      where: { id: followerId },
+    });
     await this.notificationsService.createNotification({
       userId: followingId,
       title: 'Người theo dõi mới',

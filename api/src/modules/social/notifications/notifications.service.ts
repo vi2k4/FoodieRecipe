@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
-import { NotificationType } from '@prisma/client';
+import { NotificationType } from '../../../generated/prisma/client';
 
 @Injectable()
 export class NotificationsService {

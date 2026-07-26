@@ -1,13 +1,6 @@
 allowBuilds:
   '@prisma/engines': true
-<<<<<<< HEAD
-  '@scarf/scarf': true
-  esbuild: true
-  prisma: true
-  unrs-resolver: true
-=======
   '@scarf/scarf': false
   esbuild: false
   prisma: false
   unrs-resolver: false
->>>>>>> c790af4c99263b58e021a0e06def532003a57b4b
