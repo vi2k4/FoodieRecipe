@@ -2,54 +2,58 @@ import {
   Controller,
   Get,
   Post,
-  Patch,
-  Delete,
-  Param,
   Body,
+  Patch,
+  Param,
+  Delete,
   UseGuards,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
+import { Public } from '../../common/decorators/public.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../generated/prisma/client';
 
-@Controller()
+@Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  @Get('categories')
-  async findAll() {
+  @Public()
+  @Get()
+  findAll() {
     return this.categoriesService.findAll();
   }
 
-  @Post('admin/categories')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  async create(
-    @Body('name') name: string,
-    @Body('description') description?: string,
-    @Body('icon') icon?: string,
-  ) {
-    return this.categoriesService.create(name, description, icon);
+  @Public()
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.categoriesService.findOne(BigInt(id));
   }
 
-  @Patch('admin/categories/:id')
+  @Post()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async update(
+  create(@Body() createCategoryDto: CreateCategoryDto) {
+    return this.categoriesService.create(createCategoryDto);
+  }
+
+  @Patch(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  update(
     @Param('id') id: string,
-    @Body('name') name: string,
-    @Body('description') description?: string,
-    @Body('icon') icon?: string,
+    @Body() updateCategoryDto: UpdateCategoryDto,
   ) {
-    return this.categoriesService.update(BigInt(id), name, description, icon);
+    return this.categoriesService.update(BigInt(id), updateCategoryDto);
   }
 
-  @Delete('admin/categories/:id')
+  @Delete(':id')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async delete(@Param('id') id: string) {
-    return this.categoriesService.delete(BigInt(id));
+  remove(@Param('id') id: string) {
+    return this.categoriesService.remove(BigInt(id));
   }
 }

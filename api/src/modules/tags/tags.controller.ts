@@ -9,38 +9,41 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { TagsService } from './tags.service';
+import { CreateTagDto } from './dto/create-tag.dto';
+import { Public } from '../../common/decorators/public.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../generated/prisma/client';
 
-@Controller()
+@Controller('tags')
 export class TagsController {
   constructor(private readonly tagsService: TagsService) {}
 
-  @Get('tags')
-  async findAll() {
+  @Public()
+  @Get()
+  findAll() {
     return this.tagsService.findAll();
   }
 
-  @Post('admin/tags')
+  @Post()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async create(@Body('name') name: string) {
-    return this.tagsService.create(name);
+  create(@Body() createTagDto: CreateTagDto) {
+    return this.tagsService.create(createTagDto);
   }
 
-  @Patch('admin/tags/:id')
+  @Patch(':id')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async update(@Param('id') id: string, @Body('name') name: string) {
+  update(@Param('id') id: string, @Body('name') name: string) {
     return this.tagsService.update(BigInt(id), name);
   }
 
-  @Delete('admin/tags/:id')
+  @Delete(':id')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async delete(@Param('id') id: string) {
-    return this.tagsService.delete(BigInt(id));
+  remove(@Param('id') id: string) {
+    return this.tagsService.remove(BigInt(id));
   }
 }

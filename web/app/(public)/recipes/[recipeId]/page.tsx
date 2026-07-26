@@ -1,400 +1,233 @@
-"use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+'use client';
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import {
-  Clock,
-  Users,
-  ChefHat,
-  Star,
-  Heart,
-  Bookmark,
-  ArrowLeft,
-  Flame,
-  Tag,
-  MessageCircle,
-  Eye,
-  CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
-import { apiClient } from "@/lib/api-client";
-
-type Recipe = {
-  id: string;
-  title: string;
-  description?: string;
-  thumbnail?: string;
-  cookTime?: number;
-  servings?: number;
-  difficulty: "EASY" | "MEDIUM" | "HARD";
-  calories?: number;
-  averageRating: number;
-  likeCount: string;
-  favoriteCount: string;
-  viewCount: string;
-  author: {
-    id: string;
-    username: string;
-    avatarUrl?: string;
-    bio?: string;
-  };
-  category?: {
-    id: string;
-    name: string;
-    icon?: string;
-  };
-  ingredients: {
-    id: string;
-    ingredientName: string;
-    quantity?: number;
-    unit?: string;
-    displayOrder: number;
-  }[];
-  steps: {
-    id: string;
-    stepNumber: number;
-    content: string;
-  }[];
-  recipeTags: {
-    tag: { id: string; name: string };
-  }[];
-  _count: {
-    comments: number;
-    likes: number;
-    favorites: number;
-  };
-};
-
-const difficultyConfig = {
-  EASY: { label: "Dễ", color: "#16a34a", bg: "#dcfce7" },
-  MEDIUM: { label: "Trung bình", color: "#d97706", bg: "#fef3c7" },
-  HARD: { label: "Khó", color: "#dc2626", bg: "#fee2e2" },
-};
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
+import { api } from '@/lib/api-client';
 
 export default function RecipeDetailPage() {
+  const { user } = useAuth();
   const params = useParams();
   const router = useRouter();
-  const recipeId = params?.recipeId as string;
+  const id = params.recipeId as string;
 
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [recipe, setRecipe] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const isOwner = user.isVerified && (
+    user.role === 'ADMIN' ||
+    String(recipe?.userId) === String(user?.id) ||
+    String(recipe?.author?.id) === String(user?.id)
+  );
 
   useEffect(() => {
-    if (!recipeId) return;
-    apiClient
-      .get(`/recipes/${recipeId}`)
-      .then((res) => setRecipe(res.data))
-      .catch((e) => setError(e.message || "Không thể tải công thức"))
-      .finally(() => setLoading(false));
-  }, [recipeId]);
+    async function loadRecipe() {
+      setLoading(true);
+      try {
+        const data = await api.recipes.get(id);
+        setRecipe(data);
+      } catch (err: any) {
+        console.error('Failed to load recipe:', err);
+        setErrorMsg(err.message || 'Không tìm thấy công thức này!');
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (id) loadRecipe();
+  }, [id]);
+
+  const handleDelete = async () => {
+    if (!isOwner) {
+      alert('Bạn không có quyền xóa công thức này!');
+      return;
+    }
+    if (!confirm('Bạn có chắc chắn muốn xóa công thức này không?')) return;
+    try {
+      await api.recipes.remove(id, user.id);
+      alert('Đã xóa công thức thành công!');
+      router.push('/recipes');
+    } catch (err: any) {
+      alert(err.message || 'Xóa thất bại');
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: "var(--background)" }}>
-        {/* Skeleton */}
-        <div className="h-72 w-full animate-pulse" style={{ backgroundColor: "#e7e5e4" }} />
-        <div className="mx-auto max-w-4xl px-4 py-8 space-y-6">
-          {[200, 100, 300, 250].map((w, i) => (
-            <div key={i} className="h-6 animate-pulse rounded-xl" style={{ backgroundColor: "#e7e5e4", maxWidth: `${w}px` }} />
-          ))}
-        </div>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-neutral-500">
+        <div className="text-4xl mb-3 animate-bounce">⏳</div>
+        <p className="font-medium text-lg">Đang tải chi tiết công thức từ Database...</p>
       </div>
     );
   }
 
-  if (error || !recipe) {
+  if (errorMsg || !recipe) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-        <AlertCircle className="h-16 w-16" style={{ color: "var(--danger)" }} />
-        <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
-          {error || "Không tìm thấy công thức"}
-        </h1>
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white"
-          style={{ backgroundColor: "var(--primary)" }}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Quay lại
-        </button>
+      <div className="container mx-auto px-4 py-16 text-center">
+        <div className="text-5xl mb-4">🍲</div>
+        <h2 className="text-2xl font-bold text-neutral-800 mb-2">Không tìm thấy công thức</h2>
+        <p className="text-neutral-500 mb-6">{errorMsg || 'Công thức này có thể đã bị xóa hoặc không tồn tại.'}</p>
+        <Link href="/recipes" className="px-6 py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600">
+          Quay lại danh sách công thức
+        </Link>
       </div>
     );
   }
 
-  const diff = difficultyConfig[recipe.difficulty];
+  const ingredientsList = recipe.ingredients || [];
+  const stepsList = recipe.steps || [];
+  const tagsList = recipe.tags || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--background)" }}>
-      {/* Hero Image */}
-      <div className="relative h-72 sm:h-96 w-full overflow-hidden">
-        {recipe.thumbnail ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={recipe.thumbnail}
-            alt={recipe.title}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center" style={{ backgroundColor: "var(--surface-muted)" }}>
-            <ChefHat className="h-20 w-20" style={{ color: "var(--border)" }} />
+    <div className="pb-16">
+      {/* Hero Section */}
+      <div className="relative h-[40vh] md:h-[50vh] min-h-[320px] w-full bg-neutral-900">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={recipe.thumbnail || `https://picsum.photos/seed/${recipe.id}/1200/800`}
+          alt={recipe.title}
+          className="w-full h-full object-cover opacity-85"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent" />
+        
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
+          <div className="container mx-auto max-w-4xl">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <Link href="/recipes" className="inline-flex items-center text-white/80 hover:text-white text-sm font-medium transition-colors">
+                &larr; Quay lại danh sách
+              </Link>
+              
+              {isOwner && (
+                <div className="flex gap-2">
+                  <Link href={`/recipes/${recipe.id}/edit`} className="px-3.5 py-1.5 bg-amber-500/20 text-amber-300 hover:bg-amber-500 hover:text-white rounded-lg text-xs font-semibold transition-colors border border-amber-500/30 flex items-center gap-1">
+                    ✏️ Sửa công thức
+                  </Link>
+                  <button onClick={handleDelete} className="px-3.5 py-1.5 bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white rounded-lg text-xs font-semibold transition-colors border border-red-500/30 flex items-center gap-1">
+                    🗑️ Xóa
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3 mb-3">
+              {recipe.category && (
+                <span className="px-3 py-1 rounded-full bg-orange-500 text-white text-xs font-medium">
+                  {recipe.category.icon || '📂'} {recipe.category.name}
+                </span>
+              )}
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white border border-white/30 backdrop-blur-md flex items-center gap-1">
+                🧑‍🍳 Tác giả: {recipe.author?.username || 'Người dùng'}
+              </span>
+              {(recipe.source === 'AI GenAI' || recipe.source === 'AI') && (
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                  🤖 Source: AI GenAI
+                </span>
+              )}
+              <span className={`px-3 py-1 rounded-full text-xs font-medium backdrop-blur-md flex items-center gap-1 ${
+                recipe.isPublic !== false
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+              }`}>
+                {recipe.isPublic !== false ? '🌐 Công khai' : '🔒 Riêng tư'}
+              </span>
+            </div>
+
+            <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">{recipe.title}</h1>
+            
+            <div className="flex flex-wrap items-center gap-6 text-white/90 text-sm md:text-base">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🔥</span>
+                <span className="font-medium">{recipe.calories || '—'} kcal</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⏱️</span>
+                <span className="font-medium">{recipe.cookTime || '—'} phút</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">👥</span>
+                <span className="font-medium">{recipe.servings || 4} người</span>
+              </div>
+            </div>
+
+            {/* Display Tags in Hero Section */}
+            {tagsList.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-white/10">
+                <span className="text-white/70 text-xs font-medium mr-1">🏷️ Tags:</span>
+                {tagsList.map((tag: any) => (
+                  <span key={String(tag.id)} className="px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-xs font-medium border border-white/20 transition-colors">
+                    #{tag.name}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-
-        {/* Back button */}
-        <button
-          onClick={() => router.back()}
-          className="absolute left-4 top-4 flex items-center gap-2 rounded-xl bg-white/20 px-3 py-2 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/30"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Quay lại
-        </button>
-
-        {/* Title overlaid */}
-        <div className="absolute bottom-0 left-0 right-0 p-6">
-          {recipe.category && (
-            <span
-              className="mb-2 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
-              style={{ backgroundColor: "var(--primary)", color: "white" }}
-            >
-              {recipe.category.name}
-            </span>
-          )}
-          <h1 className="text-2xl font-bold text-white sm:text-3xl">{recipe.title}</h1>
         </div>
       </div>
 
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+      {/* Content Section */}
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        {recipe.description && (
+          <div className="mb-10 p-6 bg-orange-50/50 border border-orange-100 rounded-2xl text-neutral-700 leading-relaxed text-lg">
+            {recipe.description}
+          </div>
+        )}
 
-            {/* Description */}
-            {recipe.description && (
-              <div
-                className="rounded-2xl p-5"
-                style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
-              >
-                <p className="leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                  {recipe.description}
-                </p>
-              </div>
-            )}
-
-            {/* Ingredients */}
-            <div
-              className="rounded-2xl p-5"
-              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
-            >
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg text-sm" style={{ backgroundColor: "var(--primary)", color: "white" }}>
-                  🥕
-                </span>
-                Nguyên liệu
-                {recipe.servings && (
-                  <span className="ml-auto text-sm font-normal" style={{ color: "var(--text-secondary)" }}>
-                    {recipe.servings} khẩu phần
-                  </span>
-                )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          
+          {/* Ingredients */}
+          <div className="md:col-span-1">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 sticky top-24">
+              <h2 className="text-xl font-bold text-neutral-900 mb-6 flex items-center gap-2">
+                <span>🛒</span> Nguyên liệu ({ingredientsList.length})
               </h2>
-
-              {recipe.ingredients.length === 0 ? (
-                <p className="text-sm italic" style={{ color: "var(--text-secondary)" }}>Chưa có nguyên liệu</p>
+              {ingredientsList.length === 0 ? (
+                <p className="text-neutral-400 text-sm">Chưa có thông tin nguyên liệu</p>
               ) : (
-                <ul className="space-y-2">
-                  {recipe.ingredients.map((ing) => (
-                    <li
-                      key={ing.id}
-                      className="flex items-center gap-3 rounded-xl px-4 py-2.5"
-                      style={{ backgroundColor: "var(--surface-muted)" }}
-                    >
-                      <CheckCircle2 className="h-4 w-4 flex-shrink-0" style={{ color: "var(--primary)" }} />
-                      <span className="flex-1 font-medium text-sm" style={{ color: "var(--text-primary)" }}>
-                        {ing.ingredientName}
-                      </span>
-                      {(ing.quantity || ing.unit) && (
-                        <span className="text-sm font-semibold" style={{ color: "var(--primary)" }}>
-                          {ing.quantity} {ing.unit}
-                        </span>
-                      )}
+                <ul className="space-y-4">
+                  {ingredientsList.map((ing: any, idx: number) => (
+                    <li key={ing.id || idx} className="flex items-start gap-3">
+                      <input 
+                        type="checkbox" 
+                        className="mt-1 w-5 h-5 rounded border-neutral-300 text-orange-500 focus:ring-orange-500 cursor-pointer" 
+                      />
+                      <div>
+                        <span className="font-medium text-neutral-800 block">{ing.ingredientName}</span>
+                        {(ing.quantity || ing.unit) && (
+                          <span className="text-sm text-neutral-500">{ing.quantity || ''} {ing.unit || ''}</span>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
               )}
             </div>
-
-            {/* Steps */}
-            <div
-              className="rounded-2xl p-5"
-              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
-            >
-              <h2 className="mb-5 flex items-center gap-2 text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg text-sm" style={{ backgroundColor: "var(--primary)", color: "white" }}>
-                  👨‍🍳
-                </span>
-                Các bước thực hiện
-              </h2>
-
-              {recipe.steps.length === 0 ? (
-                <p className="text-sm italic" style={{ color: "var(--text-secondary)" }}>Chưa có hướng dẫn các bước</p>
-              ) : (
-                <ol className="space-y-5">
-                  {recipe.steps.map((step) => (
-                    <li key={step.id} className="flex gap-4">
-                      <div
-                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white mt-0.5"
-                        style={{ backgroundColor: "var(--primary)" }}
-                      >
-                        {step.stepNumber}
-                      </div>
-                      <div
-                        className="flex-1 rounded-xl p-4"
-                        style={{ backgroundColor: "var(--surface-muted)" }}
-                      >
-                        <p className="leading-relaxed text-sm" style={{ color: "var(--text-primary)" }}>
-                          {step.content}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-5">
-            {/* Quick Stats */}
-            <div
-              className="rounded-2xl p-5 space-y-4"
-              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
-            >
-              <h3 className="font-bold" style={{ color: "var(--text-primary)" }}>Thông tin nhanh</h3>
-
-              <div className="grid grid-cols-2 gap-3">
-                {recipe.cookTime && (
-                  <div className="flex flex-col items-center rounded-xl py-3 px-2 gap-1" style={{ backgroundColor: "var(--surface-muted)" }}>
-                    <Clock className="h-5 w-5" style={{ color: "var(--primary)" }} />
-                    <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{recipe.cookTime} phút</span>
-                    <span className="text-xs" style={{ color: "var(--text-secondary)" }}>Thời gian</span>
+          {/* Steps */}
+          <div className="md:col-span-2">
+            <h2 className="text-2xl font-bold text-neutral-900 mb-8 flex items-center gap-2">
+              <span>👨‍🍳</span> Các bước thực hiện ({stepsList.length})
+            </h2>
+            {stepsList.length === 0 ? (
+              <p className="text-neutral-400">Chưa có nội dung các bước nấu</p>
+            ) : (
+              <div className="space-y-8">
+                {stepsList.map((step: any, idx: number) => (
+                  <div key={step.id || idx} className="flex gap-4">
+                    <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-orange-100 text-orange-600 font-bold text-lg">
+                      {step.stepNumber || idx + 1}
+                    </div>
+                    <div className="pt-2">
+                      <p className="text-neutral-800 leading-relaxed text-lg">{step.content}</p>
+                    </div>
                   </div>
-                )}
-                {recipe.servings && (
-                  <div className="flex flex-col items-center rounded-xl py-3 px-2 gap-1" style={{ backgroundColor: "var(--surface-muted)" }}>
-                    <Users className="h-5 w-5" style={{ color: "var(--primary)" }} />
-                    <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{recipe.servings}</span>
-                    <span className="text-xs" style={{ color: "var(--text-secondary)" }}>Khẩu phần</span>
-                  </div>
-                )}
-                <div className="flex flex-col items-center rounded-xl py-3 px-2 gap-1" style={{ backgroundColor: "var(--surface-muted)" }}>
-                  <ChefHat className="h-5 w-5" style={{ color: diff.color }} />
-                  <span className="text-sm font-bold" style={{ color: diff.color }}>{diff.label}</span>
-                  <span className="text-xs" style={{ color: "var(--text-secondary)" }}>Độ khó</span>
-                </div>
-                {recipe.calories && (
-                  <div className="flex flex-col items-center rounded-xl py-3 px-2 gap-1" style={{ backgroundColor: "var(--surface-muted)" }}>
-                    <Flame className="h-5 w-5" style={{ color: "#f97316" }} />
-                    <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{recipe.calories}</span>
-                    <span className="text-xs" style={{ color: "var(--text-secondary)" }}>Calories</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Engagement stats */}
-              <div className="flex items-center justify-around pt-2 border-t" style={{ borderColor: "var(--border)" }}>
-                <div className="flex items-center gap-1 text-sm" style={{ color: "var(--text-secondary)" }}>
-                  <Heart className="h-4 w-4" style={{ color: "#ec4899" }} />
-                  <span>{recipe.likeCount}</span>
-                </div>
-                <div className="flex items-center gap-1 text-sm" style={{ color: "var(--text-secondary)" }}>
-                  <Bookmark className="h-4 w-4" style={{ color: "var(--primary)" }} />
-                  <span>{recipe.favoriteCount}</span>
-                </div>
-                <div className="flex items-center gap-1 text-sm" style={{ color: "var(--text-secondary)" }}>
-                  <MessageCircle className="h-4 w-4" style={{ color: "#3b82f6" }} />
-                  <span>{recipe._count.comments}</span>
-                </div>
-                <div className="flex items-center gap-1 text-sm" style={{ color: "var(--text-secondary)" }}>
-                  <Eye className="h-4 w-4" />
-                  <span>{recipe.viewCount}</span>
-                </div>
-              </div>
-
-              {/* Rating */}
-              {recipe.averageRating > 0 && (
-                <div className="flex items-center gap-2 pt-1">
-                  <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                  <span className="font-bold" style={{ color: "var(--text-primary)" }}>
-                    {Number(recipe.averageRating).toFixed(1)}
-                  </span>
-                  <span className="text-sm" style={{ color: "var(--text-secondary)" }}>/ 5.0</span>
-                </div>
-              )}
-            </div>
-
-            {/* Author */}
-            <div
-              className="rounded-2xl p-5"
-              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
-            >
-              <h3 className="mb-3 font-bold" style={{ color: "var(--text-primary)" }}>Tác giả</h3>
-              <Link href={`/users/${recipe.author.id}`} className="flex items-center gap-3 group">
-                {recipe.author.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={recipe.author.avatarUrl}
-                    alt={recipe.author.username}
-                    className="h-12 w-12 rounded-full object-cover border-2"
-                    style={{ borderColor: "var(--primary)" }}
-                  />
-                ) : (
-                  <div
-                    className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-white"
-                    style={{ backgroundColor: "var(--primary)" }}
-                  >
-                    {recipe.author.username[0].toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <p className="font-semibold group-hover:underline" style={{ color: "var(--text-primary)" }}>
-                    {recipe.author.username}
-                  </p>
-                  {recipe.author.bio && (
-                    <p className="text-xs line-clamp-2" style={{ color: "var(--text-secondary)" }}>
-                      {recipe.author.bio}
-                    </p>
-                  )}
-                </div>
-              </Link>
-            </div>
-
-            {/* Tags */}
-            {recipe.recipeTags.length > 0 && (
-              <div
-                className="rounded-2xl p-5"
-                style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
-              >
-                <h3 className="mb-3 font-bold flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
-                  <Tag className="h-4 w-4" style={{ color: "var(--primary)" }} />
-                  Tags
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {recipe.recipeTags.map(({ tag }) => (
-                    <span
-                      key={tag.id}
-                      className="rounded-full px-3 py-1 text-xs font-medium"
-                      style={{ backgroundColor: "var(--surface-muted)", color: "var(--primary)", border: "1px solid var(--border)" }}
-                    >
-                      #{tag.name}
-                    </span>
-                  ))}
-                </div>
+                ))}
               </div>
             )}
           </div>
+          
         </div>
       </div>
     </div>

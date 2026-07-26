@@ -35,3 +35,10 @@
 
 # generated prisma client
 **/src/generated/prisma/
+
+# temp files
+*.docx
+*.zip
+*_cleaned.txt
+*_unzipped/
+

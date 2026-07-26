@@ -78,7 +78,7 @@ export async function createCategory(data: {
   description?: string;
   icon?: string;
 }) {
-  const res = await apiClient.post("/admin/categories", data);
+  const res = await apiClient.post("/categories", data);
   return res.data;
 }
 
@@ -86,12 +86,12 @@ export async function updateCategory(
   id: string,
   data: { name: string; description?: string; icon?: string }
 ) {
-  const res = await apiClient.patch(`/admin/categories/${id}`, data);
+  const res = await apiClient.patch(`/categories/${id}`, data);
   return res.data;
 }
 
 export async function deleteCategory(id: string) {
-  const res = await apiClient.delete(`/admin/categories/${id}`);
+  const res = await apiClient.delete(`/categories/${id}`);
   return res.data;
 }
 
@@ -103,17 +103,17 @@ export async function getTags() {
 }
 
 export async function createTag(name: string) {
-  const res = await apiClient.post("/admin/tags", { name });
+  const res = await apiClient.post("/tags", { name });
   return res.data;
 }
 
 export async function updateTag(id: string, name: string) {
-  const res = await apiClient.patch(`/admin/tags/${id}`, { name });
+  const res = await apiClient.patch(`/tags/${id}`, { name });
   return res.data;
 }
 
 export async function deleteTag(id: string) {
-  const res = await apiClient.delete(`/admin/tags/${id}`);
+  const res = await apiClient.delete(`/tags/${id}`);
   return res.data;
 }
 
