@@ -13,14 +13,15 @@ export class BedrockService {
 
   constructor(private readonly config: ConfigService) {
     this.client = new BedrockRuntimeClient({
-      region: this.config.getOrThrow<string>('AWS_REGION'),
-
-      credentials: {
-        accessKeyId: this.config.getOrThrow<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.config.getOrThrow<string>(
-          'AWS_SECRET_ACCESS_KEY',
-        ),
-      },
+      region: this.config.get<string>('AWS_REGION') || 'ap-southeast-1',
+      ...(this.config.get<string>('AWS_ACCESS_KEY_ID') && this.config.get<string>('AWS_SECRET_ACCESS_KEY')
+        ? {
+            credentials: {
+              accessKeyId: this.config.get<string>('AWS_ACCESS_KEY_ID')!,
+              secretAccessKey: this.config.get<string>('AWS_SECRET_ACCESS_KEY')!,
+            },
+          }
+        : {}),
     });
   }
 

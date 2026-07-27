@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import {
   S3Client,
   PutObjectCommand,
@@ -12,17 +12,16 @@ export class S3Service {
   private s3Client: S3Client;
 
   constructor(private configService: ConfigService) {
+    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
+    const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
     this.s3Client = new S3Client({
-      region: this.configService.getOrThrow<string>('AWS_REGION'),
-      credentials: {
-        accessKeyId: this.configService.getOrThrow<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.getOrThrow<string>(
-          'AWS_SECRET_ACCESS_KEY',
-        ),
-      },
+      region: this.configService.get<string>('AWS_REGION') || 'ap-southeast-1',
+      ...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
     });
   }
   async uploadImage(file: Express.Multer.File, folder: string) {
+    const bucket = this.configService.get<string>('AWS_BUCKET_NAME');
+    if (!bucket) throw new ServiceUnavailableException('AWS S3 chưa được cấu hình');
     // 1. Resize + convert WebP
 
     const optimizedImage = await sharp(file.buffer)
@@ -45,7 +44,7 @@ export class S3Service {
 
     await this.s3Client.send(
       new PutObjectCommand({
-        Bucket: process.env.AWS_BUCKET_NAME,
+        Bucket: bucket,
 
         Key: key,
 
@@ -60,7 +59,7 @@ export class S3Service {
     return {
       key,
 
-      url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
+      url: `https://${bucket}.s3.${this.configService.get<string>('AWS_REGION') || 'ap-southeast-1'}.amazonaws.com/${key}`,
     };
   }
 
@@ -68,8 +67,10 @@ export class S3Service {
     key: string,
     expiresIn = 300, // 5 phút
   ): Promise<string> {
+    const bucket = this.configService.get<string>('AWS_BUCKET_NAME');
+    if (!bucket) throw new ServiceUnavailableException('AWS S3 chưa được cấu hình');
     const command = new GetObjectCommand({
-      Bucket: this.configService.getOrThrow<string>('AWS_BUCKET_NAME'),
+      Bucket: bucket,
       Key: key,
     });
 

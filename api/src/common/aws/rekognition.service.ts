@@ -13,13 +13,15 @@ export class RekognitionService {
 
   constructor(private readonly configService: ConfigService) {
     this.client = new RekognitionClient({
-      region: this.configService.getOrThrow<string>('AWS_REGION'),
-      credentials: {
-        accessKeyId: this.configService.getOrThrow<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.getOrThrow<string>(
-          'AWS_SECRET_ACCESS_KEY',
-        ),
-      },
+      region: this.configService.get<string>('AWS_REGION') || 'ap-southeast-1',
+      ...(this.configService.get<string>('AWS_ACCESS_KEY_ID') && this.configService.get<string>('AWS_SECRET_ACCESS_KEY')
+        ? {
+            credentials: {
+              accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID')!,
+              secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY')!,
+            },
+          }
+        : {}),
     });
   }
 
