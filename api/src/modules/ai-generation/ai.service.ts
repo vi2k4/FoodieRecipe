@@ -63,7 +63,9 @@ export class AIGenerationService {
     userId: number,
     dto: GenerateRecipeDto,
   ): Promise<GenerateRecipeResponseDto> {
-    const prompt = this.promptBuilder.buildRecipePromptFromNames(dto.ingredients);
+    const prompt = this.promptBuilder.buildRecipePromptFromNames(
+      dto.ingredients,
+    );
 
     const { recipe, historyId } = await this.generateAndPersistRecipe({
       userId,
@@ -81,8 +83,11 @@ export class AIGenerationService {
 
   async analyzeImage(
     file: Express.Multer.File,
-    userId = 1,
+    userId: number | null = null,
   ): Promise<AnalyzeImageResponseDto> {
+    if (userId == null) {
+      userId = 1; // TODO: Sau này sẽ lấy từ JWT
+    }
     const upload = await this.s3Service.uploadImage(file, 'ai-images');
     const result = await this.rekognitionService.detectLabels(upload.key);
 
@@ -122,7 +127,9 @@ export class AIGenerationService {
     const model = this.configService.getOrThrow<string>('BEDROCK_MODEL_ID');
 
     try {
-      const rawResponse = await this.bedrockService.generateRecipe(params.prompt);
+      const rawResponse = await this.bedrockService.generateRecipe(
+        params.prompt,
+      );
       const generatedRecipe = this.parseBedrockRecipe(rawResponse);
 
       const savedRecipe = await this.recipePersistence.saveGeneratedRecipe(
