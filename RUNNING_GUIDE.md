@@ -7,7 +7,7 @@ Tài liệu này hướng dẫn cách khởi động cả frontend (Next.js) và
 Cài đặt sẵn:
 
 - Node.js (khuyến nghị phiên bản mới)
-- pnpm
+- pnpmgit pull origin develop
 - Docker Desktop (nếu dùng PostgreSQL qua Docker)
 
 ## 2. Cài đặt dependency
@@ -130,3 +130,40 @@ pnpm lint
 cd api
 pnpm prisma migrate dev --name <ten_migration>
 ```
+
+## 9. Tắt và Khởi động lại (Restart)
+
+### 9.1 Tắt chương trình
+Khi bạn code xong và muốn tắt các server, bạn chỉ cần làm như sau:
+1. Mở cửa sổ terminal đang chạy Frontend (`pnpm dev`) và nhấn tổ hợp phím **`Ctrl + C`**, sau đó ấn `Y` (nếu được hỏi) để dừng tiến trình.
+2. Làm tương tự ở cửa sổ terminal đang chạy Backend (`pnpm start:dev`): nhấn **`Ctrl + C`**.
+3. Để tắt cơ sở dữ liệu (nếu muốn giải phóng RAM máy), mở terminal ở thư mục gốc (`c:\Code\FoodieRecipe`) và chạy:
+```bash
+docker compose stop
+```
+*(Nếu muốn xóa hẳn container nhưng giữ lại dữ liệu trong volume, có thể dùng `docker compose down`)*
+
+### 9.2 Khởi động lại vào lần code tới
+Vào ngày hôm sau hoặc lần code tới, bạn chỉ cần làm 3 bước đơn giản:
+
+**Bước 1: Bật Database**
+Mở terminal ở thư mục gốc:
+```bash
+docker compose start
+```
+*(Nếu trước đó dùng `down`, hãy chạy lại `docker compose up -d`)*
+
+**Bước 2: Bật Backend API**
+Mở 1 terminal mới:
+```bash
+cd api
+corepack pnpm start:dev
+```
+
+**Bước 3: Bật Frontend Web**
+Mở thêm 1 terminal mới:
+```bash
+cd web
+corepack pnpm dev
+```
+Sau đó truy cập `http://localhost:3000` để bắt đầu code.

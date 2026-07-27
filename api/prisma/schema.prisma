@@ -67,6 +67,7 @@ model User {
   bio          String?   @db.Text
   role         UserRole  @default(USER)
   isVerified   Boolean   @default(false) @map("is_verified")
+  isLocked     Boolean   @default(false) @map("is_locked")
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)

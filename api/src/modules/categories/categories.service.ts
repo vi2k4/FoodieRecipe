@@ -41,11 +41,6 @@ export class CategoriesService {
   }
 
   async create(dto: CreateCategoryDto) {
-    // Generate id manually or let DB handle if it's autoincrement?
-    // Prisma schema for RecipeCategory: id BigInt @id
-    // It doesn't have @default(autoincrement()), so we might need to generate it, or it might be set via middleware.
-    // Wait, let me check the Prisma schema in the prompt.
-    // RecipeCategory: id BigInt @id (no autoincrement). Oh wait, actually we can generate it using Date.now() for simplicity if not specified.
     const id = BigInt(Date.now());
 
     const category = await this.prisma.recipeCategory.create({

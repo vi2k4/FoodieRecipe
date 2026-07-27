@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -46,6 +47,28 @@ export class TagsService {
       },
     });
     return this.serializeObj(tag);
+  }
+
+  async update(id: bigint, name: string) {
+    const tag = await this.prisma.tag.findUnique({
+      where: { id },
+    });
+    if (!tag) {
+      throw new NotFoundException('Không tìm thấy thẻ');
+    }
+
+    const existingName = await this.prisma.tag.findFirst({
+      where: { name, NOT: { id } },
+    });
+    if (existingName) {
+      throw new BadRequestException('Tên thẻ này đã tồn tại');
+    }
+
+    const updatedTag = await this.prisma.tag.update({
+      where: { id },
+      data: { name },
+    });
+    return this.serializeObj(updatedTag);
   }
 
   async remove(id: bigint) {

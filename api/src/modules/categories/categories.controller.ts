@@ -6,11 +6,16 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Public } from '../../common/decorators/public.decorator';
+import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../generated/prisma/client';
 
 @Controller('categories')
 export class CategoriesController {
@@ -28,14 +33,16 @@ export class CategoriesController {
     return this.categoriesService.findOne(BigInt(id));
   }
 
-  // TODO: Add JwtAuthGuard and RolesGuard(Admin) when AuthModule is ready
   @Post()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.create(createCategoryDto);
   }
 
-  // TODO: Add JwtAuthGuard and RolesGuard(Admin) when AuthModule is ready
   @Patch(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
@@ -43,8 +50,9 @@ export class CategoriesController {
     return this.categoriesService.update(BigInt(id), updateCategoryDto);
   }
 
-  // TODO: Add JwtAuthGuard and RolesGuard(Admin) when AuthModule is ready
   @Delete(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.categoriesService.remove(BigInt(id));
   }

@@ -2,9 +2,9 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { json } from 'express';
 import { AppModule } from './app.module';
+import { BigIntInterceptor } from './common/interceptors/bigint.interceptor';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { TransformBigIntInterceptor } from './common/interceptors/transform-bigint.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,6 +13,8 @@ async function bootstrap() {
   app.use(json({ limit: '5mb' }));
 
   app.setGlobalPrefix('api');
+
+  app.useGlobalInterceptors(new BigIntInterceptor());
 
   app.enableCors({
     origin: 'http://localhost:3000',
@@ -26,9 +28,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-
-  // Global BigInt interceptor
-  app.useGlobalInterceptors(new TransformBigIntInterceptor());
 
   // Swagger setup
   const config = new DocumentBuilder()

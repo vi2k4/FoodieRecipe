@@ -148,7 +148,7 @@ export const api = {
       return data;
     },
     update: async (id: string | number, body: Record<string, unknown>) => {
-      const { data } = await apiClient.patch<any>(`/categories/${id}`, body);
+      const { data } = await apiClient.post<any>(`/categories/${id}`, body);
       return data;
     },
     remove: async (id: string | number) => {

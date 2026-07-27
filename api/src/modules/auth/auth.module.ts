@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
 import { EmailService } from './email.service';
 
+@Global()
 @Module({
   imports: [UsersModule],
   controllers: [AuthController],
@@ -11,3 +12,4 @@ import { EmailService } from './email.service';
   exports: [AuthService],
 })
 export class AuthModule {}
+

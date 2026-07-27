@@ -1,302 +1,513 @@
-import { PrismaClient, UserRole, RecipeDifficulty, RecipeImageType } from '../src/generated/prisma/client';
+import { PrismaClient, UserRole, RecipeDifficulty, RecipeImageType, NotificationType, ReportStatus, AIGenerationStatus } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
-import 'dotenv/config';
+import { scryptSync, randomBytes } from 'crypto';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+function hashPassword(password: string) {
+  const salt = randomBytes(16).toString('hex');
+  const hash = scryptSync(password, salt, 64).toString('hex');
+  return `scrypt:${salt}:${hash}`;
+}
+
+
+function subDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() - days);
+  return result;
+}
 
 async function main() {
-  console.log('Clearing existing data...');
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+  const adapter = new PrismaPg(pool);
+  const prisma = new PrismaClient({ adapter });
+
+  console.log('Bắt đầu dọn dẹp database cũ...');
   // Delete in reverse order of dependencies
-  await prisma.recipeTag.deleteMany();
-  await prisma.recipeIngredient.deleteMany();
-  await prisma.recipeStep.deleteMany();
-  await prisma.recipeImage.deleteMany();
+  await prisma.aIGenerationHistory.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.report.deleteMany();
   await prisma.comment.deleteMany();
-  await prisma.favorite.deleteMany();
-  await prisma.recipeLike.deleteMany();
   await prisma.rating.deleteMany();
+  await prisma.recipeLike.deleteMany();
+  await prisma.favorite.deleteMany();
+  await prisma.recipeTag.deleteMany();
+  await prisma.recipeImage.deleteMany();
+  await prisma.recipeStep.deleteMany();
+  await prisma.recipeIngredient.deleteMany();
   await prisma.recipe.deleteMany();
-  await prisma.tag.deleteMany();
   await prisma.recipeCategory.deleteMany();
+  await prisma.tag.deleteMany();
+  await prisma.userFollow.deleteMany();
   await prisma.user.deleteMany();
 
-  console.log('Seeding users...');
-  const admin = await prisma.user.create({
+  console.log('Bắt đầu seed dữ liệu mới...');
+
+  // 1. Tạo Users (Admin + Regular Users)
+  const user1 = await prisma.user.create({
     data: {
-      username: 'admin',
-      email: 'admin@foodie.com',
-      passwordHash: '$2b$10$EP/V.Y.K3H5wBfZtS0U3uO7q6599q1mG9UeS8nFhOaN2aE9tE/Fh6', // bcrypt hash of '123456'
-      avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-      bio: 'Quản trị viên hệ thống My Foodie Recipes',
+      id: 1n,
+      username: 'dung_admin',
+      email: 'dung@foodie.com',
+      passwordHash: hashPassword('12345678'),
+      bio: 'Quản trị viên hệ thống FoodiRecipe.',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
       role: UserRole.ADMIN,
       isVerified: true,
+      createdAt: subDays(new Date(), 6),
     },
   });
 
-  const chefNguyen = await prisma.user.create({
+  const user2 = await prisma.user.create({
     data: {
-      username: 'chef_nguyen',
-      email: 'nguyen@foodie.com',
-      passwordHash: '$2b$10$EP/V.Y.K3H5wBfZtS0U3uO7q6599q1mG9UeS8nFhOaN2aE9tE/Fh6', // bcrypt hash of '123456'
-      avatarUrl: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=150&q=80',
-      bio: 'Đầu bếp chuyên nghiệp với hơn 10 năm kinh nghiệm trong ẩm thực Việt Nam',
+      id: 2n,
+      username: 'hoang_chef',
+      email: 'hoang@chef.com',
+      passwordHash: hashPassword('12345678'),
+      bio: 'Đam mê ẩm thực truyền thống Việt Nam.',
+      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
       role: UserRole.USER,
       isVerified: true,
+      createdAt: subDays(new Date(), 5),
     },
   });
 
-  const memberLan = await prisma.user.create({
+  const user3 = await prisma.user.create({
     data: {
-      username: 'member_lan',
-      email: 'lan@foodie.com',
-      passwordHash: '$2b$10$EP/V.Y.K3H5wBfZtS0U3uO7q6599q1mG9UeS8nFhOaN2aE9tE/Fh6', // bcrypt hash of '123456'
-      avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
-      bio: 'Người đam mê làm bánh và nấu các món ăn tốt cho sức khỏe',
+      id: 3n,
+      username: 'lan_anh',
+      email: 'lananh@food.com',
+      passwordHash: hashPassword('12345678'),
+      bio: 'Yêu thích làm bánh và các món ăn ngọt.',
+      avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
       role: UserRole.USER,
       isVerified: true,
+      createdAt: subDays(new Date(), 4),
     },
   });
 
-  console.log('Seeding categories...');
+  const user4 = await prisma.user.create({
+    data: {
+      id: 4n,
+      username: 'minh_chay',
+      email: 'minhchay@vegan.com',
+      passwordHash: hashPassword('12345678'),
+      bio: 'Chuyên gia ẩm thực chay vì sức khỏe.',
+      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
+      role: UserRole.USER,
+      isVerified: false,
+      createdAt: subDays(new Date(), 3),
+    },
+  });
+
+  const user5 = await prisma.user.create({
+    data: {
+      id: 5n,
+      username: 'huong_giang',
+      email: 'giang@example.com',
+      passwordHash: hashPassword('12345678'),
+      bio: 'Sinh viên thiết kế, thích nấu ăn nhanh gọn.',
+      avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200',
+      role: UserRole.USER,
+      isVerified: true,
+      createdAt: subDays(new Date(), 2),
+    },
+  });
+
+  // More users created on yesterday and today to show growth
+  await prisma.user.createMany({
+    data: [
+      {
+        id: 6n,
+        username: 'quoc_bao',
+        email: 'bao@example.com',
+        passwordHash: hashPassword('12345678'),
+        role: UserRole.USER,
+        createdAt: subDays(new Date(), 1),
+      },
+      {
+        id: 7n,
+        username: 'thu_thao',
+        email: 'thao@example.com',
+        passwordHash: hashPassword('12345678'),
+        role: UserRole.USER,
+        createdAt: subDays(new Date(), 1),
+      },
+      {
+        id: 8n,
+        username: 'viet_anh',
+        email: 'viet@example.com',
+        passwordHash: hashPassword('12345678'),
+        role: UserRole.USER,
+        createdAt: new Date(),
+      },
+    ],
+  });
+
+  console.log('Đã seed xong Users.');
+
+  // 2. Tạo Categories
   const catMain = await prisma.recipeCategory.create({
-    data: { name: 'Món chính', description: 'Các món ăn no phục vụ cho bữa trưa và tối', icon: 'utensils' },
+    data: { id: 1n, name: 'Món chính', description: 'Các món ăn chính cho bữa trưa và tối', icon: 'Utensils' },
+  });
+  const catAppetizer = await prisma.recipeCategory.create({
+    data: { id: 2n, name: 'Món khai vị', description: 'Các món nhẹ kích thích vị giác', icon: 'Salad' },
   });
   const catDessert = await prisma.recipeCategory.create({
-    data: { name: 'Món tráng miệng', description: 'Bánh ngọt, kem, chè và các món ngọt khác', icon: 'cookie' },
+    data: { id: 3n, name: 'Đồ tráng miệng', description: 'Các món ngọt, bánh, chè', icon: 'Cake' },
   });
-  const catVegetarian = await prisma.recipeCategory.create({
-    data: { name: 'Món chay', description: 'Các công thức chay bổ dưỡng và thuần thực vật', icon: 'leaf' },
+  const catDrink = await prisma.recipeCategory.create({
+    data: { id: 4n, name: 'Nước uống', description: 'Sinh tố, nước ép, cà phê', icon: 'Coffee' },
   });
-  const catBeverage = await prisma.recipeCategory.create({
-    data: { name: 'Đồ uống', description: 'Sinh tố, trà, cà phê và các loại nước giải khát', icon: 'cup-straw' },
-  });
-  const catFastFood = await prisma.recipeCategory.create({
-    data: { name: 'Món ăn nhanh', description: 'Đồ ăn nhẹ chuẩn bị nhanh chóng', icon: 'sandwich' },
-  });
-  const catVietnamese = await prisma.recipeCategory.create({
-    data: { name: 'Món Việt Nam', description: 'Món ăn mang hương vị truyền thống Việt Nam', icon: 'soup' },
+  const catVegan = await prisma.recipeCategory.create({
+    data: { id: 5n, name: 'Món chay', description: 'Các món thuần chay lành mạnh', icon: 'Leaf' },
   });
 
-  console.log('Seeding tags...');
-  const tagHealthy = await prisma.tag.create({ data: { name: 'Healthy' } });
-  const tagEasy = await prisma.tag.create({ data: { name: 'Dễ làm' } });
-  const tagQuick = await prisma.tag.create({ data: { name: 'Nhanh' } });
-  const tagSpicy = await prisma.tag.create({ data: { name: 'Cay' } });
-  const tagLowCal = await prisma.tag.create({ data: { name: 'Ít calo' } });
-  const tagTraditional = await prisma.tag.create({ data: { name: 'Truyền thống' } });
+  console.log('Đã seed xong Categories.');
 
-  console.log('Seeding recipes...');
+  // 3. Tạo Tags
+  const tagEasy = await prisma.tag.create({ data: { id: 1n, name: 'Dễ làm' } });
+  const tagSoup = await prisma.tag.create({ data: { id: 2n, name: 'Món nước' } });
+  const tagFry = await prisma.tag.create({ data: { id: 3n, name: 'Đồ rán' } });
+  const tagHealthy = await prisma.tag.create({ data: { id: 4n, name: 'Tốt cho sức khỏe' } });
+  const tagTrad = await prisma.tag.create({ data: { id: 5n, name: 'Truyền thống' } });
 
-  // 1. Bánh Flan
-  const recipeFlan = await prisma.recipe.create({
+  console.log('Đã seed xong Tags.');
+
+  // 4. Tạo Recipes
+  const r1 = await prisma.recipe.create({
     data: {
-      userId: chefNguyen.id,
-      categoryId: catDessert.id,
-      title: 'Bánh Flan Truyền Thống Caramels',
-      description: 'Công thức làm bánh flan (caramel) siêu mịn, thơm ngậy mùi trứng sữa và không bị rỗ.',
-      calories: 250.00,
-      cookTime: 45,
-      difficulty: RecipeDifficulty.EASY,
-      servings: 4,
-      thumbnail: 'https://images.unsplash.com/photo-1541783245831-57d6fb0926d3?auto=format&fit=crop&w=800&q=80',
-      source: 'Đầu bếp Nguyễn',
-      isPublic: true,
-      viewCount: 150n,
-      likeCount: 42n,
-      favoriteCount: 20n,
-      averageRating: 4.80,
-      ingredients: {
-        create: [
-          { ingredientName: 'Trứng gà', quantity: 5.00, unit: 'quả', displayOrder: 1 },
-          { ingredientName: 'Sữa tươi không đường', quantity: 500.00, unit: 'ml', displayOrder: 2 },
-          { ingredientName: 'Đường cát', quantity: 100.00, unit: 'g', displayOrder: 3 },
-          { ingredientName: 'Vani', quantity: 1.00, unit: 'ống', displayOrder: 4 },
-        ],
-      },
-      steps: {
-        create: [
-          { stepNumber: 1, content: 'Đun đường với một chút nước lọc đến khi chuyển màu cánh gián (caramel), đổ một lớp mỏng vào đáy các khuôn bánh.' },
-          { stepNumber: 2, content: 'Đánh nhẹ trứng gà cho tan (tránh tạo bọt khí), đun sữa tươi ấm rồi từ từ rót sữa vào trứng, khuấy nhẹ đều tay cùng với vani.' },
-          { stepNumber: 3, content: 'Lọc hỗn hợp qua rây mịn từ 2 đến 3 lần để bánh được mịn hoàn toàn, sau đó rót từ từ vào khuôn đã nguội caramel.' },
-          { stepNumber: 4, content: 'Xếp khuôn vào nồi hấp cách thủy ở lửa nhỏ nhất trong 30-40 phút. Nên che mặt khuôn bằng giấy bạc để tránh nước đọng nhỏ vào bánh.' },
-          { stepNumber: 5, content: 'Để bánh nguội hoàn toàn rồi cho vào ngăn mát tủ lạnh từ 2-3 tiếng trước khi úp ngược ra đĩa thưởng thức.' },
-        ],
-      },
-      images: {
-        create: [
-          { imageUrl: 'https://images.unsplash.com/photo-1541783245831-57d6fb0926d3?auto=format&fit=crop&w=800&q=80', type: RecipeImageType.THUMBNAIL, displayOrder: 1 },
-          { imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80', type: RecipeImageType.RESULT, displayOrder: 2 },
-        ],
-      },
-      recipeTags: {
-        create: [
-          { tagId: tagEasy.id },
-          { tagId: tagLowCal.id },
-        ],
-      },
-    },
-  });
-
-  // 2. Phở Bò Hà Nội
-  const recipePho = await prisma.recipe.create({
-    data: {
-      userId: chefNguyen.id,
-      categoryId: catVietnamese.id,
-      title: 'Phở Bò Hà Nội Cổ Truyền',
-      description: 'Hương vị phở bò truyền thống tinh tế với nước dùng trong vắt, ngọt thanh từ xương bò ninh kỹ và thơm lừng hồi quế thảo quả.',
-      calories: 450.00,
+      id: 1n,
+      userId: 2n, // hoang_chef
+      categoryId: 1n, // Món chính
+      title: 'Phở bò truyền thống',
+      description: 'Công thức nấu phở bò gia truyền thơm ngon đậm vị.',
       cookTime: 180,
       difficulty: RecipeDifficulty.HARD,
       servings: 4,
-      thumbnail: 'https://images.unsplash.com/photo-1583224964978-2257b960c3d3?auto=format&fit=crop&w=800&q=80',
-      source: 'Bí kíp gia truyền Chef Nguyễn',
-      isPublic: true,
-      viewCount: 500n,
-      likeCount: 120n,
-      favoriteCount: 85n,
-      averageRating: 4.90,
-      ingredients: {
-        create: [
-          { ingredientName: 'Bánh phở tươi', quantity: 500.00, unit: 'g', displayOrder: 1 },
-          { ingredientName: 'Thịt thăn bò (hoặc nạm bò)', quantity: 300.00, unit: 'g', displayOrder: 2 },
-          { ingredientName: 'Xương ống bò', quantity: 1000.00, unit: 'g', displayOrder: 3 },
-          { ingredientName: 'Hành tây, gừng', quantity: 1.00, unit: 'củ', displayOrder: 4 },
-          { ingredientName: 'Gia vị phở (quế, hồi, thảo quả, đinh hương)', quantity: 1.00, unit: 'gói', displayOrder: 5 },
-          { ingredientName: 'Hành lá, rau thơm', quantity: 50.00, unit: 'g', displayOrder: 6 },
-        ],
-      },
-      steps: {
-        create: [
-          { stepNumber: 1, content: 'Xương ống rửa sạch, luộc bỏ nước đầu rồi ninh trong nồi áp suất hoặc nồi thường khoảng 2-3 tiếng để ngọt nước.' },
-          { stepNumber: 2, content: 'Nướng hành tây, gừng nguyên vỏ cho thơm, cạo sạch phần cháy đen rồi đập dập, thả vào nồi nước dùng.' },
-          { stepNumber: 3, content: 'Rang thơm quế, hồi, thảo quả rồi cho vào túi lọc vải, thả vào nồi ninh xương trước khi tắt bếp khoảng 1 tiếng.' },
-          { stepNumber: 4, content: 'Trần bánh phở qua nước sôi rồi xếp vào tô, xếp thịt bò thái lát mỏng cùng hành hoa xắt nhỏ lên trên.' },
-          { stepNumber: 5, content: 'Chan nước dùng đang sôi sùng sục vào tô phở cho thịt bò chín tái và dậy mùi hành thơm. Ăn kèm quẩy và chanh ớt.' },
-        ],
-      },
-      images: {
-        create: [
-          { imageUrl: 'https://images.unsplash.com/photo-1583224964978-2257b960c3d3?auto=format&fit=crop&w=800&q=80', type: RecipeImageType.THUMBNAIL, displayOrder: 1 },
-        ],
-      },
-      recipeTags: {
-        create: [
-          { tagId: tagTraditional.id },
-        ],
-      },
+      thumbnail: 'https://images.unsplash.com/photo-1583002621742-881c9c72e2cf?auto=format&fit=crop&q=80&w=600',
+      likeCount: 5n,
+      favoriteCount: 3n,
+      averageRating: 4.8,
+      createdAt: subDays(new Date(), 6),
     },
   });
 
-  // 3. Salad Ức Gà
-  const recipeSalad = await prisma.recipe.create({
+  const r2 = await prisma.recipe.create({
     data: {
-      userId: memberLan.id,
-      categoryId: catVegetarian.id,
-      title: 'Salad Ức Gà Sốt Mè Rang Giảm Cân',
-      description: 'Lựa chọn hoàn hảo cho những bữa ăn Eat-clean thanh đạm, giàu protein tốt và các loại vitamin từ rau quả tươi mát.',
-      calories: 320.00,
-      cookTime: 15,
+      id: 2n,
+      userId: 3n, // lan_anh
+      categoryId: 3n, // Tráng miệng
+      title: 'Bánh flan sữa tươi siêu mịn',
+      description: 'Làm bánh flan caramen tại nhà siêu đơn giản, không bị rỗ.',
+      cookTime: 45,
       difficulty: RecipeDifficulty.EASY,
-      servings: 2,
-      thumbnail: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',
-      source: 'Kitchen Eaters',
-      isPublic: true,
-      viewCount: 220n,
-      likeCount: 55n,
-      favoriteCount: 30n,
-      averageRating: 4.60,
-      ingredients: {
-        create: [
-          { ingredientName: 'Ức gà phi lê', quantity: 200.00, unit: 'g', displayOrder: 1 },
-          { ingredientName: 'Rau xà lách sạch', quantity: 150.00, unit: 'g', displayOrder: 2 },
-          { ingredientName: 'Cà chua bi', quantity: 50.00, unit: 'g', displayOrder: 3 },
-          { ingredientName: 'Quả bơ chín', quantity: 0.50, unit: 'quả', displayOrder: 4 },
-          { ingredientName: 'Nước sốt mè rang Kewpie', quantity: 3.00, unit: 'muỗng canh', displayOrder: 5 },
-        ],
+      servings: 6,
+      thumbnail: 'https://images.unsplash.com/photo-1541783245831-57d6fb0926d3?auto=format&fit=crop&q=80&w=600',
+      likeCount: 4n,
+      favoriteCount: 2n,
+      averageRating: 4.5,
+      createdAt: subDays(new Date(), 5),
+    },
+  });
+
+  const r3 = await prisma.recipe.create({
+    data: {
+      id: 3n,
+      userId: 4n, // minh_chay
+      categoryId: 5n, // Món chay
+      title: 'Đậu hũ sốt Tứ Xuyên chay',
+      description: 'Món đậu hũ sốt cay cay, đậm đà, cực kỳ trôi cơm.',
+      cookTime: 20,
+      difficulty: RecipeDifficulty.MEDIUM,
+      servings: 3,
+      thumbnail: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600',
+      likeCount: 3n,
+      favoriteCount: 1n,
+      averageRating: 4.2,
+      createdAt: subDays(new Date(), 4),
+    },
+  });
+
+  const r4 = await prisma.recipe.create({
+    data: {
+      id: 4n,
+      userId: 5n, // huong_giang
+      categoryId: 2n, // Khai vị
+      title: 'Gỏi cuốn tôm thịt',
+      description: 'Món ăn thanh mát, giải nhiệt cho mùa hè nóng bức.',
+      cookTime: 30,
+      difficulty: RecipeDifficulty.EASY,
+      servings: 4,
+      thumbnail: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&q=80&w=600',
+      likeCount: 2n,
+      favoriteCount: 2n,
+      averageRating: 4.0,
+      createdAt: subDays(new Date(), 3),
+    },
+  });
+
+  const r5 = await prisma.recipe.create({
+    data: {
+      id: 5n,
+      userId: 2n, // hoang_chef
+      categoryId: 1n, // Món chính
+      title: 'Cá kho tộ miền Tây',
+      description: 'Cá kho đậm vị tỏi ớt, thịt ba chỉ béo ngậy.',
+      cookTime: 60,
+      difficulty: RecipeDifficulty.MEDIUM,
+      servings: 4,
+      thumbnail: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&q=80&w=600',
+      likeCount: 1n,
+      favoriteCount: 1n,
+      averageRating: 4.7,
+      createdAt: subDays(new Date(), 2),
+    },
+  });
+
+  // More recipes created recently
+  await prisma.recipe.createMany({
+    data: [
+      {
+        id: 6n,
+        userId: 3n,
+        categoryId: 3n,
+        title: 'Bánh tart trứng Hong Kong',
+        cookTime: 50,
+        difficulty: RecipeDifficulty.HARD,
+        thumbnail: 'https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&q=80&w=600',
+        createdAt: subDays(new Date(), 1),
       },
-      steps: {
-        create: [
-          { stepNumber: 1, content: 'Ức gà rửa sạch, luộc chín cùng một chút gừng đập dập và muối để khử mùi. Sau khi chín, xé gà thành sợi vừa ăn.' },
-          { stepNumber: 2, content: 'Rau xà lách rửa sạch xắt khúc nhỏ. Cà chua bi cắt đôi. Dưa chuột thái mỏng. Bơ lột vỏ cắt lát dày.' },
-          { stepNumber: 3, content: 'Cho xà lách, cà chua, dưa chuột và bơ vào tô trộn lớn.' },
-          { stepNumber: 4, content: 'Rải ức gà xé sợi lên trên cùng, rưới nước sốt mè rang đều khắp bề mặt tô salad.' },
-          { stepNumber: 5, content: 'Trộn đều nhẹ tay trước khi ăn để các nguyên liệu ngấm sốt mà bơ không bị nát. Dùng lạnh ngon hơn.' },
-        ],
+      {
+        id: 7n,
+        userId: 4n,
+        categoryId: 5n,
+        title: 'Nấm đùi gà kho tiêu xanh',
+        cookTime: 25,
+        difficulty: RecipeDifficulty.EASY,
+        thumbnail: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600',
+        createdAt: subDays(new Date(), 1),
       },
-      images: {
-        create: [
-          { imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80', type: RecipeImageType.THUMBNAIL, displayOrder: 1 },
-        ],
+      {
+        id: 8n,
+        userId: 5n,
+        categoryId: 4n,
+        title: 'Trà đào cam sả thanh nhiệt',
+        cookTime: 15,
+        difficulty: RecipeDifficulty.EASY,
+        thumbnail: 'https://images.unsplash.com/photo-1536935338788-846bb9981813?auto=format&fit=crop&q=80&w=600',
+        createdAt: new Date(),
       },
-      recipeTags: {
-        create: [
-          { tagId: tagHealthy.id },
-          { tagId: tagQuick.id },
-          { tagId: tagLowCal.id },
-        ],
+    ],
+  });
+
+  // 5a. Seed Ingredients
+  await prisma.recipeIngredient.createMany({
+    data: [
+      // Phở bò (recipe 1)
+      { recipeId: 1n, ingredientName: 'Xương bò (ống tuỷ)', quantity: 1.5, unit: 'kg', displayOrder: 1 },
+      { recipeId: 1n, ingredientName: 'Thịt bò tái (nạm, gầu)', quantity: 500, unit: 'g', displayOrder: 2 },
+      { recipeId: 1n, ingredientName: 'Bánh phở tươi', quantity: 800, unit: 'g', displayOrder: 3 },
+      { recipeId: 1n, ingredientName: 'Hành tây', quantity: 2, unit: 'củ', displayOrder: 4 },
+      { recipeId: 1n, ingredientName: 'Gừng tươi', quantity: 1, unit: 'củ lớn', displayOrder: 5 },
+      { recipeId: 1n, ingredientName: 'Hoa hồi', quantity: 5, unit: 'tai', displayOrder: 6 },
+      { recipeId: 1n, ingredientName: 'Quế', quantity: 2, unit: 'thanh', displayOrder: 7 },
+      { recipeId: 1n, ingredientName: 'Nước mắm, muối, đường phèn', quantity: null, unit: 'vừa đủ', displayOrder: 8 },
+      { recipeId: 1n, ingredientName: 'Hành lá, ngò gai, giá đỗ, chanh, ớt', quantity: null, unit: 'kèm ăn', displayOrder: 9 },
+      // Bánh flan (recipe 2)
+      { recipeId: 2n, ingredientName: 'Trứng gà', quantity: 4, unit: 'quả', displayOrder: 1 },
+      { recipeId: 2n, ingredientName: 'Sữa tươi không đường', quantity: 400, unit: 'ml', displayOrder: 2 },
+      { recipeId: 2n, ingredientName: 'Sữa đặc có đường', quantity: 100, unit: 'ml', displayOrder: 3 },
+      { recipeId: 2n, ingredientName: 'Đường trắng', quantity: 100, unit: 'g', displayOrder: 4 },
+      { recipeId: 2n, ingredientName: 'Nước', quantity: 30, unit: 'ml', displayOrder: 5 },
+      { recipeId: 2n, ingredientName: 'Vani extract', quantity: 1, unit: 'muỗng cà phê', displayOrder: 6 },
+      // Đậu hũ (recipe 3)
+      { recipeId: 3n, ingredientName: 'Đậu hũ cứng', quantity: 400, unit: 'g', displayOrder: 1 },
+      { recipeId: 3n, ingredientName: 'Tương đậu đen (doubanjiang)', quantity: 2, unit: 'muỗng canh', displayOrder: 2 },
+      { recipeId: 3n, ingredientName: 'Dầu mè', quantity: 1, unit: 'muỗng canh', displayOrder: 3 },
+      { recipeId: 3n, ingredientName: 'Tỏi, gừng băm', quantity: null, unit: 'vừa đủ', displayOrder: 4 },
+      { recipeId: 3n, ingredientName: 'Nước tương, đường, tinh bột năng', quantity: null, unit: 'vừa đủ', displayOrder: 5 },
+    ],
+  });
+
+  // 5b. Seed Steps
+  await prisma.recipeStep.createMany({
+    data: [
+      // Phở bò (recipe 1)
+      { recipeId: 1n, stepNumber: 1, content: 'Xương bò rửa sạch, chần qua nước sôi 5 phút rồi rửa lại với nước lạnh để loại bỏ tạp chất.' },
+      { recipeId: 1n, stepNumber: 2, content: 'Nướng hành tây và gừng trên lửa trực tiếp hoặc trong lò nướng đến khi vỏ ngoài cháy đen, rồi cạo sạch lớp đen bên ngoài.' },
+      { recipeId: 1n, stepNumber: 3, content: 'Rang khô hoa hồi, quế và gia vị phở đến khi dậy mùi thơm. Cho vào túi lọc gia vị.' },
+      { recipeId: 1n, stepNumber: 4, content: 'Cho xương vào nồi lớn, đổ nước ngập xương (khoảng 4-5 lít), đun sôi rồi hạ lửa nhỏ. Thêm hành tây, gừng nướng và túi gia vị, ninh ít nhất 3 tiếng.' },
+      { recipeId: 1n, stepNumber: 5, content: 'Nêm nước dùng với nước mắm, muối và đường phèn cho vừa khẩu vị. Nước dùng chuẩn phải trong, có vị ngọt tự nhiên từ xương.' },
+      { recipeId: 1n, stepNumber: 6, content: 'Trụng bánh phở qua nước sôi, cho vào tô. Thái thịt bò thật mỏng xếp lên mặt. Chan nước dùng nóng bỏng vào tô, trang trí với hành lá và ngò gai.' },
+      // Bánh flan (recipe 2)
+      { recipeId: 2n, stepNumber: 1, content: 'Làm caramel: đun đường và nước trên lửa vừa, không khuấy, đến khi chuyển màu vàng cánh gián đẹp. Đổ ngay vào khuôn, nghiêng đều để caramel phủ đáy khuôn.' },
+      { recipeId: 2n, stepNumber: 2, content: 'Đánh trứng với sữa đặc, sau đó từ từ thêm sữa tươi ấm (không nóng quá). Thêm vani khuấy đều.' },
+      { recipeId: 2n, stepNumber: 3, content: 'Lọc hỗn hợp trứng qua rây mịn 2-3 lần để loại bỏ bọt khí và màng trứng, giúp bánh mịn không bị rỗ.' },
+      { recipeId: 2n, stepNumber: 4, content: 'Đổ hỗn hợp vào khuôn có caramel. Đặt khuôn vào khay nước nóng (cách thủy), hấp hoặc nướng ở 150°C trong 40-45 phút đến khi bánh đặc lại.' },
+      { recipeId: 2n, stepNumber: 5, content: 'Để nguội hoàn toàn rồi cho vào tủ lạnh ít nhất 4 tiếng. Khi ăn, dùng dao nhỏ rạch cạnh khuôn và úp ngược bánh ra đĩa.' },
+      // Đậu hũ (recipe 3)
+      { recipeId: 3n, stepNumber: 1, content: 'Cắt đậu hũ thành khối vuông 2cm. Dầu mè nóng vàng, chiên đậu hũ đến vàng đều các mặt rồi vớt ra.' },
+      { recipeId: 3n, stepNumber: 2, content: 'Phi thơm tỏi gừng, thêm tương đậu đen xào đến khi dậy mùi thơm đặc trưng và dầu chuyển màu đỏ.' },
+      { recipeId: 3n, stepNumber: 3, content: 'Cho đậu hũ vào xào cùng, thêm nước tương, đường và một ít nước. Đun nhỏ lửa khoảng 5 phút.' },
+      { recipeId: 3n, stepNumber: 4, content: 'Pha tinh bột năng với nước lạnh, đổ từ từ vào chảo, đảo đều đến khi sốt sánh lại. Rắc tiêu xanh và hành lá rồi tắt bếp.' },
+    ],
+  });
+
+  console.log('Đã seed xong Recipes.');
+
+  // 5. Kết nối Recipe & Tags
+  await prisma.recipeTag.createMany({
+    data: [
+      { recipeId: 1n, tagId: 2n },
+      { recipeId: 1n, tagId: 5n },
+      { recipeId: 2n, tagId: 1n },
+      { recipeId: 3n, tagId: 4n },
+      { recipeId: 4n, tagId: 1n },
+      { recipeId: 4n, tagId: 4n },
+      { recipeId: 5n, tagId: 5n },
+    ],
+  });
+
+  // 6. Seed Recipe Likes
+  await prisma.recipeLike.createMany({
+    data: [
+      { userId: 1n, recipeId: 1n },
+      { userId: 3n, recipeId: 1n },
+      { userId: 4n, recipeId: 1n },
+      { userId: 5n, recipeId: 1n },
+      { userId: 2n, recipeId: 2n },
+      { userId: 4n, recipeId: 2n },
+      { userId: 5n, recipeId: 2n },
+      { userId: 2n, recipeId: 3n },
+      { userId: 3n, recipeId: 3n },
+      { userId: 2n, recipeId: 4n },
+    ],
+  });
+
+  // 7. Seed Comments
+  await prisma.comment.createMany({
+    data: [
+      { id: 1n, recipeId: 1n, userId: 3n, content: 'Nước lèo rất trong và ngọt thanh, đúng vị Phở Hà Nội!' },
+      { id: 2n, recipeId: 1n, userId: 4n, content: 'Bánh phở mềm dai vừa phải. Rất xuất sắc!' },
+      { id: 3n, recipeId: 2n, userId: 2n, content: 'Bánh béo ngậy, mịn màng không hề bị tanh mùi trứng.' },
+      { id: 4n, recipeId: 3n, userId: 5n, content: 'Món này ăn với cơm nóng vào mùa đông thì tuyệt vời.' },
+    ],
+  });
+
+  // 8. Seed Reports
+  await prisma.report.createMany({
+    data: [
+      {
+        id: 1n,
+        recipeId: 2n,
+        reporterId: 4n,
+        reason: 'Nội dung phản cảm',
+        description: 'Phần mô tả chứa một số từ ngữ không lịch sự.',
+        status: ReportStatus.PENDING,
+        createdAt: subDays(new Date(), 2),
       },
-    },
+      {
+        id: 2n,
+        recipeId: 4n,
+        reporterId: 2n,
+        reason: 'Hình ảnh sai lệch',
+        description: 'Ảnh thumbnail là gỏi cuốn nhưng công thức lại hướng dẫn làm gỏi xoài.',
+        status: ReportStatus.PENDING,
+        createdAt: subDays(new Date(), 1),
+      },
+      {
+        id: 3n,
+        recipeId: 3n,
+        reporterId: 3n,
+        reason: 'Bản quyền công thức',
+        description: 'Sao chép nguyên văn công thức từ trang cá nhân của tôi.',
+        status: ReportStatus.RESOLVED,
+        handledBy: 1n,
+        handledAt: subDays(new Date(), 1),
+        createdAt: subDays(new Date(), 3),
+      },
+    ],
   });
 
-  console.log('Seeding comments & ratings...');
-  // Comments on Flan
-  await prisma.comment.create({
-    data: {
-      recipeId: recipeFlan.id,
-      userId: memberLan.id,
-      content: 'Nhìn ngon quá anh ơi! Cho em hỏi nếu hấp bằng nồi cơm điện thì có được không ạ?',
-    },
+  // 9. Seed Notifications
+  await prisma.notification.createMany({
+    data: [
+      {
+        id: 1n,
+        userId: 2n,
+        title: 'Bình luận mới về công thức',
+        content: 'lan_anh đã bình luận về công thức "Phở bò truyền thống" của bạn.',
+        type: NotificationType.COMMENT,
+        referenceId: 1n,
+        isRead: false,
+        createdAt: subDays(new Date(), 1),
+      },
+      {
+        id: 2n,
+        userId: 2n,
+        title: 'Lượt thích mới',
+        content: 'dung_admin đã thích công thức "Phở bò truyền thống" của bạn.',
+        type: NotificationType.LIKE,
+        referenceId: 1n,
+        isRead: true,
+        createdAt: subDays(new Date(), 2),
+      },
+      {
+        id: 3n,
+        userId: 1n,
+        title: 'Báo cáo vi phạm mới',
+        content: 'minh_chay đã báo cáo công thức "Bánh flan sữa tươi siêu mịn".',
+        type: NotificationType.REPORT,
+        referenceId: 1n,
+        isRead: false,
+        createdAt: subDays(new Date(), 2),
+      },
+    ],
   });
 
-  // Rating on Flan
-  await prisma.rating.create({
-    data: {
-      recipeId: recipeFlan.id,
-      userId: memberLan.id,
-      rating: 5,
-    },
+  // 10. Seed AI Generation History
+  await prisma.aIGenerationHistory.createMany({
+    data: [
+      {
+        id: 1n,
+        userId: 2n,
+        recipeId: 1n,
+        imageUrl: 'https://images.unsplash.com/photo-1583002621742-881c9c72e2cf?auto=format&fit=crop&q=80&w=600',
+        prompt: 'phở bò việt nam bốc khói nghi ngút',
+        model: 'gemini-2.0-flash',
+        status: AIGenerationStatus.SUCCESS,
+        createdAt: subDays(new Date(), 4),
+      },
+      {
+        id: 2n,
+        userId: 3n,
+        recipeId: 2n,
+        imageUrl: 'https://images.unsplash.com/photo-1541783245831-57d6fb0926d3?auto=format&fit=crop&q=80&w=600',
+        prompt: 'bánh flan caramel bóng mịn bày trên đĩa sứ trắng',
+        model: 'gemini-2.0-flash',
+        status: AIGenerationStatus.SUCCESS,
+        createdAt: subDays(new Date(), 2),
+      },
+      {
+        id: 3n,
+        userId: 5n,
+        prompt: 'nước ép dưa hấu mát lạnh trang trí bạc hà',
+        model: 'gemini-2.0-flash',
+        status: AIGenerationStatus.FAILED,
+        createdAt: subDays(new Date(), 1),
+      },
+    ],
   });
 
-  // Comments on Pho
-  const comment1 = await prisma.comment.create({
-    data: {
-      recipeId: recipePho.id,
-      userId: memberLan.id,
-      content: 'Bí quyết nước dùng ngon quá ạ! Em đã thử nấu tại nhà và cả nhà đều khen.',
-    },
-  });
-
-  await prisma.comment.create({
-    data: {
-      recipeId: recipePho.id,
-      userId: chefNguyen.id,
-      parentCommentId: comment1.id,
-      content: 'Cảm ơn em đã chia sẻ! Chúc em nấu được nhiều món ăn ngon hơn nữa.',
-    },
-  });
-
-  await prisma.rating.create({
-    data: {
-      recipeId: recipePho.id,
-      userId: memberLan.id,
-      rating: 5,
-    },
-  });
-
-  console.log('Database seeding completed successfully!');
+  console.log('Seed dữ liệu thành công!');
+  await prisma.$disconnect();
+  await pool.end();
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('Lỗi khi seed dữ liệu:', e);
     process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-    await pool.end();
   });

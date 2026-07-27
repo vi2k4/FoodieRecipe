@@ -23,8 +23,11 @@ import {
 } from './dto/sub-resources.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../../common/guards/auth.guard';
 
 @Controller('recipes')
+@UseGuards(AuthGuard)
 export class RecipesController {
   constructor(private readonly recipesService: RecipesService) {}
 

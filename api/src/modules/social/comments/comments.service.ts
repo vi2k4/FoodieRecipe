@@ -3,7 +3,7 @@ import { PrismaService } from '../../../database/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType } from '@prisma/client';
+import { NotificationType } from '../../../generated/prisma/client';
 
 @Injectable()
 export class CommentsService {
