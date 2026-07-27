@@ -13,9 +13,10 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { SearchHistoryModule } from './modules/search-history/search-history.module';
 import { AIGenerationModule } from './modules/ai-generation/ai-generation.module';
 import { AdminModule } from './modules/admin/admin.module';
-
+import { S3Module } from './common/storage/s3.module';
 @Module({
   imports: [
+    S3Module,
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,

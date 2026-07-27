@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -34,10 +38,14 @@ export class CommentsService {
         where: { id: parentCommentId, deletedAt: null },
       });
       if (!parentComment) {
-        throw new NotFoundException(`Parent comment with ID ${parentCommentId} not found`);
+        throw new NotFoundException(
+          `Parent comment with ID ${parentCommentId} not found`,
+        );
       }
       if (parentComment.recipeId !== recipeId) {
-        throw new ForbiddenException('Parent comment does not belong to this recipe');
+        throw new ForbiddenException(
+          'Parent comment does not belong to this recipe',
+        );
       }
     }
 
@@ -139,7 +147,11 @@ export class CommentsService {
     return roots;
   }
 
-  async updateComment(userId: bigint, commentId: bigint, updateCommentDto: UpdateCommentDto) {
+  async updateComment(
+    userId: bigint,
+    commentId: bigint,
+    updateCommentDto: UpdateCommentDto,
+  ) {
     const { content } = updateCommentDto;
 
     // 1. Find comment
@@ -153,7 +165,9 @@ export class CommentsService {
 
     // 2. Check if owner
     if (comment.userId !== userId) {
-      throw new ForbiddenException('You do not have permission to edit this comment');
+      throw new ForbiddenException(
+        'You do not have permission to edit this comment',
+      );
     }
 
     // 3. Update comment
@@ -187,7 +201,9 @@ export class CommentsService {
     // 2. Check ownership or admin role (can check user object if role is stored)
     // For now, check ownership
     if (comment.userId !== userId) {
-      throw new ForbiddenException('You do not have permission to delete this comment');
+      throw new ForbiddenException(
+        'You do not have permission to delete this comment',
+      );
     }
 
     // 3. Soft delete comment
