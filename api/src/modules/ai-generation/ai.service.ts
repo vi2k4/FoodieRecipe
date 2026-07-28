@@ -10,6 +10,7 @@ import { GeneratedRecipeDto } from './dto/request/generated-recipe.dto';
 import { GenerateRecipeResponseDto } from './dto/response/ai-generate-receipt-response.dto';
 import {
   AnalyzeImageResponseDto,
+  IngredientDto,
   SavedRecipeDto,
 } from './dto/response/analyze-image-response.dto';
 import { AIGenerationHistoryDto } from './dto/response/ai-generation-history-response.dto';
@@ -23,6 +24,7 @@ import { PromptBuilderService } from './prompt/prompt-builder.service';
 import { RecipePersistenceService } from './services/recipe_persistence.service';
 import { PrismaService } from 'src/database/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { localizeDetectedIngredients } from './services/ingredient-localization';
 
 @Injectable()
 export class AIGenerationService {
@@ -38,7 +40,7 @@ export class AIGenerationService {
   ) {}
 
   private async saveHistory(data: {
-    userId: number;
+    userId: bigint;
     prompt: string;
     imageUrl?: string;
     labels: string[];
@@ -48,7 +50,7 @@ export class AIGenerationService {
   }) {
     return this.prisma.aIGenerationHistory.create({
       data: {
-        userId: BigInt(data.userId),
+        userId: data.userId,
         prompt: data.prompt,
         imageUrl: data.imageUrl ?? null,
         detectedLabels: data.labels,
@@ -60,10 +62,12 @@ export class AIGenerationService {
   }
 
   async generate(
-    userId: number,
+    userId: bigint,
     dto: GenerateRecipeDto,
   ): Promise<GenerateRecipeResponseDto> {
-    const prompt = this.promptBuilder.buildRecipePromptFromNames(dto.ingredients);
+    const prompt = this.promptBuilder.buildRecipePromptFromNames(
+      dto.ingredients,
+    );
 
     const { recipe, historyId } = await this.generateAndPersistRecipe({
       userId,
@@ -81,8 +85,11 @@ export class AIGenerationService {
 
   async analyzeImage(
     file: Express.Multer.File,
-    userId = 1,
+    userId: bigint | null = null,
   ): Promise<AnalyzeImageResponseDto> {
+    if (userId == null) {
+      throw new BadRequestException('Thiếu userId để lưu lịch sử');
+    }
     const upload = await this.s3Service.uploadImage(file, 'ai-images');
     const result = await this.rekognitionService.detectLabels(upload.key);
 
@@ -98,44 +105,61 @@ export class AIGenerationService {
 
     const prompt = this.promptBuilder.buildRecipePrompt(ingredients);
 
-    const { recipe, historyId } = await this.generateAndPersistRecipe({
-      userId,
-      prompt,
-      labels: labels.map((l) => l.name),
-      imageUrl: upload.url,
-    });
+    const { recipe, historyId, localizedIngredients } =
+      await this.generateAndPersistRecipe({
+        userId,
+        prompt,
+        labels: labels.map((l) => l.name),
+        recognizedIngredients: ingredients,
+        imageUrl: upload.url,
+      });
 
     return {
       labels,
-      ingredients,
+      ingredients: localizedIngredients,
       recipe,
       historyId,
     };
   }
 
   private async generateAndPersistRecipe(params: {
-    userId: number;
+    userId: bigint;
     prompt: string;
     labels: string[];
+    recognizedIngredients?: IngredientDto[];
     imageUrl?: string;
-  }): Promise<{ recipe: SavedRecipeDto; historyId: number }> {
+  }): Promise<{
+    recipe: SavedRecipeDto;
+    historyId: number;
+    localizedIngredients: IngredientDto[];
+  }> {
     const model = this.configService.getOrThrow<string>('BEDROCK_MODEL_ID');
 
     try {
-      const rawResponse = await this.bedrockService.generateRecipe(params.prompt);
+      const rawResponse = await this.bedrockService.generateRecipe(
+        params.prompt,
+      );
       const generatedRecipe = this.parseBedrockRecipe(rawResponse);
+      const localizedIngredients = localizeDetectedIngredients(
+        params.recognizedIngredients ?? [],
+        generatedRecipe.detectedIngredients,
+      );
 
       const savedRecipe = await this.recipePersistence.saveGeneratedRecipe(
         generatedRecipe,
-        params.userId,
+        Number(params.userId),
         params.imageUrl,
       );
+
+      const resolvedThumbnail = await this.resolveImageUrl(params.imageUrl);
 
       const history = await this.saveHistory({
         userId: params.userId,
         prompt: params.prompt,
         imageUrl: params.imageUrl,
-        labels: params.labels,
+        labels: localizedIngredients.length
+          ? localizedIngredients.map((ingredient) => ingredient.name)
+          : params.labels,
         model,
         status: AIGenerationStatus.SUCCESS,
         recipeId: Number(savedRecipe.id),
@@ -153,9 +177,10 @@ export class AIGenerationService {
           steps: generatedRecipe.steps,
           tips: generatedRecipe.tips,
           nutrition: generatedRecipe.nutrition,
-          thumbnail: params.imageUrl,
+          thumbnail: resolvedThumbnail ?? undefined,
         },
         historyId: Number(history.id),
+        localizedIngredients,
       };
     } catch (error) {
       await this.saveHistory({
@@ -192,6 +217,10 @@ export class AIGenerationService {
       throw new BadRequestException('Phản hồi AI không phải JSON hợp lệ');
     }
 
+    if (!Array.isArray(parsed.detectedIngredients)) {
+      parsed.detectedIngredients = [];
+    }
+
     if (
       !parsed.title ||
       !Array.isArray(parsed.ingredients) ||
@@ -204,48 +233,85 @@ export class AIGenerationService {
 
     return parsed;
   }
-  async getHistory(userId: number): Promise<AIGenerationHistoryDto[]> {
+
+  async getHistory(userId: bigint): Promise<AIGenerationHistoryDto[]> {
     const histories = await this.prisma.aIGenerationHistory.findMany({
       where: {
-        userId: BigInt(userId), // nếu userId trong Prisma là BigInt
+        userId,
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
 
-    return histories.map((history) => ({
-      id: Number(history.id),
-      prompt: history.prompt ?? '',
-      imageUrl: history.imageUrl ?? '',
-      detectedLabels: (history.detectedLabels as string[]) ?? [],
-      model: history.model ?? '',
-      recipeId: Number(history.recipeId!),
-      status: history.status as 'pending' | 'success' | 'failed',
-      createdAt: history.createdAt,
-      userId: Number(history.userId),
-    }));
+    return Promise.all(histories.map((history) => this.toHistoryDto(history)));
   }
 
-  async getHistoryById(id: number): Promise<AIGenerationHistoryDto> {
-    const history = await this.prisma.aIGenerationHistory.findUnique({
-      where: {
-        id,
-      },
+  async getHistoryById(
+    id: bigint,
+    userId: bigint,
+  ): Promise<AIGenerationHistoryDto> {
+    const history = await this.prisma.aIGenerationHistory.findFirst({
+      where: { id, userId },
     });
 
     if (!history) {
       throw new NotFoundException(`AI Generation History ${id} not found`);
     }
 
+    return this.toHistoryDto(history);
+  }
+
+  private getConfiguredS3Key(value?: string | null): string | null {
+    if (!value) return null;
+
+    const bucket = this.configService.get<string>('AWS_BUCKET_NAME');
+    if (!bucket) return null;
+
+    try {
+      const url = new URL(value);
+      if (url.hostname.startsWith(`${bucket}.s3.`)) {
+        return decodeURIComponent(url.pathname.replace(/^\//, ''));
+      }
+
+      if (
+        url.hostname.startsWith('s3.') &&
+        url.pathname.startsWith(`/${bucket}/`)
+      ) {
+        return decodeURIComponent(url.pathname.slice(bucket.length + 2));
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  }
+
+  private async resolveImageUrl(value?: string | null) {
+    const key = this.getConfiguredS3Key(value);
+    return key ? this.s3Service.getPresignedUrl(key) : value;
+  }
+
+  private async toHistoryDto(history: {
+    id: bigint;
+    userId: bigint;
+    recipeId: bigint | null;
+    imageUrl: string | null;
+    detectedLabels: unknown;
+    prompt: string | null;
+    model: string | null;
+    status: string;
+    createdAt: Date;
+  }): Promise<AIGenerationHistoryDto> {
     return {
       id: Number(history.id),
       prompt: history.prompt ?? '',
-      imageUrl: history.imageUrl ?? '',
+      imageUrl: (await this.resolveImageUrl(history.imageUrl)) ?? '',
       detectedLabels: (history.detectedLabels as string[]) ?? [],
       model: history.model ?? '',
-      recipeId: Number(history.recipeId!),
-      status: history.status as 'pending' | 'success' | 'failed',
+      recipeId: history.recipeId ? Number(history.recipeId) : undefined,
+      status: history.status.toLowerCase() as
+        'pending' | 'processing' | 'success' | 'failed',
       createdAt: history.createdAt,
       userId: Number(history.userId),
     };

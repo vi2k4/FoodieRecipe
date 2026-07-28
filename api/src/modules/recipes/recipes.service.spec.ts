@@ -3,10 +3,20 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RecipesService } from './recipes.service';
 import { PrismaService } from '../../database/prisma.service';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { S3Service } from '../../common/storage/s3.service';
 
 describe('RecipesService (Unit Tests)', () => {
   let service: RecipesService;
   let prisma: any;
+
+  const mockS3Service = {
+    getPresignedUrl: jest.fn(),
+  };
+
+  const mockConfigService = {
+    get: jest.fn(),
+  };
 
   const mockPrismaService = {
     recipe: {
@@ -64,6 +74,14 @@ describe('RecipesService (Unit Tests)', () => {
           provide: PrismaService,
           useValue: mockPrismaService,
         },
+        {
+          provide: S3Service,
+          useValue: mockS3Service,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
       ],
     }).compile();
 
@@ -113,9 +131,67 @@ describe('RecipesService (Unit Tests)', () => {
         expect(res.total).toEqual(1);
         expect(prisma.recipe.findMany).toHaveBeenCalledWith(
           expect.objectContaining({
-            where: expect.objectContaining({ deletedAt: null }),
+            where: expect.objectContaining({
+              deletedAt: null,
+              isPublic: true,
+            }),
           }),
         );
+      });
+
+      it('should return both public and private recipes only for a specific user', async () => {
+        prisma.recipe.findMany.mockResolvedValue([]);
+        prisma.recipe.count.mockResolvedValue(0);
+
+        await service.findAll({ page: 1, limit: 10, userId: BigInt(7) });
+
+        expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({
+              deletedAt: null,
+              userId: BigInt(7),
+            }),
+          }),
+        );
+        expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.not.objectContaining({ isPublic: expect.anything() }),
+          }),
+        );
+      });
+
+      it('should only presign images from the configured S3 bucket', async () => {
+        mockConfigService.get.mockReturnValue('private-food-bucket');
+        mockS3Service.getPresignedUrl.mockResolvedValue(
+          'https://signed.example.com/ai-images/dish.jpg',
+        );
+        prisma.recipe.findMany.mockResolvedValue([
+          {
+            id: BigInt(1),
+            title: 'AI dish',
+            thumbnail:
+              'https://private-food-bucket.s3.ap-southeast-1.amazonaws.com/ai-images/dish.jpg',
+          },
+          {
+            id: BigInt(2),
+            title: 'External dish',
+            thumbnail: 'https://images.unsplash.com/photo.jpg',
+          },
+        ]);
+        prisma.recipe.count.mockResolvedValue(2);
+
+        const res = await service.findAll({ page: 1, limit: 10 });
+
+        expect(res.data[0].thumbnail).toBe(
+          'https://signed.example.com/ai-images/dish.jpg',
+        );
+        expect(res.data[1].thumbnail).toBe(
+          'https://images.unsplash.com/photo.jpg',
+        );
+        expect(mockS3Service.getPresignedUrl).toHaveBeenCalledWith(
+          'ai-images/dish.jpg',
+        );
+        expect(mockS3Service.getPresignedUrl).toHaveBeenCalledTimes(1);
       });
     });
 

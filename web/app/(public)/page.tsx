@@ -17,54 +17,6 @@ interface Recipe {
   } | null;
 }
 
-const MOCK_RECIPES: Recipe[] = [
-  {
-    id: 1,
-    title: "Bánh Flan Truyền Thống Caramels",
-    description: "Công thức làm bánh flan caramel siêu mịn, thơm ngậy mùi trứng sữa và không bị rỗ.",
-    calories: 250,
-    cookTime: 45,
-    difficulty: "EASY",
-    servings: 4,
-    thumbnail: "https://images.unsplash.com/photo-1541783245831-57d6fb0926d3?auto=format&fit=crop&w=800&q=80",
-    averageRating: 4.8,
-    author: {
-      username: "chef_nguyen",
-      avatarUrl: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=150&q=80",
-    }
-  },
-  {
-    id: 2,
-    title: "Phở Bò Hà Nội Cổ Truyền",
-    description: "Hương vị phở bò truyền thống tinh tế với nước dùng trong vắt, ngọt thanh từ xương bò ninh kỹ và thơm lừng hồi quế thảo quả.",
-    calories: 450,
-    cookTime: 180,
-    difficulty: "HARD",
-    servings: 4,
-    thumbnail: "https://images.unsplash.com/photo-1583224964978-2257b960c3d3?auto=format&fit=crop&w=800&q=80",
-    averageRating: 4.9,
-    author: {
-      username: "chef_nguyen",
-      avatarUrl: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=150&q=80",
-    }
-  },
-  {
-    id: 3,
-    title: "Salad Ức Gà Sốt Mè Rang Giảm Cân",
-    description: "Lựa chọn hoàn hảo cho những bữa ăn Eat-clean thanh đạm, giàu protein tốt và các loại vitamin từ rau quả tươi mát.",
-    calories: 320,
-    cookTime: 15,
-    difficulty: "EASY",
-    servings: 2,
-    thumbnail: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80",
-    averageRating: 4.6,
-    author: {
-      username: "member_lan",
-      avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-    }
-  }
-];
-
 const CATEGORIES = [
   { name: "Món chính", count: 120, icon: Utensils, color: "bg-orange-50 text-orange-600 border-orange-100" },
   { name: "Món tráng miệng", count: 45, icon: Cookie, color: "bg-amber-50 text-amber-600 border-amber-100" },
@@ -75,18 +27,24 @@ const CATEGORIES = [
 async function getRecipes(): Promise<Recipe[]> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-    const res = await fetch(`${apiUrl}/recipes`, {
+    const params = new URLSearchParams({
+      isPublic: "true",
+      page: "1",
+      limit: "6",
+    });
+    const res = await fetch(`${apiUrl}/recipes?${params.toString()}`, {
       cache: "no-store",
       headers: {
         "Accept": "application/json"
       }
     });
     if (!res.ok) throw new Error("Failed to fetch recipes");
-    const data = await res.json();
-    return Array.isArray(data) && data.length > 0 ? data : MOCK_RECIPES;
+    const payload = await res.json();
+    const recipes = Array.isArray(payload) ? payload : payload?.data;
+    return Array.isArray(recipes) ? recipes.slice(0, 6) : [];
   } catch (error) {
-    console.error("Backend fetch failed, using mock data:", error);
-    return MOCK_RECIPES;
+    console.error("Backend fetch failed:", error);
+    return [];
   }
 }
 
@@ -116,15 +74,17 @@ export default async function PublicHomePage() {
           </p>
 
           {/* Search Bar mockup */}
-          <div className="max-w-xl mx-auto flex items-center bg-white border border-neutral-200 rounded-2xl p-2 shadow-md focus-within:ring-2 focus-within:ring-orange-500/20 focus-within:border-orange-500 transition-all duration-300">
-            <Search className="w-5 h-5 text-neutral-400 ml-3" />
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm công thức, nguyên liệu..." 
-              className="w-full px-3 py-2.5 text-neutral-800 placeholder-neutral-400 bg-transparent border-0 outline-none focus:ring-0 text-sm"
-              disabled
-            />
-            <button className="bg-orange-600 hover:bg-orange-500 text-white font-medium text-sm px-5 py-2.5 rounded-xl transition-all duration-200 shadow-sm flex items-center gap-1.5 cursor-not-allowed">
+          <div className="mx-auto flex max-w-xl flex-col gap-2 rounded-2xl border border-neutral-200 bg-white p-2 shadow-md transition-all duration-300 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/20 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 flex-1 items-center">
+              <Search className="ml-3 h-5 w-5 shrink-0 text-neutral-400" />
+              <input 
+                type="text" 
+                placeholder="Tìm kiếm công thức, nguyên liệu..." 
+                className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2.5 text-sm text-neutral-800 outline-none placeholder-neutral-400 focus:ring-0"
+                disabled
+              />
+            </div>
+            <button className="flex shrink-0 cursor-not-allowed items-center justify-center gap-1.5 rounded-xl bg-orange-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-orange-500">
               Tìm kiếm
             </button>
           </div>

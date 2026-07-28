@@ -5,7 +5,7 @@ export class AIGenerationHistoryDto {
   createdAt!: Date;
   imageUrl!: string;
   model!: string;
-  recipeId!: number;
-  status!: 'pending' | 'success' | 'failed';
+  recipeId?: number;
+  status!: 'pending' | 'processing' | 'success' | 'failed';
   userId!: number;
 }

@@ -3,7 +3,15 @@ import {
   NutritionDto,
 } from './generated-ingredient-recipe.dto';
 
+export class TranslatedDetectedIngredientDto {
+  sourceName!: string;
+
+  name!: string;
+}
+
 export class GeneratedRecipeDto {
+  detectedIngredients!: TranslatedDetectedIngredientDto[];
+
   title!: string;
 
   description!: string;

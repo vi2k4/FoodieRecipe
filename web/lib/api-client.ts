@@ -42,6 +42,35 @@ apiClient.interceptors.response.use(
 );
 
 export const api = {
+  searchHistory: {
+    list: async (limit = 10) => {
+      const { data } = await apiClient.get<SearchHistoryEntry[]>(
+        "/search-history",
+        { params: { limit } },
+      );
+      return data;
+    },
+    create: async (keyword: string) => {
+      const { data } = await apiClient.post<SearchHistoryEntry>(
+        "/search-history",
+        { keyword },
+      );
+      return data;
+    },
+    remove: async (id: string | number) => {
+      const { data } = await apiClient.delete<{ success: boolean }>(
+        `/search-history/${id}`,
+      );
+      return data;
+    },
+    clear: async () => {
+      const { data } = await apiClient.delete<{
+        success: boolean;
+        deletedCount: number;
+      }>("/search-history");
+      return data;
+    },
+  },
   recipes: {
     list: async (params?: Record<string, any> | string) => {
       if (typeof params === 'string') {
@@ -49,6 +78,10 @@ export const api = {
         return data;
       }
       const { data } = await apiClient.get<any>('/recipes', { params });
+      return data;
+    },
+    mine: async (params?: Record<string, any>) => {
+      const { data } = await apiClient.get<any>('/recipes/mine', { params });
       return data;
     },
     get: async (id: string | number) => {
@@ -171,3 +204,10 @@ export const api = {
     },
   },
 };
+
+export interface SearchHistoryEntry {
+  id: string;
+  userId: string | null;
+  keyword: string;
+  createdAt: string;
+}

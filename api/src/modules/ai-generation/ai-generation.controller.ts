@@ -5,6 +5,7 @@ import {
   Param,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 
@@ -19,8 +20,11 @@ import { AIGenerationHistoryDto } from './dto/response/ai-generation-history-res
 import { FileInterceptor } from '@nestjs/platform-express';
 
 import { S3Service } from '../../common/storage/s3.service';
+import { AuthGuard } from '../../common/guards/auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('ai')
+@UseGuards(AuthGuard)
 export class AIGenerationController {
   constructor(
     private readonly aiService: AIGenerationService,
@@ -37,27 +41,33 @@ export class AIGenerationController {
 
   @Post('generate')
   async generate(
+    @CurrentUser() user: { id: bigint },
     @Body() dto: GenerateRecipeDto,
   ): Promise<GenerateRecipeResponseDto> {
-    // TODO: Sau này userId sẽ lấy từ JWT
-    return this.aiService.generate(1, dto);
+    return this.aiService.generate(user.id, dto);
   }
 
   @Post('analyze-image')
   @UseInterceptors(FileInterceptor('image'))
-  async analyzeImage(@UploadedFile() file: Express.Multer.File) {
-    return await this.aiService.analyzeImage(file);
+  async analyzeImage(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: { id: bigint },
+  ) {
+    return this.aiService.analyzeImage(file, user.id);
   }
 
   @Get('history')
-  getHistory(): Promise<AIGenerationHistoryDto[]> {
-    return this.aiService.getHistory(1);
+  getHistory(
+    @CurrentUser() user: { id: bigint },
+  ): Promise<AIGenerationHistoryDto[]> {
+    return this.aiService.getHistory(user.id);
   }
 
   @Get('history/:id')
   async getHistoryById(
     @Param('id') id: string,
+    @CurrentUser() user: { id: bigint },
   ): Promise<AIGenerationHistoryDto> {
-    return this.aiService.getHistoryById(Number(id));
+    return this.aiService.getHistoryById(BigInt(id), user.id);
   }
 }
