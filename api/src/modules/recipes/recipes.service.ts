@@ -22,10 +22,66 @@ import {
   RecipeImageType,
   Prisma,
 } from '../../generated/prisma/client';
+import { ConfigService } from '@nestjs/config';
+import { S3Service } from '../../common/storage/s3.service';
 
 @Injectable()
 export class RecipesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly s3Service: S3Service,
+    private readonly configService: ConfigService,
+  ) {}
+
+  private getConfiguredS3Key(value?: string | null): string | null {
+    if (!value) return null;
+
+    const bucket = this.configService.get<string>('AWS_BUCKET_NAME');
+    if (!bucket) return null;
+
+    try {
+      const url = new URL(value);
+      const virtualHostedBucket = url.hostname.startsWith(`${bucket}.s3.`);
+      const pathStyleBucket =
+        url.hostname.startsWith('s3.') &&
+        url.pathname.startsWith(`/${bucket}/`);
+
+      if (virtualHostedBucket) {
+        return decodeURIComponent(url.pathname.replace(/^\//, ''));
+      }
+
+      if (pathStyleBucket) {
+        return decodeURIComponent(url.pathname.slice(bucket.length + 2));
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  }
+
+  private async resolveImageUrl(value?: string | null) {
+    const key = this.getConfiguredS3Key(value);
+    return key ? this.s3Service.getPresignedUrl(key) : value;
+  }
+
+  private async resolveRecipeImages<T extends Record<string, any>>(
+    recipe: T,
+  ): Promise<T> {
+    const resolved: Record<string, any> = { ...recipe };
+    resolved.thumbnail = await this.resolveImageUrl(recipe.thumbnail);
+
+    if (Array.isArray(recipe.images)) {
+      resolved.images = await Promise.all(
+        recipe.images.map(async (image: Record<string, any>) => ({
+          ...image,
+          imageUrl: await this.resolveImageUrl(image.imageUrl),
+        })),
+      );
+    }
+
+    return resolved as T;
+  }
 
   private serializeObj(obj: any): any {
     if (obj === null || obj === undefined) return obj;
@@ -44,7 +100,9 @@ export class RecipesService {
     return obj;
   }
 
-  async findAll(query: QueryRecipeDto) {
+  async findAll(
+    query: QueryRecipeDto & { userId?: number | string | bigint },
+  ) {
     const {
       page = 1,
       limit = 10,
@@ -68,7 +126,10 @@ export class RecipesService {
     if (difficulty) {
       where.difficulty = difficulty as RecipeDifficulty;
     }
-    if (isPublic !== undefined) {
+    if (!userId) {
+      // Public recipe endpoints must never expose private recipes.
+      where.isPublic = true;
+    } else if (isPublic !== undefined) {
       const pub = String(isPublic).toLowerCase() === 'true';
       where.isPublic = pub;
     }
@@ -94,8 +155,12 @@ export class RecipesService {
       this.prisma.recipe.count({ where }),
     ]);
 
+    const resolvedData = await Promise.all(
+      data.map((recipe) => this.resolveRecipeImages(recipe)),
+    );
+
     return {
-      data: this.serializeObj(data),
+      data: this.serializeObj(resolvedData),
       page: Number(page),
       limit: Number(limit),
       total,
@@ -150,13 +215,15 @@ export class RecipesService {
       });
     }
 
-    return this.serializeObj({
+    const resolvedRecipe = await this.resolveRecipeImages({
       ...recipe,
       ingredients,
       steps,
       images,
       tags: fullTags,
     });
+
+    return this.serializeObj(resolvedRecipe);
   }
 
   async create(userId: bigint, dto: CreateRecipeDto) {
@@ -205,7 +272,7 @@ export class RecipesService {
         },
       },
     });
-    return this.serializeObj(recipe);
+    return this.serializeObj(await this.resolveRecipeImages(recipe));
   }
 
   async update(id: bigint, userId: bigint, dto: UpdateRecipeDto) {
@@ -283,7 +350,7 @@ export class RecipesService {
         },
       },
     });
-    return this.serializeObj(updated);
+    return this.serializeObj(await this.resolveRecipeImages(updated));
   }
 
   async remove(id: bigint, userId: bigint) {

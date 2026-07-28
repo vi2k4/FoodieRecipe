@@ -178,7 +178,7 @@ export default function EditRecipePage() {
 
       setSuccessMsg('✨ Cập nhật thông tin cơ bản thành công! Đang quay lại trang chi tiết...');
       setTimeout(() => {
-        router.push(`/recipes/${recipeId}`);
+        router.push(`/my-recipes/${recipeId}`);
       }, 800);
     } catch (err: any) {
       setErrorMsg(err.message || 'Cập nhật thất bại');
@@ -300,7 +300,7 @@ export default function EditRecipePage() {
   // Cancel edits and return to detail page
   const handleCancel = () => {
     if (confirm('Bạn có chắc chắn muốn HỦY TẤT CẢ thay đổi chưa lưu và quay lại trang chi tiết không?')) {
-      router.push(`/recipes/${recipeId}`);
+      router.push(`/my-recipes/${recipeId}`);
     }
   };
 

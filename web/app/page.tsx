@@ -20,7 +20,7 @@ export default function Home() {
       setLoading(true);
       try {
         const [resRecipes, resCats] = await Promise.all([
-          api.recipes.list({ limit: 6 }).catch(() => []),
+          api.recipes.list({ isPublic: true, page: 1, limit: 6 }).catch(() => []),
           api.categories.list().catch(() => []),
         ]);
         setRecipes(Array.isArray(resRecipes) ? resRecipes : resRecipes?.data || []);
@@ -39,14 +39,14 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative pt-20 pb-28 px-4 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-orange-100/50 -z-10" />
-        <div className="container mx-auto text-center max-w-3xl">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-neutral-900 mb-6 leading-tight">
+        <div className="container mx-auto max-w-5xl text-center">
+          <h1 className="mx-auto mb-6 max-w-3xl text-4xl font-bold leading-tight tracking-tight text-neutral-900 md:text-6xl">
             My Foodie Recipes <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-400">
               Nền tảng chia sẻ công thức nấu ăn tích hợp AI/GenAI
             </span>
           </h1>
-          <p className="text-lg text-neutral-600 mb-10 max-w-2xl mx-auto">
+          <p className="mx-auto mb-10 max-w-2xl text-lg text-neutral-600">
             Khám phá hàng ngàn công thức nấu ăn hấp dẫn, dinh dưỡng và dễ làm. Đặc biệt, trải nghiệm công nghệ AI đột phá giúp tạo công thức từ ảnh nguyên liệu của bạn.
           </p>
 
@@ -56,19 +56,19 @@ export default function Home() {
               e.preventDefault();
               window.location.href = `/recipes?search=${encodeURIComponent(search)}&categoryId=${categoryId}&maxCalories=${maxCalories}`;
             }}
-            className="bg-white p-4 rounded-2xl shadow-xl shadow-orange-500/5 border border-orange-100 flex flex-col md:flex-row gap-4 text-left"
+            className="grid grid-cols-1 gap-4 rounded-2xl border border-orange-100 bg-white p-4 text-left shadow-xl shadow-orange-500/5 sm:grid-cols-2 lg:grid-cols-12"
           >
             <input 
               type="text" 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tên món ăn (vd: Phở bò)..." 
-              className="flex-1 px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900"
+              className="min-w-0 rounded-xl border border-neutral-200 px-4 py-3 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-orange-500 sm:col-span-2 lg:col-span-5"
             />
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 bg-white"
+              className="min-w-0 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-orange-500 lg:col-span-3"
             >
               <option value="">Tất cả danh mục</option>
               {categories.map((cat) => (
@@ -77,19 +77,19 @@ export default function Home() {
                 </option>
               ))}
             </select>
-            <div className="flex items-center gap-2 px-2">
+            <div className="flex min-w-0 items-center gap-2 px-2 lg:col-span-2">
               <span className="text-sm text-neutral-500 whitespace-nowrap">Max Calo:</span>
               <input 
                 type="number"
                 value={maxCalories}
                 onChange={(e) => setMaxCalories(e.target.value)}
                 placeholder="500" 
-                className="w-24 px-3 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900" 
+                className="min-w-0 flex-1 rounded-lg border border-neutral-200 px-3 py-2 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-orange-500" 
               />
             </div>
             <button 
               type="submit"
-              className="px-8 py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors whitespace-nowrap flex items-center justify-center shadow-lg shadow-orange-500/20"
+              className="flex w-full items-center justify-center whitespace-nowrap rounded-xl bg-orange-500 px-5 py-3 font-medium text-white shadow-lg shadow-orange-500/20 transition-colors hover:bg-orange-600 lg:col-span-2"
             >
               🔍 Tìm kiếm
             </button>

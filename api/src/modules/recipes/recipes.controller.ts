@@ -46,6 +46,11 @@ export class RecipesController {
     return this.recipesService.findAll(query);
   }
 
+  @Get('mine')
+  findMine(@CurrentUser() user: { id: bigint }, @Query() query: QueryRecipeDto) {
+    return this.recipesService.findAll({ ...query, userId: user.id });
+  }
+
   @Public()
   @Get(':id')
   async findOne(@Param('id') id: string) {
