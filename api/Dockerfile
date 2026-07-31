@@ -29,11 +29,15 @@ RUN pnpm install --prod --frozen-lockfile
 FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 
+RUN corepack enable
+
 ENV NODE_ENV=production
 
 COPY --from=production-deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
-COPY package.json ./package.json
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 EXPOSE 3001
 
