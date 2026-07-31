@@ -5,30 +5,36 @@ WORKDIR /app
 RUN corepack enable
 
 FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json pnpm-lock.yaml prisma.config.ts tsconfig.json nest-cli.json ./
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY prisma.config.ts tsconfig.json tsconfig.build.json nest-cli.json ./
 COPY prisma ./prisma
 COPY src ./src
 
-# Prisma config requires DATABASE_URL while generating the client.
 ARG DATABASE_URL=postgresql://build:build@localhost:5432/build
 ENV DATABASE_URL=${DATABASE_URL}
+
 RUN pnpm exec prisma generate
 RUN pnpm build
 
 FROM base AS production-deps
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --prod --frozen-lockfile
 
 FROM node:22-bookworm-slim AS runner
 WORKDIR /app
+
 ENV NODE_ENV=production
+
 COPY --from=production-deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY package.json ./package.json
+
 EXPOSE 3001
+
 CMD ["node", "dist/main.js"]
