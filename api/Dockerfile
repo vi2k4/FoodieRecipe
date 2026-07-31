@@ -5,10 +5,13 @@ WORKDIR /app
 RUN corepack enable
 
 FROM base AS deps
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
 RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
+
 COPY --from=deps /app/node_modules ./node_modules
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -22,23 +25,22 @@ ENV DATABASE_URL=${DATABASE_URL}
 RUN pnpm exec prisma generate
 RUN pnpm build
 
-FROM base AS production-deps
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --prod --frozen-lockfile
-
 FROM node:22-bookworm-slim AS runner
-WORKDIR /app
 
-RUN corepack enable
+WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY --from=production-deps /app/node_modules ./node_modules
+# Copy cả Prisma CLI và Prisma Client đã generate
+COPY --from=builder /app/node_modules ./node_modules
+
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+COPY package.json ./package.json
 
 EXPOSE 3001
 
-CMD ["node", "dist/src/main.js"]
+# Tự chạy migration trước khi khởi động NestJS
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && exec node dist/src/main.js"]
