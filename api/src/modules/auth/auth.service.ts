@@ -17,6 +17,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { EmailService } from './email.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { S3Service } from '../../common/storage/s3.service';
 
 type SafeUser = {
   id: string;
@@ -38,6 +39,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
     private readonly emailService: EmailService,
+    private readonly s3Service: S3Service,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -250,7 +252,11 @@ export class AuthService {
     return this.toSafeUser(user);
   }
 
-  async updateProfile(userId: string, dto: UpdateProfileDto) {
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+    avatar?: Express.Multer.File,
+  ) {
     const username = dto.username?.trim();
     if (
       username !== undefined &&
@@ -273,14 +279,29 @@ export class AuthService {
       throw new ConflictException('Ảnh đại diện không được lớn hơn 2MB');
     }
 
+    if (avatar) {
+      if (!avatar.mimetype.startsWith('image/')) {
+        throw new ConflictException('Invalid avatar image');
+      }
+      if (avatar.size > 2 * 1024 * 1024) {
+        throw new ConflictException('Avatar must not exceed 2MB');
+      }
+    }
+
+    const uploadedAvatarUrl = avatar
+      ? (await this.s3Service.uploadImage(avatar, `avatars/${userId}`)).url
+      : undefined;
+
     const user = await this.prisma.user.update({
       where: { id: BigInt(userId) },
       data: {
         ...(username !== undefined ? { username } : {}),
         ...(dto.bio !== undefined ? { bio: dto.bio?.trim() || null } : {}),
-        ...(dto.avatarUrl !== undefined
-          ? { avatarUrl: dto.avatarUrl?.trim() || null }
-          : {}),
+        ...(uploadedAvatarUrl !== undefined
+          ? { avatarUrl: uploadedAvatarUrl }
+          : dto.avatarUrl !== undefined
+            ? { avatarUrl: dto.avatarUrl?.trim() || null }
+            : {}),
       },
     });
     return this.toSafeUser(user);
