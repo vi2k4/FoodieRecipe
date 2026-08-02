@@ -104,13 +104,14 @@ export class AuthController {
   private readonly refreshCookieName = 'foodirecipe_refresh_token';
 
   private cookieOptions() {
+    // HTTP deployments (for example, direct EC2 testing without a domain)
+    // cannot store a Secure cookie. Set COOKIE_SECURE=true when HTTPS is enabled.
+    const secure = process.env.COOKIE_SECURE === 'true';
+
     return {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite:
-        process.env.NODE_ENV === 'production'
-          ? ('none' as const)
-          : ('lax' as const),
+      secure,
+      sameSite: secure ? ('none' as const) : ('lax' as const),
       path: '/api/auth',
     };
   }
