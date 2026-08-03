@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
 import {
   Controller,
+  BadRequestException,
   Get,
   Post,
   Body,
@@ -9,7 +10,10 @@ import {
   Delete,
   Query,
   Headers,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { RecipesService } from './recipes.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
@@ -25,11 +29,15 @@ import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { S3Service } from '../../common/storage/s3.service';
 
 @Controller('recipes')
 @UseGuards(AuthGuard)
 export class RecipesController {
-  constructor(private readonly recipesService: RecipesService) {}
+  constructor(
+    private readonly recipesService: RecipesService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   private getUserId(
     user: any,
@@ -44,6 +52,25 @@ export class RecipesController {
   @Get()
   findAll(@Query() query: QueryRecipeDto) {
     return this.recipesService.findAll(query);
+  }
+
+  @Post('upload-image')
+  @UseInterceptors(FileInterceptor('image'))
+  async uploadImage(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: { id: bigint },
+  ) {
+    if (!file) {
+      throw new BadRequestException('Thiếu file ảnh');
+    }
+    if (!file.mimetype.startsWith('image/')) {
+      throw new BadRequestException('File phải là ảnh');
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      throw new BadRequestException('Ảnh không được lớn hơn 5MB');
+    }
+
+    return this.s3Service.uploadImage(file, `recipe-images/${user.id}`);
   }
 
   @Get('mine')
