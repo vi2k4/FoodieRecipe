@@ -10,7 +10,9 @@ import {
   ArrowRight,
   ChefHat,
   Users,
+  UserRound,
 } from "lucide-react";
+import { BowlFood } from "@phosphor-icons/react";
 
 import { Recipe } from "@/types/recipe";
 import VisibilityBadge from "./VisibilityBadge";
@@ -71,13 +73,13 @@ export default function RecipeCard({ recipe }: Props) {
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <span className="text-5xl">🍽️</span>
+            <BowlFood size={56} weight="duotone" className="text-orange-400" aria-hidden="true" />
           </div>
         )}
 
         {/* My Recipe Badge */}
         <div className="absolute top-3 left-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1">
-          <span>👤</span> My Recipe
+          <UserRound className="size-3.5" aria-hidden="true" /> My Recipe
         </div>
 
         {/* Visibility */}

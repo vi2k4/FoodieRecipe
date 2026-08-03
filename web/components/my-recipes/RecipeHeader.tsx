@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { ArrowLeft } from "lucide-react";
+import { BowlFood } from "@phosphor-icons/react";
 
 interface Props {
   image?: string;
@@ -32,7 +33,7 @@ export default function RecipeHeader({ image, title }: Props) {
             />
           ) : (
             <div className="flex h-full items-center justify-center">
-              <span className="text-6xl">🍽️</span>
+              <BowlFood size={64} weight="duotone" className="text-orange-400" aria-hidden="true" />
             </div>
           )}
           {/* Overlay gradient */}

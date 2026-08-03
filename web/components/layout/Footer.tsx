@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ChefHat } from '@phosphor-icons/react';
 
 export function Footer() {
   const pathname = usePathname();
@@ -11,7 +12,7 @@ export function Footer() {
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
         <div className="col-span-1 md:col-span-2">
           <Link href="/" className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">🍜</span>
+            <ChefHat size={30} weight="duotone" className="text-orange-500" aria-hidden="true" />
             <span className="font-bold text-xl bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent">
               FoodieRecipe
             </span>

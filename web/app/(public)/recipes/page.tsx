@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
+import { BowlFood, ChefHat, Sparkle } from '@phosphor-icons/react';
 
 export default function RecipesPage() {
   const { user } = useAuth();
@@ -120,7 +121,7 @@ export default function RecipesPage() {
           onClick={handleCreateClick}
           className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20 shrink-0"
         >
-          <span>➕</span> Đóng góp công thức mới
+          Đóng góp công thức mới
         </button>
       </div>
 
@@ -130,7 +131,7 @@ export default function RecipesPage() {
           <div className="bg-white p-6 rounded-3xl border border-neutral-200 shadow-sm sticky top-24 space-y-6">
             <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
               <h3 className="font-bold text-neutral-900 flex items-center gap-2">
-                <span>🎯</span> Bộ lọc tìm kiếm
+                Bộ lọc tìm kiếm
               </h3>
               {(search || categoryId || difficulty || maxCalories || maxCookTime) && (
                 <button
@@ -165,7 +166,7 @@ export default function RecipesPage() {
                   <option value="">Tất cả danh mục</option>
                   {categories.map((cat) => (
                     <option key={String(cat.id)} value={String(cat.id)}>
-                      {cat.icon || '📂'} {cat.name}
+                      {cat.name}
                     </option>
                   ))}
                 </select>
@@ -213,7 +214,7 @@ export default function RecipesPage() {
                   type="submit"
                   className="w-full py-3 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors shadow-sm text-sm"
                 >
-                  🔍 Tìm kiếm & Áp dụng
+                  Tìm kiếm & Áp dụng
                 </button>
               </div>
             </form>
@@ -230,7 +231,7 @@ export default function RecipesPage() {
             </div>
           ) : recipes.length === 0 ? (
             <div className="p-16 text-center bg-white rounded-3xl border border-neutral-200 space-y-4">
-              <div className="text-5xl">🍲</div>
+              <BowlFood size={60} weight="duotone" className="mx-auto text-orange-400" aria-label="No image" />
               <h3 className="text-xl font-bold text-neutral-800">Không tìm thấy công thức nào</h3>
               <p className="text-neutral-500 text-sm max-w-md mx-auto">
                 Thử thay đổi từ khóa hoặc bộ lọc tìm kiếm để khám phá nhiều công thức hơn.
@@ -271,7 +272,7 @@ export default function RecipesPage() {
                       {/* Category Badge */}
                       {recipe.category && (
                         <div className="absolute top-3 right-3 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm">
-                          {recipe.category.icon || '📂'} {recipe.category.name}
+                          {recipe.category.name}
                         </div>
                       )}
                     </div>
@@ -283,9 +284,9 @@ export default function RecipesPage() {
                       </h3>
 
                       <div className="flex items-center gap-4 text-xs text-neutral-500 mb-4">
-                        <span className="flex items-center gap-1 font-medium">🔥 {recipe.calories || '—'} kcal</span>
+                        <span className="flex items-center gap-1 font-medium">{recipe.calories || '—'} kcal</span>
                         <span className="flex items-center gap-1 font-medium">⏱️ {recipe.cookTime || '—'} phút</span>
-                        <span className="flex items-center gap-1 font-medium">👥 {recipe.servings || 4} người</span>
+                        <span className="flex items-center gap-1 font-medium">{recipe.servings || 4} người</span>
                       </div>
 
                       {recipe.description && (
@@ -298,7 +299,7 @@ export default function RecipesPage() {
                       <div className="mt-auto pt-4 border-t border-neutral-100 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="w-7 h-7 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs shrink-0">
-                            🧑‍🍳
+                            <ChefHat size={18} weight="duotone" aria-label="Chef recipe" />
                           </div>
                           <span className="text-xs font-medium text-neutral-700 truncate">
                             {recipe.author?.username || 'Người dùng'}
@@ -307,11 +308,11 @@ export default function RecipesPage() {
 
                         {recipe.source === 'AI GenAI' || recipe.source === 'AI' ? (
                           <span className="text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2.5 py-0.5 rounded-full shrink-0">
-                            🤖 AI GenAI
+                            <><Sparkle size={16} weight="duotone" aria-hidden="true" /> AI GenAI</>
                           </span>
                         ) : (
                           <span className="text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full shrink-0">
-                            🌐 Công khai
+                            Công khai
                           </span>
                         )}
                       </div>

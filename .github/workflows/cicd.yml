@@ -81,6 +81,4 @@ jobs:
               -u "${{ github.repository_owner }}" \
               --password-stdin
 
-            docker compose pull
-            docker compose up -d --remove-orphans
-            docker image prune -f
+            ~/foodirecipe/deploy-secrets.sh

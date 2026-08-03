@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LogOut, UserRound } from "lucide-react";
+import { ChefHat } from "@phosphor-icons/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { auth, type AuthSession } from "@/lib/auth";
 import { toast } from "sonner";
@@ -40,7 +41,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-orange-100 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-xl">🍜</span>
+          <ChefHat size={26} weight="duotone" className="text-orange-500" aria-hidden="true" />
           <span className="font-bold text-lg bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent">
             FoodieRecipe
           </span>

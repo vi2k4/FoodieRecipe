@@ -216,7 +216,7 @@ export default function AdminCategoriesPage() {
                       className="flex h-10 w-10 items-center justify-center rounded-xl text-lg flex-shrink-0"
                       style={{ backgroundColor: "var(--surface-muted)" }}
                     >
-                      {cat.icon ? cat.icon[0].toUpperCase() : "📂"}
+                      {cat.icon ? cat.icon[0].toUpperCase() : ""}
                     </div>
                     <div>
                       <p className="font-semibold" style={{ color: "var(--text-primary)" }}>{cat.name}</p>

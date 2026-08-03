@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { Check, Hash } from 'lucide-react';
+import { Globe, LockKey } from '@phosphor-icons/react';
 import { api } from '@/lib/api-client';
 import { ImageUploader } from '@/components/ui/ImageUploader';
 
@@ -176,7 +178,7 @@ export default function EditRecipePage() {
         isPublic: isPublic,
       });
 
-      setSuccessMsg('✨ Cập nhật thông tin cơ bản thành công! Đang quay lại trang chi tiết...');
+      setSuccessMsg('Cập nhật thông tin cơ bản thành công! Đang quay lại trang chi tiết...');
       setTimeout(() => {
         router.push(`/my-recipes/${recipeId}`);
       }, 800);
@@ -324,7 +326,7 @@ export default function EditRecipePage() {
         >
           &larr; Quay lại chi tiết công thức
         </button>
-        <h1 className="text-3xl font-bold text-neutral-900">✏️ Chỉnh sửa công thức</h1>
+        <h1 className="text-3xl font-bold text-neutral-900">Chỉnh sửa công thức</h1>
         <p className="text-neutral-500 text-sm mt-1">ID công thức: #{recipeId}</p>
       </div>
 
@@ -336,7 +338,7 @@ export default function EditRecipePage() {
 
       {errorMsg && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl font-medium">
-          ⚠️ {errorMsg}
+          {errorMsg}
         </div>
       )}
 
@@ -350,7 +352,7 @@ export default function EditRecipePage() {
               : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
           }`}
         >
-          📝 Thông tin cơ bản
+          Thông tin cơ bản
         </button>
         <button
           onClick={() => setActiveTab('ingredients')}
@@ -360,7 +362,7 @@ export default function EditRecipePage() {
               : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
           }`}
         >
-          🛒 Nguyên liệu ({ingredients.length})
+          Nguyên liệu ({ingredients.length})
         </button>
         <button
           onClick={() => setActiveTab('steps')}
@@ -370,7 +372,7 @@ export default function EditRecipePage() {
               : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
           }`}
         >
-          👨‍🍳 Các bước nấu ({steps.length})
+          Các bước nấu ({steps.length})
         </button>
         <button
           onClick={() => setActiveTab('tags')}
@@ -380,7 +382,7 @@ export default function EditRecipePage() {
               : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
           }`}
         >
-          🏷️ Thẻ Tags ({recipeTagIds.length})
+          Thẻ Tags ({recipeTagIds.length})
         </button>
       </div>
 
@@ -403,7 +405,7 @@ export default function EditRecipePage() {
                     : 'bg-white border-neutral-200 hover:bg-neutral-50 text-neutral-600'
                 }`}
               >
-                <span className="text-2xl">🌐</span>
+                <Globe size={30} weight="duotone" className="text-emerald-500" aria-hidden="true" />
                 <div>
                   <div className="font-semibold text-sm">Công khai (Public)</div>
                   <div className="text-xs text-neutral-500 mt-0.5">Mọi người đều có thể tìm thấy và xem công thức này</div>
@@ -419,7 +421,7 @@ export default function EditRecipePage() {
                     : 'bg-white border-neutral-200 hover:bg-neutral-50 text-neutral-600'
                 }`}
               >
-                <span className="text-2xl">🔒</span>
+                <LockKey size={30} weight="duotone" className="text-slate-500" aria-hidden="true" />
                 <div>
                   <div className="font-semibold text-sm">Riêng tư (Private)</div>
                   <div className="text-xs text-neutral-500 mt-0.5">Chỉ một mình bạn có thể xem công thức này</div>
@@ -506,7 +508,7 @@ export default function EditRecipePage() {
                 <option value="">Chọn danh mục</option>
                 {categories.map((cat) => (
                   <option key={String(cat.id)} value={String(cat.id)}>
-                    {cat.icon || '📂'} {cat.name}
+                    {cat.name}
                   </option>
                 ))}
               </select>
@@ -522,7 +524,7 @@ export default function EditRecipePage() {
               disabled={saving}
               className="px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-medium transition-colors shadow-lg shadow-orange-500/20 disabled:opacity-50 text-sm"
             >
-              {saving ? '⏳ Đang lưu...' : '💾 Lưu thay đổi thông tin cơ bản'}
+              {saving ? 'Đang lưu...' : 'Lưu thay đổi thông tin cơ bản'}
             </button>
           </div>
         </form>
@@ -550,7 +552,7 @@ export default function EditRecipePage() {
                     className="p-2 text-neutral-400 hover:text-red-500 transition-colors"
                     title="Xóa nguyên liệu"
                   >
-                    🗑️ Xóa
+                    Xóa
                   </button>
                 </div>
               ))}
@@ -559,7 +561,7 @@ export default function EditRecipePage() {
 
           {/* Form add ingredient */}
           <form onSubmit={handleAddIngredient} className="pt-6 border-t border-neutral-200 space-y-4">
-            <h3 className="font-bold text-neutral-900 text-sm">➕ Thêm nguyên liệu mới</h3>
+            <h3 className="font-bold text-neutral-900 text-sm">Thêm nguyên liệu mới</h3>
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 required
@@ -637,7 +639,7 @@ export default function EditRecipePage() {
                     className="p-1.5 text-neutral-400 hover:text-red-500 transition-colors text-sm shrink-0"
                     title="Xóa bước này"
                   >
-                    🗑️ Xóa
+                    Xóa
                   </button>
                 </div>
               ))}
@@ -646,7 +648,7 @@ export default function EditRecipePage() {
 
           {/* Form add step */}
           <form onSubmit={handleAddStep} className="pt-6 border-t border-neutral-200 space-y-4">
-            <h3 className="font-bold text-neutral-900 text-sm">➕ Thêm bước thực hiện tiếp theo</h3>
+            <h3 className="font-bold text-neutral-900 text-sm">Thêm bước thực hiện tiếp theo</h3>
             <textarea
               required
               rows={3}
@@ -695,7 +697,7 @@ export default function EditRecipePage() {
               disabled={saving || !newTagName.trim()}
               className="px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 whitespace-nowrap"
             >
-              ➕ Thêm Tag mới
+              Thêm Tag mới
             </button>
           </div>
 
@@ -715,7 +717,7 @@ export default function EditRecipePage() {
                       : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'
                   }`}
                 >
-                  <span>{isAttached ? '✓' : '#'}</span>
+                  {isAttached ? <Check className="size-4" aria-hidden="true" /> : <Hash className="size-4" aria-hidden="true" />}
                   <span>{tag.name}</span>
                 </button>
               );
