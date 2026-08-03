@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { api } from '@/lib/api-client';
 
 interface ImageUploaderProps {
   value: string;
@@ -21,16 +22,12 @@ export function ImageUploader({ value, onChange, label = 'Ảnh thành phẩm' }
     }
 
     setLoading(true);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      onChange(reader.result as string);
-      setLoading(false);
-    };
-    reader.onerror = () => {
-      alert('Đọc file ảnh thất bại!');
-      setLoading(false);
-    };
-    reader.readAsDataURL(file);
+    api.images.upload(file)
+      .then(({ url }) => onChange(url))
+      .catch((error) => {
+        alert(error instanceof Error ? error.message : 'Tải ảnh lên thất bại!');
+      })
+      .finally(() => setLoading(false));
   };
 
   return (
