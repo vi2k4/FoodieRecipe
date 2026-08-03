@@ -127,7 +127,7 @@ export default function Home() {
                 <div className="relative h-48 overflow-hidden bg-neutral-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
-                    src={recipe.thumbnail || `https://picsum.photos/seed/${recipe.id}/600/400`} 
+                    src={recipe.thumbnail || "/file.svg"} 
                     alt={recipe.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                   />

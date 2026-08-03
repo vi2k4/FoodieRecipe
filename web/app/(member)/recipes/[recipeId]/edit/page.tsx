@@ -146,6 +146,11 @@ export default function EditRecipePage() {
       return;
     }
 
+    if (!thumbnail.trim()) {
+      setErrorMsg('Vui lòng tải lên ảnh món ăn trước khi lưu!');
+      return;
+    }
+
     const currentUserId = user.id || 1;
     if (servings && Number(servings) < 1) {
       setErrorMsg('Khẩu phần ăn phải lớn hơn hoặc bằng 1!');
@@ -193,6 +198,10 @@ export default function EditRecipePage() {
   const handleAddIngredient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newIngName.trim()) return;
+    if (newIngQuantity !== '' && Number(newIngQuantity) < 0) {
+      alert('Số lượng nguyên liệu không được là số âm!');
+      return;
+    }
 
     const currentUserId = user.id || 1;
     setSaving(true);
@@ -573,8 +582,9 @@ export default function EditRecipePage() {
               />
               <input
                 type="number"
+                min="0"
                 value={newIngQuantity}
-                onChange={(e) => setNewIngQuantity(e.target.value)}
+                onChange={(e) => setNewIngQuantity(e.target.value.replace(/^-/, ''))}
                 placeholder="Số lượng"
                 className="w-28 px-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 text-sm"
               />

@@ -87,7 +87,7 @@ export default function RecipeDetailPage() {
       <div className="relative h-[40vh] md:h-[50vh] min-h-[320px] w-full bg-neutral-900">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={recipe.thumbnail || `https://picsum.photos/seed/${recipe.id}/1200/800`}
+          src={recipe.thumbnail || "/file.svg"}
           alt={recipe.title}
           className="w-full h-full object-cover opacity-85"
         />

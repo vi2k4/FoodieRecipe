@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsOptional, IsNumber, IsBoolean, IsIn, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsNumber, IsBoolean, IsIn, MaxLength, Min } from 'class-validator';
 
 export class CreateRecipeDto {
   @IsOptional()
@@ -18,10 +18,12 @@ export class CreateRecipeDto {
 
   @IsOptional()
   @IsNumber()
+  @Min(0, { message: 'Số calo không được là số âm' })
   calories?: number;
 
   @IsOptional()
   @IsNumber()
+  @Min(0, { message: 'Thời gian nấu không được là số âm' })
   cookTime?: number;
 
   @IsOptional()
@@ -30,9 +32,10 @@ export class CreateRecipeDto {
 
   @IsOptional()
   @IsNumber()
+  @Min(1, { message: 'Số khẩu phần phải lớn hơn hoặc bằng 1' })
   servings?: number;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'Ảnh món ăn là bắt buộc' })
   @IsString()
   thumbnail?: string;
 

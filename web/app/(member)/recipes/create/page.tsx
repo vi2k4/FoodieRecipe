@@ -122,6 +122,11 @@ export default function CreateRecipePage() {
       return;
     }
 
+    if (!imageUrl.trim()) {
+      alert('Vui lòng tải lên ảnh món ăn trước khi tạo công thức!');
+      return;
+    }
+
     if (servings && Number(servings) < 1) {
       alert('Khẩu phần ăn phải lớn hơn hoặc bằng 1!');
       return;
@@ -134,6 +139,11 @@ export default function CreateRecipePage() {
 
     if (cookTime && Number(cookTime) < 0) {
       alert('Thời gian nấu không được là số âm!');
+      return;
+    }
+
+    if (ingredients.some((ingredient) => ingredient.amount !== '' && Number(ingredient.amount) < 0)) {
+      alert('Số lượng nguyên liệu không được là số âm!');
       return;
     }
 
@@ -169,7 +179,7 @@ export default function CreateRecipePage() {
             unit: ing.unit.trim() || undefined,
             displayOrder: i + 1,
             userId: currentUserId,
-          }, currentUserId).catch(console.error);
+          }, currentUserId);
         }
       }
 
@@ -181,13 +191,13 @@ export default function CreateRecipePage() {
             stepNumber: i + 1,
             content: stepContent.trim(),
             userId: currentUserId,
-          }, currentUserId).catch(console.error);
+          }, currentUserId);
         }
       }
 
       // 4. Associate selected Tags with Recipe
       for (const tagId of selectedTagIds) {
-        await api.recipeTags.add(recipeId, tagId, currentUserId).catch(console.error);
+        await api.recipeTags.add(recipeId, tagId, currentUserId);
       }
 
       alert('Tạo công thức mới thành công và đã lưu vào Database!');
@@ -443,10 +453,11 @@ export default function CreateRecipePage() {
               />
               <input 
                 type="number" 
+                min="0"
                 value={ing.amount}
                 onChange={(e) => {
                   const updated = [...ingredients];
-                  updated[idx].amount = e.target.value;
+                  updated[idx].amount = e.target.value.replace(/^-/, '');
                   setIngredients(updated);
                 }}
                 placeholder="Số lượng" 

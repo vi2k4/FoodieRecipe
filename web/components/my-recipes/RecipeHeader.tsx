@@ -29,6 +29,7 @@ export default function RecipeHeader({ image, title }: Props) {
               src={image}
               fill
               alt={title || "Recipe image"}
+              unoptimized
               className="object-cover"
             />
           ) : (

@@ -64,6 +64,7 @@ export default function RecipeCard({ recipe }: Props) {
             src={imageUrl}
             alt={recipe.title}
             fill
+            unoptimized
             className="
             object-cover
             transition-transform
