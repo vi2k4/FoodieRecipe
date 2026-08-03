@@ -8,8 +8,11 @@ import {
   Post,
   Res,
   UnauthorizedException,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -87,12 +90,14 @@ export class AuthController {
   }
 
   @Patch('me')
+  @UseInterceptors(FileInterceptor('avatar'))
   async updateMe(
     @Headers('authorization') authorization: string | undefined,
     @Body() dto: UpdateProfileDto,
+    @UploadedFile() avatar?: Express.Multer.File,
   ) {
     const userId = this.getUserId(authorization);
-    return { user: await this.authService.updateProfile(userId, dto) };
+    return { user: await this.authService.updateProfile(userId, dto, avatar) };
   }
 
   private getUserId(authorization?: string) {

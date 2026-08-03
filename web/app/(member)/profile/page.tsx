@@ -49,7 +49,7 @@ export default function ProfilePage() {
     resolver: zodResolver(profileSchema as any),
     defaultValues: { username: "", bio: "", avatarUrl: "" },
   });
-  const [selectedFile, setSelectedFile] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -82,14 +82,14 @@ export default function ProfilePage() {
 
   async function submit(values: ProfileFormValues) {
     try {
-      const updated = await auth.updateProfile(values);
+      const updated = await auth.updateProfile(values, selectedFile || undefined);
       setUser(updated);
       reset({
         username: updated.username,
         bio: updated.bio || "",
         avatarUrl: updated.avatarUrl || "",
       });
-      setSelectedFile("");
+      setSelectedFile(null);
       toast.success("Đã cập nhật hồ sơ");
     } catch (error) {
       toast.error("Cập nhật thất bại", {
@@ -120,7 +120,7 @@ export default function ProfilePage() {
     reader.onload = () => {
       const value = String(reader.result || "");
       setValue("avatarUrl", value, { shouldDirty: true, shouldValidate: true });
-      setSelectedFile(file.name);
+      setSelectedFile(file);
     };
     reader.readAsDataURL(file);
   }
@@ -288,7 +288,7 @@ export default function ProfilePage() {
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-stone-700">
-                        {selectedFile || "Chọn ảnh từ máy tính"}
+                        {selectedFile?.name || "Chọn ảnh từ máy tính"}
                       </span>
                       <span className="mt-1 block text-xs text-stone-400">
                         PNG, JPG, WEBP hoặc GIF · tối đa 2MB
@@ -333,7 +333,7 @@ export default function ProfilePage() {
                     className="border-orange-200"
                     onClick={() => {
                       reset();
-                      setSelectedFile("");
+                      setSelectedFile(null);
                     }}
                     disabled={!isDirty}
                   >

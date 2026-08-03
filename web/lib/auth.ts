@@ -69,12 +69,17 @@ export const auth = {
   async updateProfile(data: {
     username: string;
     bio: string;
-    avatarUrl: string;
-  }) {
+  }, avatar?: File) {
     const current = this.getSession();
     if (!current?.accessToken)
       throw new Error("Bạn cần đăng nhập để cập nhật hồ sơ");
-    const { data: result } = await apiClient.patch<{ user: AuthUser }>("/auth/me", data);
+    const formData = new FormData();
+    formData.append("username", data.username);
+    formData.append("bio", data.bio);
+    if (avatar) formData.append("avatar", avatar);
+    const { data: result } = await apiClient.patch<{ user: AuthUser }>("/auth/me", formData, {
+      headers: { "Content-Type": undefined },
+    });
     this.saveSession({ ...current, user: result.user });
     return result.user;
   },
