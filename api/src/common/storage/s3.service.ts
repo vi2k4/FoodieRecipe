@@ -7,21 +7,28 @@ import {
 import sharp from 'sharp';
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { getSignedUrl as getCloudFrontSignedUrl } from '@aws-sdk/cloudfront-signer';
+
 @Injectable()
 export class S3Service {
   private s3Client: S3Client;
 
   constructor(private configService: ConfigService) {
     const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
-    const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
+    const secretAccessKey = this.configService.get<string>(
+      'AWS_SECRET_ACCESS_KEY',
+    );
     this.s3Client = new S3Client({
       region: this.configService.get<string>('AWS_REGION') || 'ap-southeast-1',
-      ...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
+      ...(accessKeyId && secretAccessKey
+        ? { credentials: { accessKeyId, secretAccessKey } }
+        : {}),
     });
   }
   async uploadImage(file: Express.Multer.File, folder: string) {
     const bucket = this.configService.get<string>('AWS_BUCKET_NAME');
-    if (!bucket) throw new ServiceUnavailableException('AWS S3 chưa được cấu hình');
+    if (!bucket)
+      throw new ServiceUnavailableException('AWS S3 chưa được cấu hình');
     // 1. Resize + convert WebP
 
     const optimizedImage = await sharp(file.buffer)
@@ -63,12 +70,59 @@ export class S3Service {
     };
   }
 
-  async getPresignedUrl(
+  async getDeliveryUrl(
     key: string,
-    expiresIn = 300, // 5 phút
+    expiresIn = Number(
+      this.configService.get<string>('CLOUDFRONT_URL_EXPIRES_IN') || 300,
+    ),
   ): Promise<string> {
+    const cloudFrontDomain =
+      this.configService.get<string>('CLOUDFRONT_DOMAIN');
+    const keyPairId = this.configService.get<string>('CLOUDFRONT_KEY_PAIR_ID');
+    const privateKeyBase64 = this.configService.get<string>(
+      'CLOUDFRONT_PRIVATE_KEY_BASE64',
+    );
+
+    const hasAnyCloudFrontConfig = Boolean(
+      cloudFrontDomain || keyPairId || privateKeyBase64,
+    );
+
+    if (hasAnyCloudFrontConfig) {
+      if (!cloudFrontDomain || !keyPairId || !privateKeyBase64) {
+        throw new ServiceUnavailableException(
+          'CloudFront chưa được cấu hình đầy đủ',
+        );
+      }
+
+      const domain = cloudFrontDomain
+        .trim()
+        .replace(/^https?:\/\//, '')
+        .replace(/\/$/, '');
+      const encodedKey = key
+        .split('/')
+        .map((segment) => encodeURIComponent(segment))
+        .join('/');
+      const privateKey = Buffer.from(privateKeyBase64, 'base64').toString(
+        'utf8',
+      );
+
+      if (!privateKey.includes('PRIVATE KEY')) {
+        throw new ServiceUnavailableException(
+          'CloudFront private key không hợp lệ',
+        );
+      }
+
+      return getCloudFrontSignedUrl({
+        url: `https://${domain}/${encodedKey}`,
+        keyPairId,
+        privateKey,
+        dateLessThan: new Date(Date.now() + expiresIn * 1000).toISOString(),
+      });
+    }
+
     const bucket = this.configService.get<string>('AWS_BUCKET_NAME');
-    if (!bucket) throw new ServiceUnavailableException('AWS S3 chưa được cấu hình');
+    if (!bucket)
+      throw new ServiceUnavailableException('AWS S3 chưa được cấu hình');
     const command = new GetObjectCommand({
       Bucket: bucket,
       Key: key,

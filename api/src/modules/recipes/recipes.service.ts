@@ -62,7 +62,7 @@ export class RecipesService {
 
   private async resolveImageUrl(value?: string | null) {
     const key = this.getConfiguredS3Key(value);
-    return key ? this.s3Service.getPresignedUrl(key) : value;
+    return key ? this.s3Service.getDeliveryUrl(key) : value;
   }
 
   private async resolveRecipeImages<T extends Record<string, any>>(
@@ -100,9 +100,7 @@ export class RecipesService {
     return obj;
   }
 
-  async findAll(
-    query: QueryRecipeDto & { userId?: number | string | bigint },
-  ) {
+  async findAll(query: QueryRecipeDto & { userId?: number | string | bigint }) {
     const {
       page = 1,
       limit = 10,

@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
+const cloudFrontDomain = process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN?.trim()
+  .replace(/^https?:\/\//, "")
+  .replace(/\/$/, "");
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -12,6 +16,15 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
         pathname: "/**",
       },
+      ...(cloudFrontDomain
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: cloudFrontDomain,
+              pathname: "/**",
+            },
+          ]
+        : []),
     ],
   },
   turbopack: {

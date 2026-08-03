@@ -289,7 +289,7 @@ export class AIGenerationService {
 
   private async resolveImageUrl(value?: string | null) {
     const key = this.getConfiguredS3Key(value);
-    return key ? this.s3Service.getPresignedUrl(key) : value;
+    return key ? this.s3Service.getDeliveryUrl(key) : value;
   }
 
   private async toHistoryDto(history: {

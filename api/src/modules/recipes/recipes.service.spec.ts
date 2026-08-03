@@ -11,7 +11,7 @@ describe('RecipesService (Unit Tests)', () => {
   let prisma: any;
 
   const mockS3Service = {
-    getPresignedUrl: jest.fn(),
+    getDeliveryUrl: jest.fn(),
   };
 
   const mockConfigService = {
@@ -162,7 +162,7 @@ describe('RecipesService (Unit Tests)', () => {
 
       it('should only presign images from the configured S3 bucket', async () => {
         mockConfigService.get.mockReturnValue('private-food-bucket');
-        mockS3Service.getPresignedUrl.mockResolvedValue(
+        mockS3Service.getDeliveryUrl.mockResolvedValue(
           'https://signed.example.com/ai-images/dish.jpg',
         );
         prisma.recipe.findMany.mockResolvedValue([
@@ -188,10 +188,10 @@ describe('RecipesService (Unit Tests)', () => {
         expect(res.data[1].thumbnail).toBe(
           'https://images.unsplash.com/photo.jpg',
         );
-        expect(mockS3Service.getPresignedUrl).toHaveBeenCalledWith(
+        expect(mockS3Service.getDeliveryUrl).toHaveBeenCalledWith(
           'ai-images/dish.jpg',
         );
-        expect(mockS3Service.getPresignedUrl).toHaveBeenCalledTimes(1);
+        expect(mockS3Service.getDeliveryUrl).toHaveBeenCalledTimes(1);
       });
     });
 
