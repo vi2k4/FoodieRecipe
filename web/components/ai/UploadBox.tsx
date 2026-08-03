@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { AppleLogo, Carrot, Egg } from "@phosphor-icons/react";
 import { useRef } from "react";
 
 interface Props {
@@ -65,7 +66,7 @@ export default function UploadBox({
           />
         ) : (
           <div className="text-center px-6">
-            <div className="text-6xl">🥕 🍅 🥚</div>
+            <div className="flex items-center gap-2 text-orange-400"><Carrot size={48} weight="duotone" /><AppleLogo size={48} weight="duotone" className="text-red-400" /><Egg size={48} weight="duotone" className="text-yellow-500" /></div>
             <p className="mt-3 text-sm text-gray-500">
               Nhấn để chọn ảnh nguyên liệu
             </p>

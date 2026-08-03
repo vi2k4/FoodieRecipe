@@ -3,6 +3,7 @@
 import { History, RotateCcw, Search, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { api, type SearchHistoryEntry } from "@/lib/api-client";
+import { CalendarBlank, CaretDown, Clock, CookingPot, Fire, FunnelSimple, Globe, LockKey, SortAscending, TextAa } from "@phosphor-icons/react";
 
 interface FilterValues {
   keyword: string;
@@ -36,6 +37,9 @@ export default function SearchFilter({
   const [minCookTime, setMinCookTime] = useState("");
   const [maxCookTime, setMaxCookTime] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  const [sortOpen, setSortOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [visibilityOpen, setVisibilityOpen] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>([]);
 
   const loadSearchHistory = useCallback(async () => {
@@ -147,7 +151,7 @@ export default function SearchFilter({
     >
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <span>🎯</span> Tìm kiếm nâng cao
+          <span className="text-orange-500">⌕</span> Tìm kiếm nâng cao
         </h2>
         {hasActiveFilters && (
           <button
@@ -166,7 +170,8 @@ export default function SearchFilter({
 
       {/* Keyword */}
       <div className="mb-4">
-        <label className="mb-1.5 block text-sm font-medium text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+          <SortAscending size={18} weight="duotone" className="text-orange-500" aria-hidden="true" />
           Từ khóa
         </label>
 
@@ -241,28 +246,66 @@ export default function SearchFilter({
 
       {/* Category */}
       <div className="mb-4">
-        <label className="mb-1.5 block text-sm font-medium text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+          <FunnelSimple size={18} weight="duotone" className="text-orange-500" aria-hidden="true" />
           Danh mục
         </label>
+
+        <div className="relative mb-2">
+          <button
+            type="button"
+            onClick={() => setCategoryOpen((open) => !open)}
+            aria-haspopup="listbox"
+            aria-expanded={categoryOpen}
+            className="flex w-full items-center justify-between rounded-xl border border-orange-100 bg-gradient-to-r from-orange-50/70 to-white px-4 py-3 text-left text-sm font-medium text-gray-700 shadow-sm transition hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+          >
+            <span className="flex items-center gap-2">
+              <CookingPot size={19} weight="duotone" className="text-orange-500" aria-hidden="true" />
+              <span>{categoryId ? categories.find((cat) => String(cat.id) === categoryId)?.name || "Danh mục" : "Tất cả danh mục"}</span>
+            </span>
+            <CaretDown size={18} weight="bold" className={`text-orange-500 transition-transform ${categoryOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+          </button>
+
+          {categoryOpen && (
+            <div role="listbox" aria-label="Danh mục" className="absolute inset-x-0 top-full z-20 mt-2 max-h-56 overflow-y-auto rounded-xl border border-orange-100 bg-white p-1.5 shadow-xl shadow-orange-500/10">
+              {[["", "Tất cả danh mục"], ...categories.map((cat) => [String(cat.id), cat.name])].map(([value, label]) => (
+                <button
+                  key={value || "all"}
+                  type="button"
+                  role="option"
+                  aria-selected={categoryId === value}
+                  onClick={() => { setCategoryId(value); setCategoryOpen(false); }}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${categoryId === value ? "bg-orange-50 font-semibold text-orange-700" : "text-gray-600 hover:bg-orange-50/60 hover:text-orange-700"}`}
+                >
+                  <CookingPot size={18} weight="duotone" className="text-orange-500" />
+                  <span>{label}</span>
+                  {categoryId === value && <span className="ml-auto text-orange-500">✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <select
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
-          className="
+          className="hidden
             w-full
             rounded-xl
-            border border-gray-300
-            p-3
+            border border-orange-100
+            bg-gradient-to-r from-orange-50/70 to-white
+            px-4 py-3 pr-10
+            text-sm font-medium text-gray-700 shadow-sm
             outline-none
             transition
-            focus:border-orange-500 focus:ring-1 focus:ring-orange-500
-            bg-white
+            hover:border-orange-300
+            focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20
           "
         >
           <option value="">Tất cả danh mục</option>
           {categories.map((cat) => (
             <option key={String(cat.id)} value={String(cat.id)}>
-              {cat.icon || "📂"} {cat.name}
+              {cat.name}
             </option>
           ))}
         </select>
@@ -270,33 +313,73 @@ export default function SearchFilter({
 
       {/* Visibility */}
       <div className="mb-4">
-        <label className="mb-1.5 block text-sm font-medium text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+          {visibility === "PRIVATE" ? <LockKey size={18} weight="duotone" className="text-slate-500" aria-hidden="true" /> : <Globe size={18} weight="duotone" className="text-emerald-500" aria-hidden="true" />}
           Quyền riêng tư
         </label>
+
+        <div className="relative mb-2">
+          <button
+            type="button"
+            onClick={() => setVisibilityOpen((open) => !open)}
+            aria-haspopup="listbox"
+            aria-expanded={visibilityOpen}
+            className="flex w-full items-center justify-between rounded-xl border border-orange-100 bg-gradient-to-r from-orange-50/70 to-white px-4 py-3 text-left text-sm font-medium text-gray-700 shadow-sm transition hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+          >
+            <span className="flex items-center gap-2">
+              {visibility === "PRIVATE" ? <LockKey size={19} weight="duotone" className="text-slate-500" /> : <Globe size={19} weight="duotone" className="text-emerald-500" />}
+              <span>{visibility === "PUBLIC" ? "Công khai" : visibility === "PRIVATE" ? "Riêng tư" : "Tất cả"}</span>
+            </span>
+            <CaretDown size={18} weight="bold" className={`text-orange-500 transition-transform ${visibilityOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+          </button>
+
+          {visibilityOpen && (
+            <div role="listbox" aria-label="Quyền riêng tư" className="absolute inset-x-0 top-full z-20 mt-2 overflow-hidden rounded-xl border border-orange-100 bg-white p-1.5 shadow-xl shadow-orange-500/10">
+              {[["", "Tất cả"], ["PUBLIC", "Công khai"], ["PRIVATE", "Riêng tư"]].map(([value, label]) => (
+                <button
+                  key={value || "all"}
+                  type="button"
+                  role="option"
+                  aria-selected={visibility === value}
+                  onClick={() => { setVisibility(value); setVisibilityOpen(false); }}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${visibility === value ? "bg-orange-50 font-semibold text-orange-700" : "text-gray-600 hover:bg-orange-50/60 hover:text-orange-700"}`}
+                >
+                  {value === "PRIVATE" ? <LockKey size={18} weight="duotone" className="text-slate-500" /> : <Globe size={18} weight="duotone" className="text-emerald-500" />}
+                  <span>{label}</span>
+                  {visibility === value && <span className="ml-auto text-orange-500">✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <select
           value={visibility}
           onChange={(e) => setVisibility(e.target.value)}
-          className="
+          className="hidden
             w-full
             rounded-xl
-            border border-gray-300
-            p-3
+            border border-orange-100
+            bg-gradient-to-r from-orange-50/70 to-white
+            px-4 py-3 pr-10
+            text-sm font-medium text-gray-700 shadow-sm
             outline-none
             transition
-            focus:border-orange-500 focus:ring-1 focus:ring-orange-500
-            bg-white
+            hover:border-orange-300
+            focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20
           "
         >
           <option value="">Tất cả</option>
-          <option value="PUBLIC">🌍 Công khai</option>
-          <option value="PRIVATE">🔒 Riêng tư</option>
+          <option value="PUBLIC">Công khai</option>
+          <option value="PRIVATE">Riêng tư</option>
         </select>
       </div>
 
+
       {/* Calories */}
       <div className="mb-4">
-        <label className="mb-1.5 block text-sm font-medium text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+          <Fire size={18} weight="duotone" className="text-red-500" aria-hidden="true" />
           Lượng calo (kcal)
         </label>
 
@@ -335,7 +418,8 @@ export default function SearchFilter({
 
       {/* Cooking Time */}
       <div className="mb-4">
-        <label className="mb-1.5 block text-sm font-medium text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+          <Clock size={18} weight="duotone" className="text-blue-500" aria-hidden="true" />
           Thời gian nấu (phút)
         </label>
 
@@ -374,29 +458,66 @@ export default function SearchFilter({
 
       {/* Sort */}
       <div className="mb-4">
-        <label className="mb-1.5 block text-sm font-medium text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+          <SortAscending size={18} weight="duotone" className="text-orange-500" aria-hidden="true" />
           Sắp xếp theo
         </label>
+
+        <div className="relative mb-2">
+          <button
+            type="button"
+            onClick={() => setSortOpen((open) => !open)}
+            aria-haspopup="listbox"
+            aria-expanded={sortOpen}
+            className="flex w-full items-center justify-between rounded-xl border border-orange-100 bg-gradient-to-r from-orange-50/70 to-white px-4 py-3 text-left text-sm font-medium text-gray-700 shadow-sm transition hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+          >
+            <span className="flex items-center gap-2">
+              {sortBy === "newest" && <CalendarBlank size={19} weight="duotone" className="text-orange-500" />}
+              {sortBy === "oldest" && <CalendarBlank size={19} weight="duotone" className="text-slate-500" />}
+              {sortBy === "cookTime" && <Clock size={19} weight="duotone" className="text-blue-500" />}
+              {sortBy === "calories" && <Fire size={19} weight="duotone" className="text-red-500" />}
+              {sortBy === "name" && <TextAa size={19} weight="duotone" className="text-violet-500" />}
+              <span>{sortBy === "newest" ? "Mới nhất" : sortBy === "oldest" ? "Cũ nhất" : sortBy === "cookTime" ? "Thời gian nấu" : sortBy === "calories" ? "Lượng calo" : "Tên món (A-Z)"}</span>
+            </span>
+            <CaretDown size={18} weight="bold" className={`text-orange-500 transition-transform ${sortOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+          </button>
+
+          {sortOpen && (
+            <div role="listbox" aria-label="Sắp xếp theo" className="absolute inset-x-0 top-full z-20 mt-2 overflow-hidden rounded-xl border border-orange-100 bg-white p-1.5 shadow-xl shadow-orange-500/10">
+              {([
+                ["newest", "Mới nhất", CalendarBlank, "text-orange-500"],
+                ["oldest", "Cũ nhất", CalendarBlank, "text-slate-500"],
+                ["cookTime", "Thời gian nấu", Clock, "text-blue-500"],
+                ["calories", "Lượng calo", Fire, "text-red-500"],
+                ["name", "Tên món (A-Z)", TextAa, "text-violet-500"],
+              ] as const).map(([value, label, Icon, color]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="option"
+                  aria-selected={sortBy === value}
+                  onClick={() => { setSortBy(value); setSortOpen(false); }}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${sortBy === value ? "bg-orange-50 font-semibold text-orange-700" : "text-gray-600 hover:bg-orange-50/60 hover:text-orange-700"}`}
+                >
+                  <Icon size={19} weight="duotone" className={color} />
+                  <span>{label}</span>
+                  {sortBy === value && <span className="ml-auto text-xs text-orange-500">✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="
-            w-full
-            rounded-xl
-            border border-gray-300
-            p-3
-            outline-none
-            transition
-            focus:border-orange-500 focus:ring-1 focus:ring-orange-500
-            bg-white
-          "
+          className="hidden"
         >
           <option value="newest">🆕 Mới nhất</option>
-          <option value="oldest">📅 Cũ nhất</option>
+          <option value="oldest">Cũ nhất</option>
           <option value="cookTime">⏱️ Thời gian nấu</option>
-          <option value="calories">🔥 Lượng calo</option>
-          <option value="name">📝 Tên món (A-Z)</option>
+          <option value="calories">Lượng calo</option>
+          <option value="name">Tên món (A-Z)</option>
         </select>
       </div>
 

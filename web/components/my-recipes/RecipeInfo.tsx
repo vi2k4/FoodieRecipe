@@ -1,6 +1,6 @@
 import VisibilityBadge from "../my-recipes/VisibilityBadge";
 
-import { Clock3, Flame, Users, ChefHat } from "lucide-react";
+import { Clock, Fire, ChefHat, UsersThree } from "@phosphor-icons/react";
 
 interface Props {
   recipe: {
@@ -48,25 +48,25 @@ export default function RecipeInfo({ recipe }: Props) {
 
       <div className="mt-8 grid gap-5 grid-cols-2 md:grid-cols-4">
         <div className="rounded-xl bg-white p-5 shadow-sm border border-orange-100">
-          <Flame className="text-orange-500" size={22} />
+          <Fire className="text-orange-500" size={22} weight="duotone" />
           <h3 className="mt-3 text-sm text-gray-500">Calories</h3>
           <p className="font-bold text-lg">{recipe.calories ?? "—"} kcal</p>
         </div>
 
         <div className="rounded-xl bg-white p-5 shadow-sm border border-orange-100">
-          <Clock3 className="text-orange-500" size={22} />
+          <Clock className="text-orange-500" size={22} weight="duotone" />
           <h3 className="mt-3 text-sm text-gray-500">Cooking</h3>
           <p className="font-bold text-lg">{recipe.cookTime ?? "—"} mins</p>
         </div>
 
         <div className="rounded-xl bg-white p-5 shadow-sm border border-orange-100">
-          <ChefHat className="text-orange-500" size={22} />
+          <ChefHat className="text-orange-500" size={22} weight="duotone" />
           <h3 className="mt-3 text-sm text-gray-500">Difficulty</h3>
           <p className="font-bold text-lg">{diffLabel}</p>
         </div>
 
         <div className="rounded-xl bg-white p-5 shadow-sm border border-orange-100">
-          <Users className="text-orange-500" size={22} />
+          <UsersThree className="text-orange-500" size={22} weight="duotone" />
           <h3 className="mt-3 text-sm text-gray-500">Servings</h3>
           <p className="font-bold text-lg">{recipe.servings ?? 4} people</p>
         </div>

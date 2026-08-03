@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { SavedRecipe } from "@/types/ai";
+import { CheckCircle } from "@phosphor-icons/react";
 
 interface Props {
   recipe: SavedRecipe;
@@ -17,7 +18,7 @@ export default function ResultCard({ recipe }: Props) {
         p-5
       "
     >
-      <h2 className="text-green-700 font-bold text-lg">🎉 Đã tạo công thức:</h2>
+      <h2 className="flex items-center gap-2 text-green-700 font-bold text-lg"><CheckCircle size={22} weight="duotone" aria-hidden="true" /> Đã tạo công thức:</h2>
 
       <p className="mt-2 font-semibold">{recipe.title}</p>
 

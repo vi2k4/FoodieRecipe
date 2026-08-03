@@ -73,7 +73,7 @@ export default function RecipeDetailPage() {
       <main className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
         <div className="mx-auto max-w-5xl px-4 py-10">
           <div className="p-16 text-center bg-white rounded-3xl border border-orange-100 space-y-4">
-            <div className="text-5xl">😵</div>
+            <div className="text-5xl">!</div>
             <h3 className="text-xl font-bold text-gray-800">
               Failed to load recipe
             </h3>
@@ -89,7 +89,7 @@ export default function RecipeDetailPage() {
       <main className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
         <div className="mx-auto max-w-5xl px-4 py-10">
           <div className="p-16 text-center bg-white rounded-3xl border border-orange-100 space-y-4">
-            <div className="text-5xl">🔍</div>
+            <div className="text-5xl">?</div>
             <h3 className="text-xl font-bold text-gray-800">
               Recipe not found
             </h3>

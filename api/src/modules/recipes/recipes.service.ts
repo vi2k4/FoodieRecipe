@@ -39,6 +39,12 @@ export class RecipesService {
     const bucket = this.configService.get<string>('AWS_BUCKET_NAME');
     if (!bucket) return null;
 
+    // New uploads are stored as S3 keys. Keep data URLs and other external
+    // URLs untouched, but resolve our own keys to presigned URLs on reads.
+    if (!/^https?:\/\//i.test(value)) {
+      return value.startsWith('data:') ? null : value;
+    }
+
     try {
       const url = new URL(value);
       const virtualHostedBucket = url.hostname.startsWith(`${bucket}.s3.`);
@@ -58,6 +64,11 @@ export class RecipesService {
     }
 
     return null;
+  }
+
+  private normalizeStoredImage(value?: string | null) {
+    const key = this.getConfiguredS3Key(value);
+    return key ?? value;
   }
 
   private async resolveImageUrl(value?: string | null) {
@@ -259,7 +270,7 @@ export class RecipesService {
         cookTime: dto.cookTime ? Math.max(0, Number(dto.cookTime)) : null,
         difficulty: (dto.difficulty as RecipeDifficulty) || 'EASY',
         servings: dto.servings ? Math.max(1, Number(dto.servings)) : 4,
-        thumbnail: dto.thumbnail,
+        thumbnail: this.normalizeStoredImage(dto.thumbnail),
         source: dto.source,
         isPublic: dto.isPublic !== undefined ? dto.isPublic : true,
       },
@@ -337,7 +348,7 @@ export class RecipesService {
               ? Math.max(1, Number(dto.servings))
               : 4
             : undefined,
-        thumbnail: dto.thumbnail,
+        thumbnail: this.normalizeStoredImage(dto.thumbnail),
         source: dto.source,
         isPublic: dto.isPublic,
       },
@@ -521,7 +532,7 @@ export class RecipesService {
       data: {
         id,
         recipeId,
-        imageUrl: dto.imageUrl,
+        imageUrl: this.normalizeStoredImage(dto.imageUrl) ?? '',
         type: (dto.type as RecipeImageType) || 'OTHER',
         displayOrder: dto.displayOrder || 1,
         createdAt: new Date(),
