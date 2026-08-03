@@ -238,6 +238,9 @@ export class RecipesService {
   }
 
   async create(userId: bigint, dto: CreateRecipeDto) {
+    if (!dto.thumbnail?.trim()) {
+      throw new BadRequestException('Ảnh món ăn là bắt buộc!');
+    }
     if (
       dto.calories !== undefined &&
       dto.calories !== null &&
@@ -323,6 +326,10 @@ export class RecipesService {
       throw new BadRequestException('Khẩu phần ăn phải lớn hơn hoặc bằng 1!');
     }
 
+    if (dto.thumbnail !== undefined && !dto.thumbnail.trim()) {
+      throw new BadRequestException('Ảnh món ăn không được để trống!');
+    }
+
     const updated = await this.prisma.recipe.update({
       where: { id },
       data: {
@@ -400,6 +407,9 @@ export class RecipesService {
     dto: CreateIngredientDto,
   ) {
     await this.checkOwnership(recipeId, userId);
+    if (dto.quantity !== undefined && Number(dto.quantity) < 0) {
+      throw new BadRequestException('Số lượng nguyên liệu không được là số âm!');
+    }
     const id = BigInt(Date.now());
     const ingredient = await this.prisma.recipeIngredient.create({
       data: {
@@ -420,6 +430,9 @@ export class RecipesService {
     });
     if (!ingredient) throw new NotFoundException('Ingredient not found');
     await this.checkOwnership(ingredient.recipeId, userId);
+    if (dto.quantity !== undefined && Number(dto.quantity) < 0) {
+      throw new BadRequestException('Số lượng nguyên liệu không được là số âm!');
+    }
 
     const updated = await this.prisma.recipeIngredient.update({
       where: { id },

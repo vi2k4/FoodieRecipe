@@ -386,8 +386,9 @@ export default function SearchFilter({
         <div className="grid grid-cols-2 gap-3">
           <input
             type="number"
+            min="0"
             value={minCalories}
-            onChange={(e) => setMinCalories(e.target.value)}
+            onChange={(e) => setMinCalories(e.target.value.replace(/^-/, ''))}
             placeholder="Tối thiểu"
             className="
               rounded-xl
@@ -401,8 +402,9 @@ export default function SearchFilter({
 
           <input
             type="number"
+            min="0"
             value={maxCalories}
-            onChange={(e) => setMaxCalories(e.target.value)}
+            onChange={(e) => setMaxCalories(e.target.value.replace(/^-/, ''))}
             placeholder="Tối đa"
             className="
               rounded-xl
@@ -426,8 +428,9 @@ export default function SearchFilter({
         <div className="grid grid-cols-2 gap-3">
           <input
             type="number"
+            min="0"
             value={minCookTime}
-            onChange={(e) => setMinCookTime(e.target.value)}
+            onChange={(e) => setMinCookTime(e.target.value.replace(/^-/, ''))}
             placeholder="Tối thiểu"
             className="
               rounded-xl
@@ -441,8 +444,9 @@ export default function SearchFilter({
 
           <input
             type="number"
+            min="0"
             value={maxCookTime}
-            onChange={(e) => setMaxCookTime(e.target.value)}
+            onChange={(e) => setMaxCookTime(e.target.value.replace(/^-/, ''))}
             placeholder="Tối đa"
             className="
               rounded-xl

@@ -191,8 +191,9 @@ export default function RecipesPage() {
                   <label className="block text-xs font-medium text-neutral-700 mb-1">Max Calo (kcal)</label>
                   <input
                     type="number"
+                    min="0"
                     value={maxCalories}
-                    onChange={(e) => setMaxCalories(e.target.value)}
+                    onChange={(e) => setMaxCalories(e.target.value.replace(/^-/, ''))}
                     placeholder="vd: 500"
                     className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 text-sm"
                   />
@@ -201,8 +202,9 @@ export default function RecipesPage() {
                   <label className="block text-xs font-medium text-neutral-700 mb-1">Max thời gian (phút)</label>
                   <input
                     type="number"
+                    min="0"
                     value={maxCookTime}
-                    onChange={(e) => setMaxCookTime(e.target.value)}
+                    onChange={(e) => setMaxCookTime(e.target.value.replace(/^-/, ''))}
                     placeholder="vd: 60"
                     className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 text-sm"
                   />
@@ -258,11 +260,17 @@ export default function RecipesPage() {
                     {/* Thumbnail Image */}
                     <div className="relative h-48 overflow-hidden bg-neutral-100">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={recipe.thumbnail || `https://picsum.photos/seed/${recipe.id}/600/400`}
-                        alt={recipe.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+                      {recipe.thumbnail ? (
+                        <img
+                          src={recipe.thumbnail}
+                          alt={recipe.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <BowlFood size={56} weight="duotone" className="text-orange-400" aria-hidden="true" />
+                        </div>
+                      )}
                       
                       {/* Difficulty Badge */}
                       <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-neutral-800 shadow-sm">

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsOptional, IsNumber, IsIn } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsNumber, IsIn, Min } from 'class-validator';
 
 export class CreateIngredientDto {
   @IsNotEmpty({ message: 'Tên nguyên liệu không được để trống' })
@@ -7,6 +7,7 @@ export class CreateIngredientDto {
 
   @IsOptional()
   @IsNumber({}, { message: 'Số lượng phải là một số' })
+  @Min(0, { message: 'Số lượng nguyên liệu không được là số âm' })
   quantity?: number;
 
   @IsOptional()
@@ -25,6 +26,7 @@ export class UpdateIngredientDto {
 
   @IsOptional()
   @IsNumber({}, { message: 'Số lượng phải là một số' })
+  @Min(0, { message: 'Số lượng nguyên liệu không được là số âm' })
   quantity?: number;
 
   @IsOptional()
