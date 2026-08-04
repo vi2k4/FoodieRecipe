@@ -4,6 +4,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
+import { BowlFood, ChefHat, Sparkle } from '@phosphor-icons/react';
+import { Eye, ThumbsUp, Flame, Clock } from 'lucide-react';
+import { LikeButton } from '@/components/recipes/LikeButton';
 
 export default function Home() {
   const [recipes, setRecipes] = useState<any[]>([]);
@@ -73,7 +76,7 @@ export default function Home() {
               <option value="">Tất cả danh mục</option>
               {categories.map((cat) => (
                 <option key={String(cat.id)} value={String(cat.id)}>
-                  {cat.icon || '📂'} {cat.name}
+                  {cat.name}
                 </option>
               ))}
             </select>
@@ -91,7 +94,7 @@ export default function Home() {
               type="submit"
               className="flex w-full items-center justify-center whitespace-nowrap rounded-xl bg-orange-500 px-5 py-3 font-medium text-white shadow-lg shadow-orange-500/20 transition-colors hover:bg-orange-600 lg:col-span-2"
             >
-              🔍 Tìm kiếm
+              Tìm kiếm
             </button>
           </form>
         </div>
@@ -101,7 +104,7 @@ export default function Home() {
       <section className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-neutral-900">🔥 Công thức mới từ Database</h2>
+            <h2 className="text-2xl font-bold text-neutral-900">Công thức mới từ Database</h2>
             <p className="text-neutral-500 text-sm">Các công thức tươi ngon cập nhật từ cộng đồng</p>
           </div>
           <Link href="/recipes" className="text-orange-500 hover:text-orange-600 font-medium flex items-center gap-1">
@@ -116,7 +119,7 @@ export default function Home() {
           </div>
         ) : recipes.length === 0 ? (
           <div className="p-12 text-center text-neutral-500 bg-white rounded-2xl border border-neutral-100">
-            <div className="text-4xl mb-2">🍲</div>
+            <BowlFood size={52} weight="duotone" className="mx-auto mb-2 text-orange-400" aria-label="No image" />
             <p>Chưa có công thức nào. Hãy đóng góp công thức đầu tiên!</p>
           </div>
         ) : (
@@ -126,7 +129,7 @@ export default function Home() {
                 <div className="relative h-48 overflow-hidden bg-neutral-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
-                    src={recipe.thumbnail || `https://picsum.photos/seed/${recipe.id}/600/400`} 
+                    src={recipe.thumbnail || "/file.svg"} 
                     alt={recipe.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                   />
@@ -136,13 +139,25 @@ export default function Home() {
                 </div>
                 <div className="p-5 flex-1 flex flex-col">
                   <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-orange-500 transition-colors line-clamp-2">{recipe.title}</h3>
-                  <div className="flex items-center gap-4 text-sm text-neutral-500 mb-4">
-                    <span className="flex items-center gap-1">🔥 {recipe.calories || '—'} kcal</span>
-                    <span className="flex items-center gap-1">⏱️ {recipe.cookTime || '—'} ph</span>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500 mb-4">
+                    <span className="flex items-center gap-1 font-medium"><Flame className="w-3.5 h-3.5 text-orange-500" /> {recipe.calories || '—'} kcal</span>
+                    <span className="flex items-center gap-1 font-medium"><Clock className="w-3.5 h-3.5 text-neutral-400" /> {recipe.cookTime || '—'} ph</span>
+                    <span className="flex items-center gap-1 text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md font-medium">
+                      <Eye className="w-3.5 h-3.5 text-neutral-400" />
+                      {Number(recipe.viewCount || 0)} xem
+                    </span>
+                    <LikeButton
+                      recipeId={recipe.id}
+                      initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)}
+                    />
                   </div>
                   <div className="mt-auto flex items-center gap-2 pt-4 border-t border-neutral-100">
                     <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-xs">
-                      {recipe.source === 'AI GenAI' || recipe.source === 'AI' ? '🤖' : '👨‍🍳'}
+                      {recipe.source === 'AI GenAI' || recipe.source === 'AI' ? (
+                        <Sparkle size={16} weight="duotone" aria-label="AI generated" />
+                      ) : (
+                        <ChefHat size={16} weight="duotone" aria-label="Chef recipe" />
+                      )}
                     </div>
                     <span className="text-sm font-medium text-neutral-700 truncate">{recipe.author?.username || 'Ẩn danh'}</span>
                     {recipe.source === 'AI GenAI' || recipe.source === 'AI' ? (

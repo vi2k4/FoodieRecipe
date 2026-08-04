@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { Utensils, Cookie, Leaf, Coffee, Flame, Clock, Star, BrainCircuit, Search, ArrowRight } from "lucide-react";
+import { Utensils, Cookie, Leaf, Coffee, Flame, Clock, Star, BrainCircuit, Search, ArrowRight, Eye, ThumbsUp } from "lucide-react";
+import { FavoriteButton } from "@/components/recipes/FavoriteButton";
+import { LikeButton } from "@/components/recipes/LikeButton";
 
 interface Recipe {
   id: number;
@@ -11,6 +13,11 @@ interface Recipe {
   servings: number | null;
   thumbnail: string | null;
   averageRating: number;
+  viewCount?: number | string | null;
+  likeCount?: number | string | null;
+  _count?: {
+    likes?: number;
+  };
   author: {
     username: string;
     avatarUrl: string | null;
@@ -163,40 +170,45 @@ export default async function PublicHomePage() {
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-neutral-100 flex items-center justify-between text-neutral-500 text-xs">
+                <div className="pt-4 border-t border-neutral-100 flex flex-wrap items-center justify-between text-neutral-500 text-xs gap-2">
                   {/* Meta stats */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2.5">
                     {recipe.cookTime && (
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-neutral-400" /> {recipe.cookTime} phút
                       </span>
                     )}
-                    {recipe.calories && (
-                      <span className="flex items-center gap-1">
-                        <Flame className="w-3.5 h-3.5 text-neutral-400" /> {recipe.calories} kcal
-                      </span>
-                    )}
+                    <span className="flex items-center gap-1 text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md">
+                      <Eye className="w-3.5 h-3.5 text-neutral-400" /> {Number(recipe.viewCount || 0)}
+                    </span>
+                    <LikeButton
+                      recipeId={recipe.id}
+                      initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)}
+                    />
                   </div>
                   
                   {/* Rating */}
-                  <div className="flex items-center gap-0.5 text-amber-500 font-bold bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
-                    <Star className="w-3.5 h-3.5 fill-amber-500" /> {recipe.averageRating.toFixed(1)}
+                  <div className="flex items-center gap-0.5 text-amber-500 font-bold bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100 shrink-0">
+                    <Star className="w-3.5 h-3.5 fill-amber-500" /> {recipe.averageRating ? recipe.averageRating.toFixed(1) : "5.0"}
                   </div>
                 </div>
 
                 {/* Author footer */}
-                {recipe.author && (
-                  <div className="pt-3 border-t border-neutral-100 flex items-center gap-2">
-                    <img 
-                      src={recipe.author.avatarUrl || "/default-avatar.png"} 
-                      alt={recipe.author.username}
-                      className="w-6.5 h-6.5 rounded-full object-cover border border-neutral-200"
-                    />
-                    <span className="text-[11px] font-medium text-neutral-600">
-                      Bởi <span className="text-neutral-800 font-semibold">{recipe.author.username}</span>
-                    </span>
-                  </div>
-                )}
+                <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
+                  {recipe.author ? (
+                    <div className="flex items-center gap-2 min-w-0">
+                      <img 
+                        src={recipe.author.avatarUrl || "/default-avatar.png"} 
+                        alt={recipe.author.username}
+                        className="w-6.5 h-6.5 rounded-full object-cover border border-neutral-200 shrink-0"
+                      />
+                      <span className="text-[11px] font-medium text-neutral-600 truncate">
+                        Bởi <span className="text-neutral-800 font-semibold">{recipe.author.username}</span>
+                      </span>
+                    </div>
+                  ) : <div />}
+                  <FavoriteButton recipeId={recipe.id} />
+                </div>
               </div>
             </Link>
           ))}

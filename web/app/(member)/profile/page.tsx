@@ -10,7 +10,9 @@ import {
   ChefHat,
   CheckCircle2,
   ChevronRight,
+  Heart,
   ImagePlus,
+  LockKeyhole,
   Loader2,
   Mail,
   ShieldCheck,
@@ -49,7 +51,13 @@ export default function ProfilePage() {
     resolver: zodResolver(profileSchema as any),
     defaultValues: { username: "", bio: "", avatarUrl: "" },
   });
-  const [selectedFile, setSelectedFile] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -82,20 +90,53 @@ export default function ProfilePage() {
 
   async function submit(values: ProfileFormValues) {
     try {
-      const updated = await auth.updateProfile(values);
+      const updated = await auth.updateProfile(values, selectedFile || undefined);
       setUser(updated);
       reset({
         username: updated.username,
         bio: updated.bio || "",
         avatarUrl: updated.avatarUrl || "",
       });
-      setSelectedFile("");
+      setSelectedFile(null);
       toast.success("Đã cập nhật hồ sơ");
     } catch (error) {
       toast.error("Cập nhật thất bại", {
         description:
           error instanceof Error ? error.message : "Vui lòng thử lại.",
       });
+    }
+  }
+
+  async function submitPassword(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("Vui lòng nhập đầy đủ thông tin mật khẩu");
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.error("Mật khẩu mới phải có ít nhất 8 ký tự");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Mật khẩu xác nhận không khớp");
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+      await auth.changePassword(currentPassword, newPassword);
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      toast.success("Đổi mật khẩu thành công", {
+        description: "Phiên đăng nhập khác đã được đăng xuất. Vui lòng đăng nhập lại khi cần.",
+      });
+    } catch (error) {
+      toast.error("Đổi mật khẩu thất bại", {
+        description: error instanceof Error ? error.message : "Vui lòng thử lại.",
+      });
+    } finally {
+      setChangingPassword(false);
     }
   }
 
@@ -120,7 +161,7 @@ export default function ProfilePage() {
     reader.onload = () => {
       const value = String(reader.result || "");
       setValue("avatarUrl", value, { shouldDirty: true, shouldValidate: true });
-      setSelectedFile(file.name);
+      setSelectedFile(file);
     };
     reader.readAsDataURL(file);
   }
@@ -204,6 +245,19 @@ export default function ProfilePage() {
                     {user.role.toLowerCase()}
                   </span>
                 </div>
+
+                {/* Followers & Following Stats Counter */}
+                <div className="mt-5 flex items-center justify-around rounded-xl bg-orange-50/70 p-3 text-center border border-orange-100/80">
+                  <div className="flex-1">
+                    <p className="text-lg font-extrabold text-stone-900">{(user as any)?._count?.followers || 0}</p>
+                    <p className="text-xs font-semibold text-stone-500">Người theo dõi</p>
+                  </div>
+                  <div className="h-8 w-px bg-orange-200/60" />
+                  <div className="flex-1">
+                    <p className="text-lg font-extrabold text-stone-900">{(user as any)?._count?.following || 0}</p>
+                    <p className="text-xs font-semibold text-stone-500">Đang theo dõi</p>
+                  </div>
+                </div>
                 <div className="mt-6 space-y-3 border-t border-orange-100 pt-5 text-sm">
                   <div className="flex items-center gap-3 text-stone-600">
                     <Mail className="size-4 text-orange-500" />
@@ -221,7 +275,7 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
             <Card className="border-orange-100 shadow-sm">
-              <CardContent className="p-5">
+              <CardContent className="p-5 space-y-3">
                 <Link
                   href="/my-recipes"
                   className="flex items-center justify-between text-sm font-semibold text-stone-700 transition-colors hover:text-orange-600"
@@ -230,8 +284,79 @@ export default function ProfilePage() {
                     <ChefHat className="size-4 text-orange-500" />
                     Công thức của tôi
                   </span>
-                  <ChevronRight className="size-4" />
+                  <ChevronRight className="size-4 text-stone-400" />
                 </Link>
+                <div className="border-t border-orange-100/60 pt-3" />
+                <Link
+                  href="/favorites"
+                  className="flex items-center justify-between text-sm font-semibold text-stone-700 transition-colors hover:text-red-600"
+                >
+                  <span className="flex items-center gap-2">
+                    <Heart className="size-4 text-red-500 fill-red-500" />
+                    Món ăn yêu thích
+                  </span>
+                  <ChevronRight className="size-4 text-stone-400" />
+                </Link>
+              </CardContent>
+            </Card>
+            <Card className="border-orange-100 shadow-sm">
+              <CardHeader className="px-5 pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <LockKeyhole className="size-5 text-orange-500" />
+                  Đổi mật khẩu
+                </CardTitle>
+                <CardDescription>
+                  Cập nhật mật khẩu để bảo vệ tài khoản của bạn.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-5 pb-5">
+                <form className="space-y-4" onSubmit={submitPassword}>
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
+                    <Input
+                      id="currentPassword"
+                      type="password"
+                      autoComplete="current-password"
+                      value={passwordForm.currentPassword}
+                      onChange={(event) =>
+                        setPasswordForm((prev) => ({ ...prev, currentPassword: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">Mật khẩu mới</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      minLength={8}
+                      value={passwordForm.newPassword}
+                      onChange={(event) =>
+                        setPasswordForm((prev) => ({ ...prev, newPassword: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      minLength={8}
+                      value={passwordForm.confirmPassword}
+                      onChange={(event) =>
+                        setPasswordForm((prev) => ({ ...prev, confirmPassword: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-orange-500 hover:bg-orange-600"
+                    disabled={changingPassword}
+                  >
+                    {changingPassword ? "Đang đổi mật khẩu..." : "Đổi mật khẩu"}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </div>
@@ -288,7 +413,7 @@ export default function ProfilePage() {
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-stone-700">
-                        {selectedFile || "Chọn ảnh từ máy tính"}
+                        {selectedFile?.name || "Chọn ảnh từ máy tính"}
                       </span>
                       <span className="mt-1 block text-xs text-stone-400">
                         PNG, JPG, WEBP hoặc GIF · tối đa 2MB
@@ -333,7 +458,7 @@ export default function ProfilePage() {
                     className="border-orange-200"
                     onClick={() => {
                       reset();
-                      setSelectedFile("");
+                      setSelectedFile(null);
                     }}
                     disabled={!isDirty}
                   >

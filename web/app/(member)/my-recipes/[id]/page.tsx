@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 
 import RecipeHeader from "@/components/my-recipes/RecipeHeader";
@@ -19,6 +19,7 @@ export default function RecipeDetailPage() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const viewIncremented = useRef(false);
 
   useEffect(() => {
     if (!id) return;
@@ -26,6 +27,10 @@ export default function RecipeDetailPage() {
       setLoading(true);
       setError(null);
       try {
+        if (!viewIncremented.current) {
+          viewIncremented.current = true;
+          api.recipes.incrementView(id).catch(() => {});
+        }
         const data = await api.recipes.get(id);
         setRecipe(data as Recipe);
       } catch (err: unknown) {
@@ -73,7 +78,7 @@ export default function RecipeDetailPage() {
       <main className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
         <div className="mx-auto max-w-5xl px-4 py-10">
           <div className="p-16 text-center bg-white rounded-3xl border border-orange-100 space-y-4">
-            <div className="text-5xl">😵</div>
+            <div className="text-5xl">!</div>
             <h3 className="text-xl font-bold text-gray-800">
               Failed to load recipe
             </h3>
@@ -89,7 +94,7 @@ export default function RecipeDetailPage() {
       <main className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
         <div className="mx-auto max-w-5xl px-4 py-10">
           <div className="p-16 text-center bg-white rounded-3xl border border-orange-100 space-y-4">
-            <div className="text-5xl">🔍</div>
+            <div className="text-5xl">?</div>
             <h3 className="text-xl font-bold text-gray-800">
               Recipe not found
             </h3>

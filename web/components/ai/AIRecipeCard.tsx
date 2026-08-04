@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Sparkle } from "@phosphor-icons/react";
 
 import UploadBox from "./UploadBox";
 import GenerateButton from "./GenerateButton";
@@ -64,7 +65,7 @@ export default function AIRecipeCard() {
 
   return (
     <div className="bg-white rounded-3xl shadow-sm p-6 w-full max-w-xl">
-      <h1 className="text-2xl font-bold">✨ Quét tủ lạnh — AI gợi ý món ăn</h1>
+      <h1 className="flex items-center gap-2 text-2xl font-bold"><Sparkle size={26} weight="duotone" className="text-orange-500" aria-hidden="true" /> Quét tủ lạnh — AI gợi ý món ăn</h1>
 
       <p className="text-gray-500 mt-2">
         Chụp ảnh nguyên liệu bạn có, hệ thống tự nhận diện và sáng tạo công thức

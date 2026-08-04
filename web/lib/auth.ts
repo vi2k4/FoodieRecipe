@@ -33,6 +33,11 @@ export const auth = {
     this.saveSession(session);
     return session;
   },
+  async loginWithGoogle(credential: string) {
+    const { data: session } = await apiClient.post<AuthSession>('/auth/google', { credential });
+    this.saveSession(session);
+    return session;
+  },
   async register(username: string, email: string, password: string) {
     const { data } = await apiClient.post<PendingRegistration>("/auth/register", { username, email, password });
     return data;
@@ -69,14 +74,26 @@ export const auth = {
   async updateProfile(data: {
     username: string;
     bio: string;
-    avatarUrl: string;
-  }) {
+  }, avatar?: File) {
     const current = this.getSession();
     if (!current?.accessToken)
       throw new Error("Bạn cần đăng nhập để cập nhật hồ sơ");
-    const { data: result } = await apiClient.patch<{ user: AuthUser }>("/auth/me", data);
+    const formData = new FormData();
+    formData.append("username", data.username);
+    formData.append("bio", data.bio);
+    if (avatar) formData.append("avatar", avatar);
+    const { data: result } = await apiClient.patch<{ user: AuthUser }>("/auth/me", formData, {
+      headers: { "Content-Type": undefined },
+    });
     this.saveSession({ ...current, user: result.user });
     return result.user;
+  },
+  async changePassword(currentPassword: string, newPassword: string) {
+    const { data } = await apiClient.post<{ message: string }>(
+      "/auth/change-password",
+      { currentPassword, newPassword },
+    );
+    return data;
   },
   async forgotPassword(email: string) {
     const { data } = await apiClient.post<{ message: string; developmentOtp?: string }>("/auth/forgot-password", { email });

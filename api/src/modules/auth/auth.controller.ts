@@ -8,8 +8,11 @@ import {
   Post,
   Res,
   UnauthorizedException,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -18,6 +21,8 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -87,12 +92,33 @@ export class AuthController {
   }
 
   @Patch('me')
+  @UseInterceptors(FileInterceptor('avatar'))
   async updateMe(
     @Headers('authorization') authorization: string | undefined,
     @Body() dto: UpdateProfileDto,
+    @UploadedFile() avatar?: Express.Multer.File,
   ) {
     const userId = this.getUserId(authorization);
-    return { user: await this.authService.updateProfile(userId, dto) };
+    return { user: await this.authService.updateProfile(userId, dto, avatar) };
+  }
+
+  @Post('change-password')
+  async changePassword(
+    @Headers('authorization') authorization: string | undefined,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    const userId = this.getUserId(authorization);
+    return this.authService.changePassword(userId, dto);
+  }
+
+  @Post('google')
+  async googleLogin(
+    @Body() dto: GoogleLoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const session = await this.authService.loginWithGoogle(dto.credential);
+    this.setRefreshCookie(response, session.refreshToken);
+    return this.withoutRefreshToken(session);
   }
 
   private getUserId(authorization?: string) {
@@ -104,13 +130,14 @@ export class AuthController {
   private readonly refreshCookieName = 'foodirecipe_refresh_token';
 
   private cookieOptions() {
+    // HTTP deployments (for example, direct EC2 testing without a domain)
+    // cannot store a Secure cookie. Set COOKIE_SECURE=true when HTTPS is enabled.
+    const secure = process.env.COOKIE_SECURE === 'true';
+
     return {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite:
-        process.env.NODE_ENV === 'production'
-          ? ('none' as const)
-          : ('lax' as const),
+      secure,
+      sameSite: secure ? ('none' as const) : ('lax' as const),
       path: '/api/auth',
     };
   }

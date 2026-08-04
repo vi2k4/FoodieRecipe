@@ -272,7 +272,7 @@ export default function AdminDashboardPage() {
                         {r.title}
                       </p>
                       <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                        {r.author?.username} · ❤ {r.likeCount}
+                        {r.author?.username} · {r.likeCount} likes
                       </p>
                     </div>
                   </li>
@@ -292,7 +292,7 @@ export default function AdminDashboardPage() {
             </h2>
             {pendingReports.length === 0 ? (
               <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                Không có báo cáo nào cần xử lý ✓
+                Không có báo cáo nào cần xử lý
               </p>
             ) : (
               <ul className="space-y-3">

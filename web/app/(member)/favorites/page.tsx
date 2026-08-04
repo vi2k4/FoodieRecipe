@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { socialApi } from "@/lib/social-api";
+import { auth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +16,11 @@ import {
   Star, 
   ChevronRight,
   BookOpen,
-  ArrowRight
+  ArrowRight,
+  Eye,
+  ThumbsUp
 } from "lucide-react";
+import { LikeButton } from "@/components/recipes/LikeButton";
 
 interface Recipe {
   id: number;
@@ -27,6 +31,11 @@ interface Recipe {
   difficulty: string;
   thumbnail: string;
   averageRating: number;
+  viewCount?: number | string | null;
+  likeCount?: number | string | null;
+  _count?: {
+    likes?: number;
+  };
   author: {
     username: string;
     avatarUrl: string;
@@ -68,9 +77,18 @@ export default function FavoritesPage() {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("token"));
-    }
+    let mounted = true;
+    const syncToken = () => {
+      if (!mounted) return;
+      const session = auth.getSession();
+      setToken(session?.accessToken || null);
+    };
+    auth.bootstrap().then(syncToken).catch(syncToken);
+    window.addEventListener("foodirecipe:auth-change", syncToken);
+    return () => {
+      mounted = false;
+      window.removeEventListener("foodirecipe:auth-change", syncToken);
+    };
   }, []);
 
   const myFavoritesQuery = useQuery<any[]>({
@@ -84,15 +102,15 @@ export default function FavoritesPage() {
   const favoritesList = myFavoritesQuery.data || [];
   const favorites = token ? favoritesList : INITIAL_FAVORITES;
 
-  const handleRemoveFavorite = async (id: number) => {
-    if (!token) {
-      return;
-    }
+  const handleRemoveFavorite = async (e: React.MouseEvent, id: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!token) return;
     try {
       await socialApi.toggleFavorite(id, false);
       myFavoritesQuery.refetch();
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -137,25 +155,26 @@ export default function FavoritesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {favorites.map((recipe) => (
-              <Card 
+              <Link
                 key={recipe.id}
-                className="group bg-white rounded-3xl overflow-hidden border border-neutral-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col relative"
+                href={`/recipes/${recipe.id}`}
+                className="group bg-white rounded-3xl overflow-hidden border border-neutral-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col relative"
               >
                 {/* Unfavorite Heart Button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemoveFavorite(recipe.id)}
-                  className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm text-red-500 hover:text-red-600 hover:bg-white p-0 rounded-full shadow-md transition-all h-10 w-10"
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => handleRemoveFavorite(e, recipe.id)}
+                  className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm text-red-500 hover:text-red-600 hover:bg-white p-0 rounded-full shadow-md transition-all h-10 w-10 flex items-center justify-center cursor-pointer select-none"
                   title="Xóa khỏi yêu thích"
                 >
-                  <Heart className="w-5 h-5 fill-current" />
-                </Button>
+                  <Heart className="w-5 h-5 fill-current text-red-500" />
+                </span>
 
                 {/* Thumbnail */}
-                <div className="relative aspect-video overflow-hidden">
+                <div className="relative aspect-video overflow-hidden bg-neutral-100">
                   <img 
-                    src={recipe.thumbnail} 
+                    src={recipe.thumbnail || "/placeholder.jpg"} 
                     alt={recipe.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -168,9 +187,7 @@ export default function FavoritesPage() {
                 <CardContent className="p-6 flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-orange-600 transition-colors line-clamp-1">
-                      <Link href={`/recipes/${recipe.id}`}>
-                        {recipe.title}
-                      </Link>
+                      {recipe.title}
                     </h3>
                     <p className="text-neutral-500 text-xs line-clamp-2 mb-4 leading-relaxed">
                       {recipe.description}
@@ -183,31 +200,35 @@ export default function FavoritesPage() {
                     <div className="flex items-center gap-2">
                       <Avatar className="w-6 h-6 border border-neutral-100">
                         <AvatarImage src={recipe.author?.avatarUrl} className="object-cover" />
-                        <AvatarFallback>{recipe.author?.username?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback>{recipe.author?.username?.slice(0, 2).toUpperCase() || 'US'}</AvatarFallback>
                       </Avatar>
-                      <span className="text-xs text-neutral-600 font-medium">@{recipe.author?.username}</span>
+                      <span className="text-xs text-neutral-600 font-medium">@{recipe.author?.username || 'user'}</span>
                     </div>
 
                     {/* Stats */}
-                    <div className="flex items-center justify-between text-neutral-500 text-[11px] font-semibold">
-                      <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center justify-between text-neutral-500 text-[11px] font-semibold gap-2">
+                      <div className="flex flex-wrap items-center gap-2.5">
                         <span className="flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5 text-neutral-400" />
-                          {recipe.cookTime} phút
+                          {recipe.cookTime || 30} phút
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Flame className="w-3.5 h-3.5 text-neutral-400" />
-                          {Math.round(recipe.calories)} kcal
+                        <span className="flex items-center gap-1 text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded">
+                          <Eye className="w-3.5 h-3.5 text-neutral-400" />
+                          {Number(recipe.viewCount || 0)}
                         </span>
+                        <LikeButton
+                          recipeId={recipe.id}
+                          initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)}
+                        />
                       </div>
-                      <span className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-0.5 rounded">
+                      <span className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-0.5 rounded shrink-0">
                         <Star className="w-3 h-3 fill-current" />
                         {recipe.averageRating ? Number(recipe.averageRating).toFixed(1) : "5.0"}
                       </span>
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </Link>
             ))}
           </div>
         )}

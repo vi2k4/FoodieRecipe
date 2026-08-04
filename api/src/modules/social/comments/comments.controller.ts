@@ -56,12 +56,20 @@ export class CommentsController {
 
   @Get('recipes/:recipeId/comments')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Lấy cây bình luận của một công thức' })
+  @ApiOperation({ summary: 'Lấy cây bình luận của một công thức (có phân trang)' })
   @ApiParam({ name: 'recipeId', description: 'ID của công thức', type: String })
-  @ApiResponse({ status: 200, description: 'Trả về danh sách cây bình luận' })
+  @ApiQuery({ name: 'page', description: 'Trang hiện tại (mặc định 1)', required: false, type: Number })
+  @ApiQuery({ name: 'limit', description: 'Số bình luận cha trên 1 trang (mặc định 10)', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Trả về danh sách cây bình luận kèm thông tin phân trang' })
   @ApiResponse({ status: 404, description: 'Không tìm thấy công thức' })
-  async getComments(@Param('recipeId') recipeId: string) {
-    return this.commentsService.getCommentsTree(BigInt(recipeId));
+  async getComments(
+    @Param('recipeId') recipeId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
+    const limitNum = limit ? Math.max(1, parseInt(limit, 10)) : 10;
+    return this.commentsService.getCommentsTree(BigInt(recipeId), pageNum, limitNum);
   }
 
   @Patch('comments/:id')

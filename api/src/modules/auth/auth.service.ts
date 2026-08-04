@@ -4,7 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { resolveMx } from 'node:dns/promises';
+import { resolve4, resolve6, resolveMx } from 'node:dns/promises';
 import {
   createHmac,
   randomBytes,
@@ -17,6 +17,8 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { EmailService } from './email.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { S3Service } from '../../common/storage/s3.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 type SafeUser = {
   id: string;
@@ -38,6 +40,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
     private readonly emailService: EmailService,
+    private readonly s3Service: S3Service,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -61,21 +64,21 @@ export class AuthService {
     }
 
     const otp = this.createOtp();
-    await this.prisma.$transaction(async (transaction) => {
-      const user = await transaction.user.create({
-        data: {
-          username,
-          email,
-          passwordHash: this.hashPassword(dto.password),
-        },
-      });
-      await transaction.oTPVerification.create({
-        data: {
-          userId: user.id,
-          otpCode: this.hashOtp(otp, 'register'),
-          expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-        },
-      });
+    await this.prisma.pendingRegistration.upsert({
+      where: { email },
+      update: {
+        username,
+        passwordHash: this.hashPassword(dto.password),
+        otpCode: this.hashOtp(otp, 'register'),
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      },
+      create: {
+        username,
+        email,
+        passwordHash: this.hashPassword(dto.password),
+        otpCode: this.hashOtp(otp, 'register'),
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      },
     });
     await this.emailService.sendOtp(email, otp, 'register');
 
@@ -98,6 +101,75 @@ export class AuthService {
       throw new UnauthorizedException(
         'Email chưa được xác minh. Vui lòng xác minh bằng mã OTP trước.',
       );
+    }
+
+    return this.createSession(user);
+  }
+
+  async loginWithGoogle(credential: string) {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      throw new UnauthorizedException('Google OAuth chưa được cấu hình');
+    }
+
+    const tokenResponse = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`,
+    );
+    if (!tokenResponse.ok) {
+      throw new UnauthorizedException('Google token không hợp lệ');
+    }
+
+    const profile = (await tokenResponse.json()) as {
+      aud?: string;
+      iss?: string;
+      sub?: string;
+      email?: string;
+      email_verified?: string | boolean;
+      name?: string;
+      picture?: string;
+    };
+    const isVerifiedEmail =
+      profile.email_verified === true || profile.email_verified === 'true';
+
+    if (
+      profile.aud !== clientId ||
+      !['accounts.google.com', 'https://accounts.google.com'].includes(profile.iss ?? '') ||
+      !profile.sub ||
+      !profile.email ||
+      !isVerifiedEmail
+    ) {
+      throw new UnauthorizedException('Thông tin tài khoản Google không hợp lệ');
+    }
+
+    const email = profile.email.trim().toLowerCase();
+    let user = await this.usersService.findByEmail(email);
+
+    if (user) {
+      if (user.isLocked) {
+        throw new UnauthorizedException('Tài khoản đã bị khóa');
+      }
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          isVerified: true,
+          ...(profile.picture && !user.avatarUrl ? { avatarUrl: profile.picture } : {}),
+        },
+      });
+    } else {
+      const usernameBase = (profile.name || email.split('@')[0])
+        .replace(/[^a-zA-Z0-9_]/g, '')
+        .slice(0, 35) || 'googleuser';
+      const username = `${usernameBase}_${profile.sub.slice(-8)}`.slice(0, 50);
+
+      user = await this.prisma.user.create({
+        data: {
+          username,
+          email,
+          passwordHash: this.hashPassword(randomBytes(32).toString('hex')),
+          avatarUrl: profile.picture || null,
+          isVerified: true,
+        },
+      });
     }
 
     return this.createSession(user);
@@ -148,6 +220,27 @@ export class AuthService {
 
   async resendVerification(emailInput: string) {
     const email = emailInput?.trim().toLowerCase();
+    const pending = email
+      ? await this.prisma.pendingRegistration.findUnique({ where: { email } })
+      : null;
+
+    if (pending) {
+      const otp = this.createOtp();
+      await this.prisma.pendingRegistration.update({
+        where: { id: pending.id },
+        data: {
+          otpCode: this.hashOtp(otp, 'register'),
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        },
+      });
+      await this.emailService.sendOtp(email, otp, 'register');
+
+      return {
+        message: 'Mã OTP xác minh mới đã được gửi.',
+        ...(process.env.NODE_ENV !== 'production' ? { developmentOtp: otp } : {}),
+      };
+    }
+
     const user = email ? await this.usersService.findByEmail(email) : null;
     if (!user || user.isVerified) {
       return {
@@ -176,6 +269,39 @@ export class AuthService {
     otp: string,
     purpose: 'register' | 'reset' = 'register',
   ) {
+    if (purpose === 'register') {
+      const email = emailInput?.trim().toLowerCase();
+      const pending = email
+        ? await this.prisma.pendingRegistration.findUnique({ where: { email } })
+        : null;
+
+      if (pending) {
+        if (pending.expiresAt <= new Date() || pending.otpCode !== this.hashOtp(otp, 'register')) {
+          throw new UnauthorizedException('Mã OTP không hợp lệ hoặc đã hết hạn');
+        }
+
+        const existing = await this.usersService.findByEmail(email);
+        if (existing) {
+          await this.prisma.pendingRegistration.delete({ where: { id: pending.id } });
+          throw new ConflictException('Email đã được sử dụng');
+        }
+
+        await this.prisma.$transaction([
+          this.prisma.user.create({
+            data: {
+              username: pending.username,
+              email: pending.email,
+              passwordHash: pending.passwordHash,
+              isVerified: true,
+            },
+          }),
+          this.prisma.pendingRegistration.delete({ where: { id: pending.id } }),
+        ]);
+
+        return { valid: true, message: 'Email đã được xác minh và tài khoản đã được tạo' };
+      }
+    }
+
     const user = await this.findUser(emailInput);
     const verification = await this.prisma.oTPVerification.findFirst({
       where: {
@@ -245,12 +371,25 @@ export class AuthService {
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: BigInt(userId) },
+      include: {
+        _count: {
+          select: {
+            followers: true,
+            following: true,
+            recipes: true,
+          },
+        },
+      },
     });
     if (!user) throw new UnauthorizedException('Tài khoản không tồn tại');
     return this.toSafeUser(user);
   }
 
-  async updateProfile(userId: string, dto: UpdateProfileDto) {
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+    avatar?: Express.Multer.File,
+  ) {
     const username = dto.username?.trim();
     if (
       username !== undefined &&
@@ -273,14 +412,29 @@ export class AuthService {
       throw new ConflictException('Ảnh đại diện không được lớn hơn 2MB');
     }
 
+    if (avatar) {
+      if (!avatar.mimetype.startsWith('image/')) {
+        throw new ConflictException('Invalid avatar image');
+      }
+      if (avatar.size > 2 * 1024 * 1024) {
+        throw new ConflictException('Avatar must not exceed 2MB');
+      }
+    }
+
+    const uploadedAvatarUrl = avatar
+      ? (await this.s3Service.uploadImage(avatar, `avatars/${userId}`)).url
+      : undefined;
+
     const user = await this.prisma.user.update({
       where: { id: BigInt(userId) },
       data: {
         ...(username !== undefined ? { username } : {}),
         ...(dto.bio !== undefined ? { bio: dto.bio?.trim() || null } : {}),
-        ...(dto.avatarUrl !== undefined
-          ? { avatarUrl: dto.avatarUrl?.trim() || null }
-          : {}),
+        ...(uploadedAvatarUrl !== undefined
+          ? { avatarUrl: uploadedAvatarUrl }
+          : dto.avatarUrl !== undefined
+            ? { avatarUrl: dto.avatarUrl?.trim() || null }
+            : {}),
       },
     });
     return this.toSafeUser(user);
@@ -353,7 +507,14 @@ export class AuthService {
       bio: user.bio,
       role: user.role,
       isVerified: user.isVerified,
-    };
+      _count: user._count
+        ? {
+            followers: user._count.followers ?? 0,
+            following: user._count.following ?? 0,
+            recipes: user._count.recipes ?? 0,
+          }
+        : undefined,
+    } as any;
   }
 
   private hashPassword(password: string) {
@@ -402,12 +563,57 @@ export class AuthService {
 
     try {
       const records = await resolveMx(domain);
-      if (!records.length) throw new Error('NO_MX');
-    } catch {
+      if (records.length > 0) return;
+    } catch (error: any) {
+      if (error?.code === 'ENOTFOUND') {
+        throw new ConflictException(
+          `Tên miền email "${domain}" không tồn tại. Hãy kiểm tra lại phần sau dấu @.`,
+        );
+      }
+
+      if (error?.code !== 'ENODATA') {
+        throw new ConflictException(
+          `Không thể kiểm tra tên miền email "${domain}" lúc này. Vui lòng thử lại sau.`,
+        );
+      }
+    }
+
+    // SMTP cho phép dùng A/AAAA khi domain không khai báo MX.
+    const [ipv4, ipv6] = await Promise.all([
+      resolve4(domain).catch(() => []),
+      resolve6(domain).catch(() => []),
+    ]);
+
+    if (ipv4.length === 0 && ipv6.length === 0) {
       throw new ConflictException(
-        'Tên miền email không tồn tại hoặc không thể nhận thư',
+        `Tên miền email "${domain}" chưa cấu hình máy chủ nhận thư. Hãy dùng email thật như example@gmail.com.`,
       );
     }
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: BigInt(userId) },
+    });
+
+    if (!user || !this.verifyPassword(dto.currentPassword, user.passwordHash)) {
+      throw new UnauthorizedException('Mật khẩu hiện tại không chính xác');
+    }
+
+    this.validatePassword(dto.newPassword);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: this.hashPassword(dto.newPassword) },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId: user.id, revoked: false },
+        data: { revoked: true },
+      }),
+    ]);
+
+    return { message: 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại.' };
   }
 
   private signToken(payload: Record<string, string>) {

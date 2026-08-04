@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { GenerateRecipeDto } from './dto/request/ai-generate-receipt.dto';
@@ -28,6 +29,8 @@ import { localizeDetectedIngredients } from './services/ingredient-localization'
 
 @Injectable()
 export class AIGenerationService {
+  private readonly logger = new Logger(AIGenerationService.name);
+
   constructor(
     private readonly rekognitionService: RekognitionService,
     private readonly s3Service: S3Service,
@@ -90,36 +93,52 @@ export class AIGenerationService {
     if (userId == null) {
       throw new BadRequestException('Thiếu userId để lưu lịch sử');
     }
-    const upload = await this.s3Service.uploadImage(file, 'ai-images');
-    const result = await this.rekognitionService.detectLabels(upload.key);
+    this.logger.log(`[AI] analyze-image started for user ${userId.toString()}`);
 
-    const labels =
-      result.Labels?.map((label) => ({
-        name: label.Name ?? '',
-        confidence: Number((label.Confidence ?? 0).toFixed(2)),
-      })) ?? [];
+    try {
+      const upload = await this.s3Service.uploadImage(file, 'ai-images');
+      this.logger.log(`[AI] image uploaded to S3: ${upload.key}`);
 
-    const ingredients = this.ingredientService.extractIngredients(
-      result.Labels ?? [],
-    );
+      const result = await this.rekognitionService.detectLabels(upload.key);
+      this.logger.log(`[AI] Rekognition returned ${result.Labels?.length ?? 0} labels`);
 
-    const prompt = this.promptBuilder.buildRecipePrompt(ingredients);
+      const labels =
+        result.Labels?.map((label) => ({
+          name: label.Name ?? '',
+          confidence: Number((label.Confidence ?? 0).toFixed(2)),
+        })) ?? [];
 
-    const { recipe, historyId, localizedIngredients } =
-      await this.generateAndPersistRecipe({
-        userId,
-        prompt,
-        labels: labels.map((l) => l.name),
-        recognizedIngredients: ingredients,
-        imageUrl: upload.url,
-      });
+      const ingredients = this.ingredientService.extractIngredients(
+        result.Labels ?? [],
+      );
+      this.logger.log(`[AI] extracted ${ingredients.length} ingredients`);
 
-    return {
-      labels,
-      ingredients: localizedIngredients,
-      recipe,
-      historyId,
-    };
+      const prompt = this.promptBuilder.buildRecipePrompt(ingredients);
+
+      const { recipe, historyId, localizedIngredients } =
+        await this.generateAndPersistRecipe({
+          userId,
+          prompt,
+          labels: labels.map((l) => l.name),
+          recognizedIngredients: ingredients,
+          imageUrl: upload.url,
+        });
+
+      this.logger.log(`[AI] recipe generated and persisted with id ${recipe.id}`);
+
+      return {
+        labels,
+        ingredients: localizedIngredients,
+        recipe,
+        historyId,
+      };
+    } catch (error) {
+      this.logger.error(
+        '[AI] analyze-image failed',
+        error instanceof Error ? error.stack : JSON.stringify(error),
+      );
+      throw error;
+    }
   }
 
   private async generateAndPersistRecipe(params: {
@@ -136,9 +155,11 @@ export class AIGenerationService {
     const model = this.configService.getOrThrow<string>('BEDROCK_MODEL_ID');
 
     try {
+      this.logger.log(`[AI] calling Bedrock model ${model}`);
       const rawResponse = await this.bedrockService.generateRecipe(
         params.prompt,
       );
+      this.logger.log(`[AI] Bedrock response received (${rawResponse.length} chars)`);
       const generatedRecipe = this.parseBedrockRecipe(rawResponse);
       const localizedIngredients = localizeDetectedIngredients(
         params.recognizedIngredients ?? [],
@@ -150,6 +171,7 @@ export class AIGenerationService {
         Number(params.userId),
         params.imageUrl,
       );
+      this.logger.log(`[AI] recipe transaction committed with id ${savedRecipe.id}`);
 
       const resolvedThumbnail = await this.resolveImageUrl(params.imageUrl);
 
@@ -183,14 +205,26 @@ export class AIGenerationService {
         localizedIngredients,
       };
     } catch (error) {
-      await this.saveHistory({
-        userId: params.userId,
-        prompt: params.prompt,
-        imageUrl: params.imageUrl,
-        labels: params.labels,
-        model,
-        status: AIGenerationStatus.FAILED,
-      });
+      this.logger.error(
+        '[AI] generate-and-persist failed',
+        error instanceof Error ? error.stack : JSON.stringify(error),
+      );
+
+      try {
+        await this.saveHistory({
+          userId: params.userId,
+          prompt: params.prompt,
+          imageUrl: params.imageUrl,
+          labels: params.labels,
+          model,
+          status: AIGenerationStatus.FAILED,
+        });
+      } catch (historyError) {
+        this.logger.error(
+          '[AI] failed to save failed-generation history',
+          historyError instanceof Error ? historyError.stack : JSON.stringify(historyError),
+        );
+      }
 
       if (error instanceof BadRequestException) {
         throw error;

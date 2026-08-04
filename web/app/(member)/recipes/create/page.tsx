@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Check, Hash } from 'lucide-react';
+import { ChefHat, Globe, LockKey } from '@phosphor-icons/react';
 import { api } from '@/lib/api-client';
 import { ImageUploader } from '@/components/ui/ImageUploader';
 
@@ -120,6 +122,11 @@ export default function CreateRecipePage() {
       return;
     }
 
+    if (!imageUrl.trim()) {
+      alert('Vui lòng tải lên ảnh món ăn trước khi tạo công thức!');
+      return;
+    }
+
     if (servings && Number(servings) < 1) {
       alert('Khẩu phần ăn phải lớn hơn hoặc bằng 1!');
       return;
@@ -132,6 +139,11 @@ export default function CreateRecipePage() {
 
     if (cookTime && Number(cookTime) < 0) {
       alert('Thời gian nấu không được là số âm!');
+      return;
+    }
+
+    if (ingredients.some((ingredient) => ingredient.amount !== '' && Number(ingredient.amount) < 0)) {
+      alert('Số lượng nguyên liệu không được là số âm!');
       return;
     }
 
@@ -167,7 +179,7 @@ export default function CreateRecipePage() {
             unit: ing.unit.trim() || undefined,
             displayOrder: i + 1,
             userId: currentUserId,
-          }, currentUserId).catch(console.error);
+          }, currentUserId);
         }
       }
 
@@ -179,16 +191,16 @@ export default function CreateRecipePage() {
             stepNumber: i + 1,
             content: stepContent.trim(),
             userId: currentUserId,
-          }, currentUserId).catch(console.error);
+          }, currentUserId);
         }
       }
 
       // 4. Associate selected Tags with Recipe
       for (const tagId of selectedTagIds) {
-        await api.recipeTags.add(recipeId, tagId, currentUserId).catch(console.error);
+        await api.recipeTags.add(recipeId, tagId, currentUserId);
       }
 
-      alert('🎉 Tạo công thức mới thành công và đã lưu vào Database!');
+      alert('Tạo công thức mới thành công và đã lưu vào Database!');
       router.push(`/recipes/${recipeId}`);
     } catch (err: any) {
       console.error('Tạo công thức thất bại:', err);
@@ -206,13 +218,13 @@ export default function CreateRecipePage() {
         <Link href="/recipes" className="text-orange-500 hover:text-orange-600 font-medium mb-4 inline-block">
           &larr; Quay lại danh sách
         </Link>
-        <h1 className="text-3xl font-bold text-neutral-900">✍️ Đóng góp công thức mới</h1>
+        <h1 className="text-3xl font-bold text-neutral-900">Đóng góp công thức mới</h1>
         <p className="text-neutral-500 mt-2">Chia sẻ công thức nấu ăn của bạn – lưu trực tiếp vào cơ sở dữ liệu.</p>
       </div>
 
       {errorMsg && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
-          ⚠️ {errorMsg}
+          {errorMsg}
         </div>
       )}
 
@@ -237,7 +249,7 @@ export default function CreateRecipePage() {
                     : 'bg-white border-neutral-200 hover:bg-neutral-50 text-neutral-600'
                 }`}
               >
-                <span className="text-2xl">🌐</span>
+                <Globe size={30} weight="duotone" className="text-emerald-500" aria-hidden="true" />
                 <div>
                   <div className="font-semibold text-sm">Công khai (Public)</div>
                   <div className="text-xs text-neutral-500 mt-0.5">Mọi người đều có thể tìm thấy và xem công thức này</div>
@@ -253,7 +265,7 @@ export default function CreateRecipePage() {
                     : 'bg-white border-neutral-200 hover:bg-neutral-50 text-neutral-600'
                 }`}
               >
-                <span className="text-2xl">🔒</span>
+                <LockKey size={30} weight="duotone" className="text-slate-500" aria-hidden="true" />
                 <div>
                   <div className="font-semibold text-sm">Riêng tư (Private)</div>
                   <div className="text-xs text-neutral-500 mt-0.5">Chỉ một mình bạn có thể xem công thức này</div>
@@ -344,7 +356,7 @@ export default function CreateRecipePage() {
                 <option value="">Chọn danh mục (Không bắt buộc)</option>
                 {categories.map((cat) => (
                   <option key={String(cat.id)} value={String(cat.id)}>
-                    {cat.icon || '📂'} {cat.name}
+                    {cat.name}
                   </option>
                 ))}
               </select>
@@ -358,7 +370,7 @@ export default function CreateRecipePage() {
           <div className="pt-4 border-t border-neutral-100 space-y-3">
             <div className="flex items-center justify-between">
               <label className="block text-sm font-semibold text-neutral-800 flex items-center gap-1.5">
-                🏷️ Thẻ phân loại (Tags)
+                Thẻ phân loại (Tags)
               </label>
               <span className="text-xs text-neutral-400">Chọn hoặc tạo mới tag bên cạnh</span>
             </div>
@@ -384,7 +396,7 @@ export default function CreateRecipePage() {
                 disabled={addingTag || !newTagName.trim()}
                 className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 whitespace-nowrap"
               >
-                {addingTag ? '⏳ Đang tạo...' : '➕ Thêm Tag mới'}
+                {addingTag ? 'Đang tạo...' : 'Thêm Tag mới'}
               </button>
             </div>
 
@@ -406,7 +418,7 @@ export default function CreateRecipePage() {
                           : 'bg-neutral-100 text-neutral-600 border-neutral-200 hover:bg-neutral-200'
                       }`}
                     >
-                      <span>{isSelected ? '✓' : '#'}</span>
+                      {isSelected ? <Check className="size-4" aria-hidden="true" /> : <Hash className="size-4" aria-hidden="true" />}
                       <span>{tag.name}</span>
                     </button>
                   );
@@ -419,9 +431,9 @@ export default function CreateRecipePage() {
         {/* Ingredients */}
         <div className="space-y-4">
           <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
-            <h2 className="text-xl font-bold text-neutral-900">🛒 Nguyên liệu</h2>
+            <h2 className="flex items-center gap-2 text-xl font-bold text-neutral-900"><ChefHat size={24} weight="duotone" className="text-orange-500" aria-hidden="true" /> Nguyên liệu</h2>
             <button type="button" onClick={addIngredient} className="text-orange-500 hover:text-orange-600 font-medium text-sm flex items-center gap-1">
-              ➕ Thêm dòng
+              Thêm dòng
             </button>
           </div>
           
@@ -441,10 +453,11 @@ export default function CreateRecipePage() {
               />
               <input 
                 type="number" 
+                min="0"
                 value={ing.amount}
                 onChange={(e) => {
                   const updated = [...ingredients];
-                  updated[idx].amount = e.target.value;
+                  updated[idx].amount = e.target.value.replace(/^-/, '');
                   setIngredients(updated);
                 }}
                 placeholder="Số lượng" 
@@ -467,7 +480,7 @@ export default function CreateRecipePage() {
                 disabled={ingredients.length === 1}
                 className="p-2 text-neutral-400 hover:text-red-500 disabled:opacity-50 transition-colors"
               >
-                🗑️
+                Xóa
               </button>
             </div>
           ))}
@@ -476,9 +489,9 @@ export default function CreateRecipePage() {
         {/* Steps */}
         <div className="space-y-4">
           <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
-            <h2 className="text-xl font-bold text-neutral-900">👨‍🍳 Các bước thực hiện</h2>
+            <h2 className="flex items-center gap-2 text-xl font-bold text-neutral-900"><ChefHat size={24} weight="duotone" className="text-orange-500" aria-hidden="true" /> Các bước thực hiện</h2>
             <button type="button" onClick={addStep} className="text-orange-500 hover:text-orange-600 font-medium text-sm flex items-center gap-1">
-              ➕ Thêm bước
+              Thêm bước
             </button>
           </div>
           
@@ -528,7 +541,7 @@ export default function CreateRecipePage() {
                 className="p-2 text-neutral-400 hover:text-red-500 disabled:opacity-50 transition-colors mt-1"
                 title="Xóa bước này"
               >
-                🗑️
+                Xóa
               </button>
             </div>
           ))}
@@ -543,7 +556,7 @@ export default function CreateRecipePage() {
             disabled={loading}
             className="px-8 py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20 disabled:opacity-50"
           >
-            {loading ? '⏳ Đang lưu vào Database...' : '💾 Đăng công thức (Lưu vào DB)'}
+            {loading ? 'Đang lưu vào Database...' : 'Đăng công thức (Lưu vào DB)'}
           </button>
         </div>
 

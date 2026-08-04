@@ -88,6 +88,10 @@ export const api = {
       const { data } = await apiClient.get<any>(`/recipes/${id}`);
       return data;
     },
+    incrementView: async (id: string | number) => {
+      const { data } = await apiClient.post<any>(`/recipes/${id}/view`);
+      return data;
+    },
     create: async (body: Record<string, unknown>) => {
       const headers = body?.userId ? { 'x-user-id': String(body.userId) } : undefined;
       const { data } = await apiClient.post<any>('/recipes', body, { headers });
@@ -143,6 +147,16 @@ export const api = {
     },
   },
   images: {
+    upload: async (file: File) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      const { data } = await apiClient.post<{ key: string; url: string }>(
+        '/recipes/upload-image',
+        formData,
+        { headers: { 'Content-Type': undefined } },
+      );
+      return data;
+    },
     add: async (recipeId: string | number, body: Record<string, unknown>, userId?: string | number) => {
       const uid = userId || body?.userId;
       const headers = uid ? { 'x-user-id': String(uid) } : undefined;

@@ -10,9 +10,14 @@ import {
   ArrowRight,
   ChefHat,
   Users,
+  UserRound,
+  Eye,
+  ThumbsUp,
 } from "lucide-react";
+import { BowlFood } from "@phosphor-icons/react";
 
 import { Recipe } from "@/types/recipe";
+import { LikeButton } from "@/components/recipes/LikeButton";
 import VisibilityBadge from "./VisibilityBadge";
 
 interface Props {
@@ -62,6 +67,7 @@ export default function RecipeCard({ recipe }: Props) {
             src={imageUrl}
             alt={recipe.title}
             fill
+            unoptimized
             className="
             object-cover
             transition-transform
@@ -71,13 +77,13 @@ export default function RecipeCard({ recipe }: Props) {
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <span className="text-5xl">🍽️</span>
+            <BowlFood size={56} weight="duotone" className="text-orange-400" aria-hidden="true" />
           </div>
         )}
 
         {/* My Recipe Badge */}
         <div className="absolute top-3 left-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1">
-          <span>👤</span> My Recipe
+          <UserRound className="size-3.5" aria-hidden="true" /> My Recipe
         </div>
 
         {/* Visibility */}
@@ -126,6 +132,18 @@ export default function RecipeCard({ recipe }: Props) {
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Flame size={17} className="text-orange-400" />
             <span>{recipe.calories ?? "—"} kcal</span>
+          </div>
+
+          <div className="flex items-center gap-4 text-sm text-gray-600 pt-1">
+            <span className="flex items-center gap-1.5 font-medium text-neutral-600 bg-neutral-100 px-2.5 py-1 rounded-lg">
+              <Eye size={16} className="text-neutral-500" />
+              {Number(recipe.viewCount || 0)} xem
+            </span>
+            <LikeButton
+              recipeId={recipe.id}
+              initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)}
+              showText
+            />
           </div>
 
           {diffLabel && (

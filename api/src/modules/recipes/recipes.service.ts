@@ -24,6 +24,8 @@ import {
 } from '../../generated/prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from '../../common/storage/s3.service';
+import { NotificationsService } from '../social/notifications/notifications.service';
+import { NotificationType } from '../../generated/prisma/client';
 
 @Injectable()
 export class RecipesService {
@@ -31,6 +33,7 @@ export class RecipesService {
     private readonly prisma: PrismaService,
     private readonly s3Service: S3Service,
     private readonly configService: ConfigService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private getConfiguredS3Key(value?: string | null): string | null {
@@ -38,6 +41,12 @@ export class RecipesService {
 
     const bucket = this.configService.get<string>('AWS_BUCKET_NAME');
     if (!bucket) return null;
+
+    // New uploads are stored as S3 keys. Keep data URLs and other external
+    // URLs untouched, but resolve our own keys to presigned URLs on reads.
+    if (!/^https?:\/\//i.test(value)) {
+      return value.startsWith('data:') ? null : value;
+    }
 
     try {
       const url = new URL(value);
@@ -58,6 +67,11 @@ export class RecipesService {
     }
 
     return null;
+  }
+
+  private normalizeStoredImage(value?: string | null) {
+    const key = this.getConfiguredS3Key(value);
+    return key ?? value;
   }
 
   private async resolveImageUrl(value?: string | null) {
@@ -148,6 +162,13 @@ export class RecipesService {
           category: {
             select: { id: true, name: true, icon: true },
           },
+          _count: {
+            select: {
+              comments: { where: { deletedAt: null } },
+              likes: true,
+              favorites: true,
+            },
+          },
         },
       }),
       this.prisma.recipe.count({ where }),
@@ -177,7 +198,7 @@ export class RecipesService {
         },
         _count: {
           select: {
-            comments: true,
+            comments: { where: { deletedAt: null } },
             likes: true,
             favorites: true,
           },
@@ -225,6 +246,9 @@ export class RecipesService {
   }
 
   async create(userId: bigint, dto: CreateRecipeDto) {
+    if (!dto.thumbnail?.trim()) {
+      throw new BadRequestException('Ảnh món ăn là bắt buộc!');
+    }
     if (
       dto.calories !== undefined &&
       dto.calories !== null &&
@@ -257,7 +281,7 @@ export class RecipesService {
         cookTime: dto.cookTime ? Math.max(0, Number(dto.cookTime)) : null,
         difficulty: (dto.difficulty as RecipeDifficulty) || 'EASY',
         servings: dto.servings ? Math.max(1, Number(dto.servings)) : 4,
-        thumbnail: dto.thumbnail,
+        thumbnail: this.normalizeStoredImage(dto.thumbnail),
         source: dto.source,
         isPublic: dto.isPublic !== undefined ? dto.isPublic : true,
       },
@@ -270,6 +294,30 @@ export class RecipesService {
         },
       },
     });
+
+    // Notify all followers if recipe is public
+    if (recipe.isPublic !== false) {
+      try {
+        const followers = await this.prisma.userFollow.findMany({
+          where: { followingId: userId },
+          select: { followerId: true },
+        });
+
+        const authorName = recipe.author?.username || 'Người dùng bạn theo dõi';
+        for (const f of followers) {
+          await this.notificationsService.createNotification({
+            userId: f.followerId,
+            title: `Công thức mới từ ${authorName}`,
+            content: `${authorName} vừa đăng công thức mới: "${recipe.title}"`,
+            type: NotificationType.FOLLOW,
+            referenceId: recipe.id,
+          });
+        }
+      } catch (e) {
+        console.error('Failed to notify followers for new recipe:', e);
+      }
+    }
+
     return this.serializeObj(await this.resolveRecipeImages(recipe));
   }
 
@@ -310,6 +358,10 @@ export class RecipesService {
       throw new BadRequestException('Khẩu phần ăn phải lớn hơn hoặc bằng 1!');
     }
 
+    if (dto.thumbnail !== undefined && !dto.thumbnail.trim()) {
+      throw new BadRequestException('Ảnh món ăn không được để trống!');
+    }
+
     const updated = await this.prisma.recipe.update({
       where: { id },
       data: {
@@ -335,7 +387,7 @@ export class RecipesService {
               ? Math.max(1, Number(dto.servings))
               : 4
             : undefined,
-        thumbnail: dto.thumbnail,
+        thumbnail: this.normalizeStoredImage(dto.thumbnail),
         source: dto.source,
         isPublic: dto.isPublic,
       },
@@ -387,6 +439,9 @@ export class RecipesService {
     dto: CreateIngredientDto,
   ) {
     await this.checkOwnership(recipeId, userId);
+    if (dto.quantity !== undefined && Number(dto.quantity) < 0) {
+      throw new BadRequestException('Số lượng nguyên liệu không được là số âm!');
+    }
     const id = BigInt(Date.now());
     const ingredient = await this.prisma.recipeIngredient.create({
       data: {
@@ -407,6 +462,9 @@ export class RecipesService {
     });
     if (!ingredient) throw new NotFoundException('Ingredient not found');
     await this.checkOwnership(ingredient.recipeId, userId);
+    if (dto.quantity !== undefined && Number(dto.quantity) < 0) {
+      throw new BadRequestException('Số lượng nguyên liệu không được là số âm!');
+    }
 
     const updated = await this.prisma.recipeIngredient.update({
       where: { id },
@@ -519,7 +577,7 @@ export class RecipesService {
       data: {
         id,
         recipeId,
-        imageUrl: dto.imageUrl,
+        imageUrl: this.normalizeStoredImage(dto.imageUrl) ?? '',
         type: (dto.type as RecipeImageType) || 'OTHER',
         displayOrder: dto.displayOrder || 1,
         createdAt: new Date(),

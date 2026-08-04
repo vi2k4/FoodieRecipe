@@ -272,7 +272,7 @@ export default function AdminRecipeDetailPage() {
             >
               <h2 className="mb-4 flex items-center gap-2 text-lg font-bold" style={{ color: "var(--text-primary)" }}>
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg text-sm" style={{ backgroundColor: "var(--primary)", color: "white" }}>
-                  🥕
+                  Ingredients
                 </span>
                 Nguyên liệu
                 {recipe.servings && (
@@ -314,7 +314,7 @@ export default function AdminRecipeDetailPage() {
             >
               <h2 className="mb-5 flex items-center gap-2 text-lg font-bold" style={{ color: "var(--text-primary)" }}>
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg text-sm" style={{ backgroundColor: "var(--primary)", color: "white" }}>
-                  👨‍🍳
+                  Instructions
                 </span>
                 Các bước thực hiện
               </h2>

@@ -9,6 +9,7 @@ import Pagination from "@/components/my-recipes/Pagination";
 import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { Recipe, RecipeCategory } from "@/types/recipe";
+import { BookOpenText, BowlFood, Plus } from "@phosphor-icons/react";
 
 interface FilterValues {
   keyword: string;
@@ -192,7 +193,7 @@ export default function MyRecipesPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="flex items-center gap-3 text-4xl font-bold">
-              <span>📖</span>
+              <BookOpenText size={36} weight="duotone" className="text-orange-500" aria-hidden="true" />
               My Recipe Collection
             </h1>
 
@@ -206,7 +207,7 @@ export default function MyRecipesPage() {
             onClick={() => router.push("/recipes/create")}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-medium text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600"
           >
-            <span>➕</span>
+            <Plus size={20} weight="bold" aria-hidden="true" />
             Create Recipe
           </button>
         </div>
@@ -235,7 +236,7 @@ export default function MyRecipesPage() {
               </div>
             ) : error ? (
               <div className="space-y-4 rounded-3xl border border-orange-100 bg-white p-16 text-center">
-                <div className="text-5xl">😵</div>
+                <div className="text-5xl">!</div>
 
                 <h3 className="text-xl font-bold text-gray-800">
                   Failed to load recipes
@@ -250,12 +251,12 @@ export default function MyRecipesPage() {
                   onClick={() => fetchRecipes(page)}
                   className="rounded-xl bg-orange-50 px-5 py-2.5 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-100"
                 >
-                  🔄 Try Again
+                  Try Again
                 </button>
               </div>
             ) : recipes.length === 0 ? (
               <div className="space-y-4 rounded-3xl border border-orange-100 bg-white p-16 text-center">
-                <div className="text-5xl">🍲</div>
+                  <BowlFood size={60} weight="duotone" className="mx-auto text-orange-400" aria-label="No image" />
 
                 <h3 className="text-xl font-bold text-gray-800">
                   No recipes found
@@ -279,7 +280,7 @@ export default function MyRecipesPage() {
                     onClick={handleReset}
                     className="rounded-xl bg-orange-50 px-5 py-2.5 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-100"
                   >
-                    🗑️ Clear all filters
+                    Clear all filters
                   </button>
                 )}
               </div>
