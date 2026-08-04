@@ -11,7 +11,9 @@ FROM base AS deps
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-RUN pnpm install --frozen-lockfile
+# Prisma's postinstall needs prisma/schema.prisma, which is copied in the
+# builder stage. Generate Prisma Client explicitly after the schema is present.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 
 FROM base AS builder

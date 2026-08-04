@@ -22,6 +22,7 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -99,6 +100,15 @@ export class AuthController {
   ) {
     const userId = this.getUserId(authorization);
     return { user: await this.authService.updateProfile(userId, dto, avatar) };
+  }
+
+  @Post('change-password')
+  async changePassword(
+    @Headers('authorization') authorization: string | undefined,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    const userId = this.getUserId(authorization);
+    return this.authService.changePassword(userId, dto);
   }
 
   @Post('google')

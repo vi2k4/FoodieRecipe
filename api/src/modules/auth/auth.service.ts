@@ -18,6 +18,7 @@ import { RegisterDto } from './dto/register.dto';
 import { EmailService } from './email.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { S3Service } from '../../common/storage/s3.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 type SafeUser = {
   id: string;
@@ -518,6 +519,31 @@ export class AuthService {
         `Tên miền email "${domain}" chưa cấu hình máy chủ nhận thư. Hãy dùng email thật như example@gmail.com.`,
       );
     }
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: BigInt(userId) },
+    });
+
+    if (!user || !this.verifyPassword(dto.currentPassword, user.passwordHash)) {
+      throw new UnauthorizedException('Mật khẩu hiện tại không chính xác');
+    }
+
+    this.validatePassword(dto.newPassword);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: this.hashPassword(dto.newPassword) },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId: user.id, revoked: false },
+        data: { revoked: true },
+      }),
+    ]);
+
+    return { message: 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại.' };
   }
 
   private signToken(payload: Record<string, string>) {
