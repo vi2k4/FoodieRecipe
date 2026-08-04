@@ -6,8 +6,4 @@ settings:
 
 importers:
 
-  .:
-    dependencies:
-      FoodieRecipe:
-        specifier: 'link:'
-        version: 'link:'
+  .: {}
