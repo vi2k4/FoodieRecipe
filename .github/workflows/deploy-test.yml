@@ -1,0 +1,53 @@
+name: Deploy Develop
+
+on:
+    push:
+        branches:
+            - viet
+
+concurrency:
+    group: foodie-develop
+    cancel-in-progress: true
+
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout develop
+              uses: actions/checkout@v4
+
+            - name: Login Docker Hub
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DEVELOP_DOCKERHUB_USERNAME }}
+                  password: ${{ secrets.DEVELOP_DOCKERHUB_TOKEN }}
+
+            - name: Build and push backend develop
+              uses: docker/build-push-action@v6
+              with:
+                  context: ./api
+                  push: true
+                  tags: |
+                      ${{ secrets.DEVELOP_DOCKERHUB_USERNAME }}/foodie-backend:develop
+                      ${{ secrets.DEVELOP_DOCKERHUB_USERNAME }}/foodie-backend:develop-${{ github.sha }}
+
+            - name: Build and push frontend develop
+              uses: docker/build-push-action@v6
+              with:
+                  context: ./web
+                  push: true
+                  tags: |
+                      ${{ secrets.DEVELOP_DOCKERHUB_USERNAME }}/foodie-frontend:develop
+                      ${{ secrets.DEVELOP_DOCKERHUB_USERNAME }}/foodie-frontend:develop-${{ github.sha }}
+
+            - name: Deploy develop EC2
+              uses: appleboy/ssh-action@v1
+              with:
+                  host: ${{ secrets.DEVELOP_EC2_HOST }}
+                  username: ec2-user
+                  key: ${{ secrets.DEVELOP_EC2_SSH_KEY }}
+                  script: |
+                      set -e
+                      cd /home/ec2-user/foodie-develop
+                      ./deploy.sh
