@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LogOut, UserRound } from "lucide-react";
+import { LogOut, UserRound, Heart } from "lucide-react";
 import { ChefHat } from "@phosphor-icons/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { auth, type AuthSession } from "@/lib/auth";

@@ -97,7 +97,7 @@ export class CommentsService {
     return newComment;
   }
 
-  async getCommentsTree(recipeId: bigint) {
+  async getCommentsTree(recipeId: bigint, page = 1, limit = 10) {
     // 1. Check if recipe exists
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId, deletedAt: null },
@@ -106,9 +106,42 @@ export class CommentsService {
       throw new NotFoundException(`Recipe with ID ${recipeId} not found`);
     }
 
-    // 2. Fetch all comments for the recipe (excluding soft deleted ones)
-    const comments = await this.prisma.comment.findMany({
+    // 2. Count total comments for this recipe (including child/reply comments)
+    const totalComments = await this.prisma.comment.count({
       where: { recipeId, deletedAt: null },
+    });
+
+    // Count root comments (comments without parent) for page calculations
+    const totalRoots = await this.prisma.comment.count({
+      where: { recipeId, parentCommentId: null, deletedAt: null },
+    });
+
+    const totalPages = Math.ceil(totalRoots / limit) || 1;
+
+    // 3. Fetch root comments for current page
+    const rootComments = await this.prisma.comment.findMany({
+      where: { recipeId, parentCommentId: null, deletedAt: null },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    // 4. Fetch ALL non-root comments for this recipe
+    const childComments = await this.prisma.comment.findMany({
+      where: {
+        recipeId,
+        parentCommentId: { not: null },
+        deletedAt: null,
+      },
       include: {
         user: {
           select: {
@@ -121,30 +154,62 @@ export class CommentsService {
       orderBy: { createdAt: 'asc' },
     });
 
-    // 3. Structure into tree in-memory
+    // 5. Build 3-level tree structure (Level 4+ flatten into Level 3)
     const commentMap = new Map<bigint, any>();
-    const roots: any[] = [];
-
-    for (const comment of comments) {
-      const commentNode = { ...comment, replies: [] };
-      commentMap.set(comment.id, commentNode);
+    for (const child of childComments) {
+      commentMap.set(child.id, { ...child, replies: [] });
     }
 
-    for (const commentNode of commentMap.values()) {
-      if (commentNode.parentCommentId) {
-        const parentNode = commentMap.get(commentNode.parentCommentId);
-        if (parentNode) {
-          parentNode.replies.push(commentNode);
-        } else {
-          // If parent comment was soft-deleted, we still place it at root
-          roots.push(commentNode);
+    // Helper to collect all descendants recursively
+    const collectAllDescendants = (nodeId: bigint): any[] => {
+      const descendants: any[] = [];
+      for (const childNode of commentMap.values()) {
+        if (childNode.parentCommentId === nodeId) {
+          descendants.push({ ...childNode, replies: [] });
+          descendants.push(...collectAllDescendants(childNode.id));
         }
-      } else {
-        roots.push(commentNode);
       }
-    }
+      return descendants;
+    };
 
-    return roots;
+    const data = rootComments.map((root) => {
+      // Level 1
+      const level1Node = { ...root, replies: [] as any[] };
+
+      // Level 2 (children of root)
+      for (const childNode of commentMap.values()) {
+        if (childNode.parentCommentId === root.id) {
+          const level2Node = { ...childNode, replies: [] as any[] };
+
+          // Level 3 (grandchildren of root)
+          for (const grandChildNode of commentMap.values()) {
+            if (grandChildNode.parentCommentId === childNode.id) {
+              const level3Node = { ...grandChildNode, replies: [] as any[] };
+
+              // Level 4 and deeper are flattened into Level 3's replies
+              const deeperDescendants = collectAllDescendants(grandChildNode.id);
+              level3Node.replies = deeperDescendants;
+
+              level2Node.replies.push(level3Node);
+            }
+          }
+
+          level1Node.replies.push(level2Node);
+        }
+      }
+      return level1Node;
+    });
+
+    return {
+      data,
+      meta: {
+        total: totalComments,
+        totalRoots,
+        page,
+        limit,
+        totalPages,
+      },
+    };
   }
 
   async updateComment(

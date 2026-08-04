@@ -3,6 +3,8 @@ import { CommentsService } from './comments.service';
 import { PrismaService } from '../../../database/prisma.service';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 
+import { NotificationsService } from '../notifications/notifications.service';
+
 describe('CommentsService', () => {
   let service: CommentsService;
   let prisma: PrismaService;
@@ -16,7 +18,12 @@ describe('CommentsService', () => {
       create: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     },
+  };
+
+  const mockNotificationsService = {
+    createNotification: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -26,6 +33,10 @@ describe('CommentsService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();
@@ -70,30 +81,39 @@ describe('CommentsService', () => {
     });
 
     it('should create comment successfully', async () => {
-      mockPrismaService.recipe.findUnique.mockResolvedValue({ id: 2n });
-      mockPrismaService.comment.create.mockResolvedValue({ id: 100n, content: 'test comment' });
+      mockPrismaService.recipe.findUnique.mockResolvedValue({ id: 2n, userId: 1n, title: 'Recipe' });
+      mockPrismaService.comment.create.mockResolvedValue({ id: 100n, content: 'test comment', user: { username: 'testuser' } });
 
       const result = await service.createComment(1n, 2n, { content: 'test comment' });
-      expect(result).toEqual({ id: 100n, content: 'test comment' });
+      expect(result).toEqual({ id: 100n, content: 'test comment', user: { username: 'testuser' } });
     });
   });
 
   describe('getCommentsTree', () => {
     it('should return comments organized as a tree structure', async () => {
       mockPrismaService.recipe.findUnique.mockResolvedValue({ id: 2n });
-      const dbComments = [
+      mockPrismaService.comment.count
+        .mockResolvedValueOnce(3) // totalComments (all non-deleted)
+        .mockResolvedValueOnce(2); // totalRoots (root comments)
+      const rootComments = [
         { id: 1n, content: 'root 1', parentCommentId: null, user: {} },
-        { id: 2n, content: 'child of 1', parentCommentId: 1n, user: {} },
         { id: 3n, content: 'root 2', parentCommentId: null, user: {} },
       ];
-      mockPrismaService.comment.findMany.mockResolvedValue(dbComments);
+      const childComments = [
+        { id: 2n, content: 'child of 1', parentCommentId: 1n, user: {} },
+      ];
+      mockPrismaService.comment.findMany
+        .mockResolvedValueOnce(rootComments)
+        .mockResolvedValueOnce(childComments);
 
-      const tree = await service.getCommentsTree(2n);
-      expect(tree).toHaveLength(2);
-      expect(tree[0].id).toBe(1n);
-      expect(tree[0].replies).toHaveLength(1);
-      expect(tree[0].replies[0].id).toBe(2n);
-      expect(tree[1].id).toBe(3n);
+      const res = await service.getCommentsTree(2n);
+      expect(res.meta.total).toBe(3);
+      expect(res.meta.totalRoots).toBe(2);
+      expect(res.data).toHaveLength(2);
+      expect(res.data[0].id).toBe(1n);
+      expect(res.data[0].replies).toHaveLength(1);
+      expect(res.data[0].replies[0].id).toBe(2n);
+      expect(res.data[1].id).toBe(3n);
     });
   });
 

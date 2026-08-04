@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Delete, Param, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, HttpCode, HttpStatus, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { RatingsService } from './ratings.service';
 import { RatingDto } from './dto/rating.dto';
@@ -9,6 +9,34 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 @Controller('recipes/:id/rating')
 export class RatingsController {
   constructor(private readonly ratingsService: RatingsService) {}
+
+  private extractUserIdFromReq(req: any): bigint | undefined {
+    const authHeader = req.headers?.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return undefined;
+    const token = authHeader.split(' ')[1];
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return undefined;
+      const payloadStr = Buffer.from(parts[1], 'base64url').toString('utf8');
+      const payload = JSON.parse(payloadStr);
+      if (payload.exp && Date.now() >= payload.exp * 1000) return undefined;
+      return payload.sub ? BigInt(payload.sub) : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Lấy thống kê đánh giá của công thức nấu ăn' })
+  @ApiParam({ name: 'id', description: 'ID của công thức', type: String })
+  async getRatingStats(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    const userId = this.extractUserIdFromReq(req);
+    return this.ratingsService.getRatingStats(BigInt(id), userId);
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard)

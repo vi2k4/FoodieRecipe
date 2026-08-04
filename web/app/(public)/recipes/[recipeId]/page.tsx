@@ -7,6 +7,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { api } from '@/lib/api-client';
 import { BowlFood, UsersThree } from '@phosphor-icons/react';
+import { RecipeRatingSection } from '@/components/recipes/RecipeRatingSection';
+import { RecipeCommentSection } from '@/components/recipes/RecipeCommentSection';
 
 export default function RecipeDetailPage() {
   const { user } = useAuth();
@@ -230,6 +232,15 @@ export default function RecipeDetailPage() {
           </div>
           
         </div>
+
+        {/* Rating Section */}
+        <RecipeRatingSection
+          recipeId={recipe.id}
+          initialAverageRating={recipe.averageRating}
+        />
+
+        {/* Comment Section */}
+        <RecipeCommentSection recipeId={recipe.id} />
       </div>
     </div>
   );

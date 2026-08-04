@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
 import { BowlFood, ChefHat, Sparkle } from '@phosphor-icons/react';
+import { FavoriteButton } from '@/components/recipes/FavoriteButton';
 
 export default function RecipesPage() {
   const { user } = useAuth();
@@ -306,15 +307,7 @@ export default function RecipesPage() {
                           </span>
                         </div>
 
-                        {recipe.source === 'AI GenAI' || recipe.source === 'AI' ? (
-                          <span className="text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2.5 py-0.5 rounded-full shrink-0">
-                            <><Sparkle size={16} weight="duotone" aria-hidden="true" /> AI GenAI</>
-                          </span>
-                        ) : (
-                          <span className="text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full shrink-0">
-                            Công khai
-                          </span>
-                        )}
+                        <FavoriteButton recipeId={recipe.id} />
                       </div>
                     </div>
                   </Link>

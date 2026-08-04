@@ -10,6 +10,7 @@ import {
   ChefHat,
   CheckCircle2,
   ChevronRight,
+  Heart,
   ImagePlus,
   Loader2,
   Mail,
@@ -221,7 +222,7 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
             <Card className="border-orange-100 shadow-sm">
-              <CardContent className="p-5">
+              <CardContent className="p-5 space-y-3">
                 <Link
                   href="/my-recipes"
                   className="flex items-center justify-between text-sm font-semibold text-stone-700 transition-colors hover:text-orange-600"
@@ -230,7 +231,18 @@ export default function ProfilePage() {
                     <ChefHat className="size-4 text-orange-500" />
                     Công thức của tôi
                   </span>
-                  <ChevronRight className="size-4" />
+                  <ChevronRight className="size-4 text-stone-400" />
+                </Link>
+                <div className="border-t border-orange-100/60 pt-3" />
+                <Link
+                  href="/favorites"
+                  className="flex items-center justify-between text-sm font-semibold text-stone-700 transition-colors hover:text-red-600"
+                >
+                  <span className="flex items-center gap-2">
+                    <Heart className="size-4 text-red-500 fill-red-500" />
+                    Món ăn yêu thích
+                  </span>
+                  <ChevronRight className="size-4 text-stone-400" />
                 </Link>
               </CardContent>
             </Card>
