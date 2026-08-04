@@ -48,14 +48,11 @@ jobs:
                       ${{ secrets.DEVELOP_DOCKERHUB_USERNAME }}/foodie-frontend:develop-${{ github.sha }}
 
             - name: Deploy develop EC2
-              id: deploy
-              continue-on-error: true
               uses: appleboy/ssh-action@v1.2.5
               with:
                   host: ${{ secrets.DEVELOP_EC2_HOST }}
                   username: ec2-user
                   key: ${{ secrets.DEVELOP_EC2_SSH_KEY }}
-                  capture_stdout: true
                   script: |
                       DEPLOY_DIR=/home/ec2-user/foodie-develop
 
@@ -73,19 +70,4 @@ jobs:
 
                       bash deploy.sh
                       deploy_status=$?
-                      echo "DEPLOY_DIAGNOSTIC=script_exit_${deploy_status}"
                       exit "$deploy_status"
-
-            - name: Verify EC2 deployment
-              if: always()
-              env:
-                  DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
-                  DEPLOY_OUTPUT: ${{ steps.deploy.outputs.stdout }}
-              run: |
-                  diagnostic="$(printf '%s\n' "$DEPLOY_OUTPUT" | grep '^DEPLOY_DIAGNOSTIC=' | tail -n 1)"
-
-                  if [ "$DEPLOY_OUTCOME" != "success" ]; then
-                    message="${diagnostic:-DEPLOY_DIAGNOSTIC=ssh_or_remote_failure}"
-                    echo "::error title=EC2 deployment failed::$message"
-                    exit 1
-                  fi
