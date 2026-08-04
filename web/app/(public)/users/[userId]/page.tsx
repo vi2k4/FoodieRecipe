@@ -21,8 +21,12 @@ import {
   ChevronRight,
   UserCheck,
   UserPlus,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  ThumbsUp
 } from "lucide-react";
+import { LikeButton } from "@/components/recipes/LikeButton";
+import { FollowButton } from "@/components/recipes/FollowButton";
 
 interface Recipe {
   id: number;
@@ -33,6 +37,11 @@ interface Recipe {
   difficulty: string;
   thumbnail: string | null;
   averageRating?: number | null;
+  viewCount?: number | string | null;
+  likeCount?: number | string | null;
+  _count?: {
+    likes?: number;
+  };
 }
 
 interface UserProfile {
@@ -207,27 +216,11 @@ export default function UserProfilePage() {
                 </div>
                 
                 {/* Follow Button */}
-                <Button
-                  onClick={handleFollowToggle}
-                  variant={isFollowing ? "secondary" : "default"}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all duration-300 shadow-sm h-auto ${
-                    isFollowing
-                      ? "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
-                      : "bg-orange-600 text-white hover:bg-orange-700 hover:scale-105 active:scale-95 shadow-orange-600/10 hover:shadow"
-                  }`}
-                >
-                  {isFollowing ? (
-                    <>
-                      <UserCheck className="w-4 h-4" />
-                      Đang theo dõi
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4" />
-                      Theo dõi
-                    </>
-                  )}
-                </Button>
+                <FollowButton
+                  targetUserId={profile.id}
+                  targetUsername={profile.username}
+                  className="px-6 py-2.5 text-sm font-bold shadow-md"
+                />
               </div>
 
               {/* Bio */}
@@ -340,22 +333,24 @@ export default function UserProfilePage() {
                       </div>
 
                       {/* Stats */}
-                      <div className="flex items-center justify-between text-neutral-500 text-xs font-medium border-t border-neutral-50 pt-4">
-                        <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center justify-between text-neutral-500 text-xs font-medium border-t border-neutral-50 pt-4 gap-2">
+                        <div className="flex flex-wrap items-center gap-2.5">
                           {recipe.cookTime && (
                             <span className="flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5 text-neutral-400" />
                               {recipe.cookTime} phút
                             </span>
                           )}
-                          {recipe.calories && (
-                            <span className="flex items-center gap-1">
-                              <Flame className="w-3.5 h-3.5 text-neutral-400" />
-                              {Math.round(Number(recipe.calories))} kcal
-                            </span>
-                          )}
+                          <span className="flex items-center gap-1 text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md">
+                            <Eye className="w-3.5 h-3.5 text-neutral-400" />
+                            {Number(recipe.viewCount || 0)}
+                          </span>
+                          <LikeButton
+                            recipeId={recipe.id}
+                            initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)}
+                          />
                         </div>
-                        <span className="flex items-center gap-1 text-amber-500 font-semibold bg-amber-50 px-2 py-1 rounded-md border border-amber-100/60">
+                        <span className="flex items-center gap-1 text-amber-500 font-semibold bg-amber-50 px-2 py-1 rounded-md border border-amber-100/60 shrink-0">
                           <Star className="w-3.5 h-3.5 fill-current" />
                           {recipe.averageRating ? Number(recipe.averageRating).toFixed(1) : "5.0"}
                         </span>

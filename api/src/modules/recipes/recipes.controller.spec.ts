@@ -57,19 +57,24 @@ describe('RecipesController (Unit Tests)', () => {
     expect(service.findAll).toHaveBeenCalledWith({ page: 1, limit: 10 });
   });
 
-  it('findOne should increment view count and call service.findOne', async () => {
-    service.incrementViewCount.mockResolvedValue(undefined);
+  it('findOne should call service.findOne', async () => {
     service.findOne.mockResolvedValue({ id: '1', title: 'Phở' });
     const res = await controller.findOne('1');
     expect(res).toEqual({ id: '1', title: 'Phở' });
-    expect(service.incrementViewCount).toHaveBeenCalledWith(BigInt(1));
     expect(service.findOne).toHaveBeenCalledWith(BigInt(1));
+  });
+
+  it('incrementViewCount should call service.incrementViewCount', async () => {
+    service.incrementViewCount.mockResolvedValue(undefined);
+    const res = await controller.incrementViewCount('1');
+    expect(res).toEqual({ success: true });
+    expect(service.incrementViewCount).toHaveBeenCalledWith(BigInt(1));
   });
 
   it('create should call service.create with extracted userId', async () => {
     const dto = { title: 'Bún Chả', userId: '2' };
     service.create.mockResolvedValue({ id: '2', title: 'Bún Chả' });
-    const res = await controller.create({ id: 2 }, undefined, dto);
+    const res = await controller.create({ id: 2 }, '', dto);
     expect(res).toEqual({ id: '2', title: 'Bún Chả' });
     expect(service.create).toHaveBeenCalledWith(BigInt(2), dto);
   });

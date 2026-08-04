@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 
 import RecipeHeader from "@/components/my-recipes/RecipeHeader";
@@ -19,6 +19,7 @@ export default function RecipeDetailPage() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const viewIncremented = useRef(false);
 
   useEffect(() => {
     if (!id) return;
@@ -26,6 +27,10 @@ export default function RecipeDetailPage() {
       setLoading(true);
       setError(null);
       try {
+        if (!viewIncremented.current) {
+          viewIncremented.current = true;
+          api.recipes.incrementView(id).catch(() => {});
+        }
         const data = await api.recipes.get(id);
         setRecipe(data as Recipe);
       } catch (err: unknown) {
