@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: foodie-develop-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: foodie_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: foodie_db
+    volumes:
+      - foodie_develop_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U foodie_user -d foodie_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    image: ${DOCKERHUB_USERNAME}/foodie-backend:develop
+    container_name: foodie-develop-api
+    restart: unless-stopped
+    env_file:
+      - app.env
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    image: ${DOCKERHUB_USERNAME}/foodie-frontend:develop
+    container_name: foodie-develop-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  foodie_develop_postgres_data:

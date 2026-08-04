@@ -28,59 +28,24 @@ jobs:
                   key: ${{ secrets.DEVELOP_EC2_SSH_KEY }}
                   script: "true"
 
-            - name: Discover develop directory
-              if: always()
+            - name: Prepare EC2 deploy directory
               uses: appleboy/ssh-action@v1.2.5
               with:
                   host: ${{ secrets.DEVELOP_EC2_HOST }}
                   username: ec2-user
                   key: ${{ secrets.DEVELOP_EC2_SSH_KEY }}
-                  script: test -d /home/ec2-user/foodie-develop
+                  script: mkdir -p /home/ec2-user/foodie-develop
 
-            - name: Discover develop deploy script
-              if: always()
-              uses: appleboy/ssh-action@v1.2.5
+            - name: Copy EC2 deployment files
+              uses: appleboy/scp-action@v1
               with:
                   host: ${{ secrets.DEVELOP_EC2_HOST }}
                   username: ec2-user
                   key: ${{ secrets.DEVELOP_EC2_SSH_KEY }}
-                  script: test -f /home/ec2-user/foodie-develop/deploy.sh
-
-            - name: Discover existing deployment directory
-              if: always()
-              uses: appleboy/ssh-action@v1.2.5
-              with:
-                  host: ${{ secrets.DEVELOP_EC2_HOST }}
-                  username: ec2-user
-                  key: ${{ secrets.DEVELOP_EC2_SSH_KEY }}
-                  script: test -d /home/ec2-user/foodirecipe
-
-            - name: Discover existing deployment script
-              if: always()
-              uses: appleboy/ssh-action@v1.2.5
-              with:
-                  host: ${{ secrets.DEVELOP_EC2_HOST }}
-                  username: ec2-user
-                  key: ${{ secrets.DEVELOP_EC2_SSH_KEY }}
-                  script: test -f /home/ec2-user/foodirecipe/deploy-secrets.sh
-
-            - name: Discover existing environment file
-              if: always()
-              uses: appleboy/ssh-action@v1.2.5
-              with:
-                  host: ${{ secrets.DEVELOP_EC2_HOST }}
-                  username: ec2-user
-                  key: ${{ secrets.DEVELOP_EC2_SSH_KEY }}
-                  script: test -f /home/ec2-user/foodirecipe/.env
-
-            - name: Discover Docker Compose
-              if: always()
-              uses: appleboy/ssh-action@v1.2.5
-              with:
-                  host: ${{ secrets.DEVELOP_EC2_HOST }}
-                  username: ec2-user
-                  key: ${{ secrets.DEVELOP_EC2_SSH_KEY }}
-                  script: docker compose version
+                  source: deploy/develop/docker-compose.yml,deploy/develop/deploy.sh
+                  target: /home/ec2-user/foodie-develop
+                  strip_components: 2
+                  overwrite: true
 
             - name: Login Docker Hub
               uses: docker/login-action@v3
@@ -111,25 +76,27 @@ jobs:
 
             - name: Deploy develop EC2
               uses: appleboy/ssh-action@v1.2.5
+              env:
+                  DOCKERHUB_USERNAME: ${{ secrets.DEVELOP_DOCKERHUB_USERNAME }}
+                  DOCKERHUB_TOKEN: ${{ secrets.DEVELOP_DOCKERHUB_TOKEN }}
+                  NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+                  DEVELOP_FRONTEND_URL: ${{ secrets.DEVELOP_FRONTEND_URL }}
+                  GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+                  AWS_REGION: ${{ secrets.AWS_REGION }}
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
+                  BEDROCK_MODEL_ID: ${{ secrets.BEDROCK_MODEL_ID }}
+                  CLOUDFRONT_DOMAIN: ${{ secrets.CLOUDFRONT_DOMAIN }}
+                  CLOUDFRONT_KEY_PAIR_ID: ${{ secrets.CLOUDFRONT_KEY_PAIR_ID }}
+                  CLOUDFRONT_PRIVATE_KEY_BASE64: ${{ secrets.CLOUDFRONT_PRIVATE_KEY_BASE64 }}
+                  CLOUDFRONT_URL_EXPIRES_IN: ${{ secrets.CLOUDFRONT_URL_EXPIRES_IN }}
+                  RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+                  EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
               with:
                   host: ${{ secrets.DEVELOP_EC2_HOST }}
                   username: ec2-user
                   key: ${{ secrets.DEVELOP_EC2_SSH_KEY }}
+                  envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,NEXT_PUBLIC_API_URL,DEVELOP_FRONTEND_URL,GOOGLE_CLIENT_ID,AWS_REGION,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_BUCKET_NAME,BEDROCK_MODEL_ID,CLOUDFRONT_DOMAIN,CLOUDFRONT_KEY_PAIR_ID,CLOUDFRONT_PRIVATE_KEY_BASE64,CLOUDFRONT_URL_EXPIRES_IN,RESEND_API_KEY,EMAIL_FROM
                   script: |
-                      DEPLOY_DIR=/home/ec2-user/foodie-develop
-
-                      if [ ! -d "$DEPLOY_DIR" ]; then
-                        echo "DEPLOY_DIAGNOSTIC=missing_directory"
-                        exit 1
-                      fi
-
-                      cd "$DEPLOY_DIR"
-
-                      if [ ! -f deploy.sh ]; then
-                        echo "DEPLOY_DIAGNOSTIC=missing_script"
-                        exit 1
-                      fi
-
-                      bash deploy.sh
-                      deploy_status=$?
-                      exit "$deploy_status"
+                      bash /home/ec2-user/foodie-develop/deploy.sh
