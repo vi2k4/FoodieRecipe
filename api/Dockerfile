@@ -63,4 +63,4 @@ COPY package.json ./package.json
 EXPOSE 3001
 
 # Tự chạy migration rồi mới khởi động NestJS
-CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && exec node dist/src/main.js"]
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && exec node dist/main.js"]
