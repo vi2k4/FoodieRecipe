@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Heart,
   ImagePlus,
+  LockKeyhole,
   Loader2,
   Mail,
   ShieldCheck,
@@ -51,6 +52,12 @@ export default function ProfilePage() {
     defaultValues: { username: "", bio: "", avatarUrl: "" },
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -97,6 +104,39 @@ export default function ProfilePage() {
         description:
           error instanceof Error ? error.message : "Vui lòng thử lại.",
       });
+    }
+  }
+
+  async function submitPassword(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("Vui lòng nhập đầy đủ thông tin mật khẩu");
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.error("Mật khẩu mới phải có ít nhất 8 ký tự");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Mật khẩu xác nhận không khớp");
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+      await auth.changePassword(currentPassword, newPassword);
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      toast.success("Đổi mật khẩu thành công", {
+        description: "Phiên đăng nhập khác đã được đăng xuất. Vui lòng đăng nhập lại khi cần.",
+      });
+    } catch (error) {
+      toast.error("Đổi mật khẩu thất bại", {
+        description: error instanceof Error ? error.message : "Vui lòng thử lại.",
+      });
+    } finally {
+      setChangingPassword(false);
     }
   }
 
@@ -244,6 +284,66 @@ export default function ProfilePage() {
                   </span>
                   <ChevronRight className="size-4 text-stone-400" />
                 </Link>
+              </CardContent>
+            </Card>
+            <Card className="border-orange-100 shadow-sm">
+              <CardHeader className="px-5 pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <LockKeyhole className="size-5 text-orange-500" />
+                  Đổi mật khẩu
+                </CardTitle>
+                <CardDescription>
+                  Cập nhật mật khẩu để bảo vệ tài khoản của bạn.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-5 pb-5">
+                <form className="space-y-4" onSubmit={submitPassword}>
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
+                    <Input
+                      id="currentPassword"
+                      type="password"
+                      autoComplete="current-password"
+                      value={passwordForm.currentPassword}
+                      onChange={(event) =>
+                        setPasswordForm((prev) => ({ ...prev, currentPassword: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">Mật khẩu mới</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      minLength={8}
+                      value={passwordForm.newPassword}
+                      onChange={(event) =>
+                        setPasswordForm((prev) => ({ ...prev, newPassword: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      minLength={8}
+                      value={passwordForm.confirmPassword}
+                      onChange={(event) =>
+                        setPasswordForm((prev) => ({ ...prev, confirmPassword: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-orange-500 hover:bg-orange-600"
+                    disabled={changingPassword}
+                  >
+                    {changingPassword ? "Đang đổi mật khẩu..." : "Đổi mật khẩu"}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </div>

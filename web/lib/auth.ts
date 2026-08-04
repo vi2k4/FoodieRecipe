@@ -88,6 +88,13 @@ export const auth = {
     this.saveSession({ ...current, user: result.user });
     return result.user;
   },
+  async changePassword(currentPassword: string, newPassword: string) {
+    const { data } = await apiClient.post<{ message: string }>(
+      "/auth/change-password",
+      { currentPassword, newPassword },
+    );
+    return data;
+  },
   async forgotPassword(email: string) {
     const { data } = await apiClient.post<{ message: string; developmentOtp?: string }>("/auth/forgot-password", { email });
     return data;
