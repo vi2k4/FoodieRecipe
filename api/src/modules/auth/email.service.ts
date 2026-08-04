@@ -6,16 +6,17 @@ export class EmailService {
     const apiKey = process.env.RESEND_API_KEY;
     const from = process.env.EMAIL_FROM;
 
-    // Local development vẫn trả OTP trong response để test không cần mail server.
+    // Local development returns the OTP in the response when email is not configured.
     if (!apiKey || !from) {
       if (process.env.NODE_ENV !== 'production') return;
-      throw new ServiceUnavailableException('Email service chưa được cấu hình');
+      throw new ServiceUnavailableException('Resend email service chưa được cấu hình');
     }
 
     const subject =
       purpose === 'register'
         ? 'Xác minh email FoodiRecipe'
         : 'Đặt lại mật khẩu FoodiRecipe';
+
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -31,7 +32,7 @@ export class EmailService {
     });
 
     if (!response.ok) {
-      throw new ServiceUnavailableException('Không thể gửi email OTP');
+      throw new ServiceUnavailableException('Không thể gửi email OTP qua Resend');
     }
   }
 }

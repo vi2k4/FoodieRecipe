@@ -64,21 +64,21 @@ export class AuthService {
     }
 
     const otp = this.createOtp();
-    await this.prisma.$transaction(async (transaction) => {
-      const user = await transaction.user.create({
-        data: {
-          username,
-          email,
-          passwordHash: this.hashPassword(dto.password),
-        },
-      });
-      await transaction.oTPVerification.create({
-        data: {
-          userId: user.id,
-          otpCode: this.hashOtp(otp, 'register'),
-          expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-        },
-      });
+    await this.prisma.pendingRegistration.upsert({
+      where: { email },
+      update: {
+        username,
+        passwordHash: this.hashPassword(dto.password),
+        otpCode: this.hashOtp(otp, 'register'),
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      },
+      create: {
+        username,
+        email,
+        passwordHash: this.hashPassword(dto.password),
+        otpCode: this.hashOtp(otp, 'register'),
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      },
     });
     await this.emailService.sendOtp(email, otp, 'register');
 
@@ -220,6 +220,27 @@ export class AuthService {
 
   async resendVerification(emailInput: string) {
     const email = emailInput?.trim().toLowerCase();
+    const pending = email
+      ? await this.prisma.pendingRegistration.findUnique({ where: { email } })
+      : null;
+
+    if (pending) {
+      const otp = this.createOtp();
+      await this.prisma.pendingRegistration.update({
+        where: { id: pending.id },
+        data: {
+          otpCode: this.hashOtp(otp, 'register'),
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        },
+      });
+      await this.emailService.sendOtp(email, otp, 'register');
+
+      return {
+        message: 'Mã OTP xác minh mới đã được gửi.',
+        ...(process.env.NODE_ENV !== 'production' ? { developmentOtp: otp } : {}),
+      };
+    }
+
     const user = email ? await this.usersService.findByEmail(email) : null;
     if (!user || user.isVerified) {
       return {
@@ -248,6 +269,39 @@ export class AuthService {
     otp: string,
     purpose: 'register' | 'reset' = 'register',
   ) {
+    if (purpose === 'register') {
+      const email = emailInput?.trim().toLowerCase();
+      const pending = email
+        ? await this.prisma.pendingRegistration.findUnique({ where: { email } })
+        : null;
+
+      if (pending) {
+        if (pending.expiresAt <= new Date() || pending.otpCode !== this.hashOtp(otp, 'register')) {
+          throw new UnauthorizedException('Mã OTP không hợp lệ hoặc đã hết hạn');
+        }
+
+        const existing = await this.usersService.findByEmail(email);
+        if (existing) {
+          await this.prisma.pendingRegistration.delete({ where: { id: pending.id } });
+          throw new ConflictException('Email đã được sử dụng');
+        }
+
+        await this.prisma.$transaction([
+          this.prisma.user.create({
+            data: {
+              username: pending.username,
+              email: pending.email,
+              passwordHash: pending.passwordHash,
+              isVerified: true,
+            },
+          }),
+          this.prisma.pendingRegistration.delete({ where: { id: pending.id } }),
+        ]);
+
+        return { valid: true, message: 'Email đã được xác minh và tài khoản đã được tạo' };
+      }
+    }
+
     const user = await this.findUser(emailInput);
     const verification = await this.prisma.oTPVerification.findFirst({
       where: {
@@ -317,6 +371,15 @@ export class AuthService {
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: BigInt(userId) },
+      include: {
+        _count: {
+          select: {
+            followers: true,
+            following: true,
+            recipes: true,
+          },
+        },
+      },
     });
     if (!user) throw new UnauthorizedException('Tài khoản không tồn tại');
     return this.toSafeUser(user);
@@ -444,7 +507,14 @@ export class AuthService {
       bio: user.bio,
       role: user.role,
       isVerified: user.isVerified,
-    };
+      _count: user._count
+        ? {
+            followers: user._count.followers ?? 0,
+            following: user._count.following ?? 0,
+            recipes: user._count.recipes ?? 0,
+          }
+        : undefined,
+    } as any;
   }
 
   private hashPassword(password: string) {

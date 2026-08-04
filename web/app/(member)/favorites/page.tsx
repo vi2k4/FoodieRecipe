@@ -16,8 +16,11 @@ import {
   Star, 
   ChevronRight,
   BookOpen,
-  ArrowRight
+  ArrowRight,
+  Eye,
+  ThumbsUp
 } from "lucide-react";
+import { LikeButton } from "@/components/recipes/LikeButton";
 
 interface Recipe {
   id: number;
@@ -28,6 +31,11 @@ interface Recipe {
   difficulty: string;
   thumbnail: string;
   averageRating: number;
+  viewCount?: number | string | null;
+  likeCount?: number | string | null;
+  _count?: {
+    likes?: number;
+  };
   author: {
     username: string;
     avatarUrl: string;
@@ -198,18 +206,22 @@ export default function FavoritesPage() {
                     </div>
 
                     {/* Stats */}
-                    <div className="flex items-center justify-between text-neutral-500 text-[11px] font-semibold">
-                      <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center justify-between text-neutral-500 text-[11px] font-semibold gap-2">
+                      <div className="flex flex-wrap items-center gap-2.5">
                         <span className="flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5 text-neutral-400" />
                           {recipe.cookTime || 30} phút
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Flame className="w-3.5 h-3.5 text-neutral-400" />
-                          {recipe.calories ? Math.round(recipe.calories) : '—'} kcal
+                        <span className="flex items-center gap-1 text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded">
+                          <Eye className="w-3.5 h-3.5 text-neutral-400" />
+                          {Number(recipe.viewCount || 0)}
                         </span>
+                        <LikeButton
+                          recipeId={recipe.id}
+                          initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)}
+                        />
                       </div>
-                      <span className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-0.5 rounded">
+                      <span className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-0.5 rounded shrink-0">
                         <Star className="w-3 h-3 fill-current" />
                         {recipe.averageRating ? Number(recipe.averageRating).toFixed(1) : "5.0"}
                       </span>

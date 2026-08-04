@@ -245,6 +245,19 @@ export default function ProfilePage() {
                     {user.role.toLowerCase()}
                   </span>
                 </div>
+
+                {/* Followers & Following Stats Counter */}
+                <div className="mt-5 flex items-center justify-around rounded-xl bg-orange-50/70 p-3 text-center border border-orange-100/80">
+                  <div className="flex-1">
+                    <p className="text-lg font-extrabold text-stone-900">{(user as any)?._count?.followers || 0}</p>
+                    <p className="text-xs font-semibold text-stone-500">Người theo dõi</p>
+                  </div>
+                  <div className="h-8 w-px bg-orange-200/60" />
+                  <div className="flex-1">
+                    <p className="text-lg font-extrabold text-stone-900">{(user as any)?._count?.following || 0}</p>
+                    <p className="text-xs font-semibold text-stone-500">Đang theo dõi</p>
+                  </div>
+                </div>
                 <div className="mt-6 space-y-3 border-t border-orange-100 pt-5 text-sm">
                   <div className="flex items-center gap-3 text-stone-600">
                     <Mail className="size-4 text-orange-500" />

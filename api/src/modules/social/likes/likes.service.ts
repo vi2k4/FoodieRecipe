@@ -90,7 +90,7 @@ export class LikesService {
     });
 
     if (!existingLike) {
-      throw new NotFoundException('You have not liked this recipe');
+      return { message: 'Recipe already unliked', liked: false };
     }
 
     // 3. Delete like and decrement likeCount atomically
@@ -114,5 +114,13 @@ export class LikesService {
     ]);
 
     return { message: 'Recipe unliked successfully', liked: false };
+  }
+
+  async getUserLikes(userId: bigint) {
+    const likes = await this.prisma.recipeLike.findMany({
+      where: { userId },
+      select: { recipeId: true },
+    });
+    return likes.map((l) => l.recipeId.toString());
   }
 }

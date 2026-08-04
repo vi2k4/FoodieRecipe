@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -9,6 +9,9 @@ import { api } from '@/lib/api-client';
 import { BowlFood, UsersThree } from '@phosphor-icons/react';
 import { RecipeRatingSection } from '@/components/recipes/RecipeRatingSection';
 import { RecipeCommentSection } from '@/components/recipes/RecipeCommentSection';
+import { FavoriteButton } from '@/components/recipes/FavoriteButton';
+import { LikeButton } from '@/components/recipes/LikeButton';
+import { FollowButton } from '@/components/recipes/FollowButton';
 
 export default function RecipeDetailPage() {
   const { user } = useAuth();
@@ -19,6 +22,7 @@ export default function RecipeDetailPage() {
   const [recipe, setRecipe] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const viewIncremented = useRef(false);
 
   const isOwner = user.isVerified && (
     user.role === 'ADMIN' ||
@@ -30,6 +34,10 @@ export default function RecipeDetailPage() {
     async function loadRecipe() {
       setLoading(true);
       try {
+        if (!viewIncremented.current) {
+          viewIncremented.current = true;
+          api.recipes.incrementView(id).catch(() => {});
+        }
         const data = await api.recipes.get(id);
         setRecipe(data);
       } catch (err: any) {
@@ -120,9 +128,15 @@ export default function RecipeDetailPage() {
                   {recipe.category.name}
                 </span>
               )}
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white border border-white/30 backdrop-blur-md flex items-center gap-1">
+              <Link href={`/users/${recipe.userId || recipe.author?.id}`} className="px-3 py-1 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-md flex items-center gap-1.5 transition-colors">
                 Tác giả: {recipe.author?.username || 'Người dùng'}
-              </span>
+              </Link>
+              {(recipe.userId || recipe.author?.id) && (
+                <FollowButton
+                  targetUserId={recipe.userId || recipe.author?.id}
+                  targetUsername={recipe.author?.username || 'tác giả'}
+                />
+              )}
               {(recipe.source === 'AI GenAI' || recipe.source === 'AI') && (
                 <span className="px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white">
                   Source: AI GenAI
@@ -151,6 +165,10 @@ export default function RecipeDetailPage() {
               <div className="flex items-center gap-2">
                 <UsersThree size={22} weight="duotone" aria-label="Servings" />
                 <span className="font-medium">{recipe.servings || 4} người</span>
+              </div>
+              <div className="flex items-center gap-3 md:ml-auto">
+                <FavoriteButton recipeId={recipe.id} showText />
+                <LikeButton recipeId={recipe.id} initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)} showText />
               </div>
             </div>
 
