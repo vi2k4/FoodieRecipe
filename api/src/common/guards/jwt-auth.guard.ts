@@ -37,7 +37,8 @@ export class JwtAuthGuard implements CanActivate {
     const [headerB64, payloadB64, signatureB64] = parts;
 
     // Verify HMAC-SHA256 signature
-    const secret = process.env.JWT_SECRET || 'change-this-secret';
+    // Must match AuthService's signing fallback for local development.
+    const secret = process.env.JWT_SECRET || 'development-only-secret';
     const data = `${headerB64}.${payloadB64}`;
     
     // We compute the expected signature using base64url encoding
