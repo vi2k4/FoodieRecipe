@@ -82,8 +82,15 @@ export class RecipesController {
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const recipeId = BigInt(id);
-    await this.recipesService.incrementViewCount(recipeId);
     return this.recipesService.findOne(recipeId);
+  }
+
+  @Public()
+  @Post(':id/view')
+  async incrementViewCount(@Param('id') id: string) {
+    const recipeId = BigInt(id);
+    await this.recipesService.incrementViewCount(recipeId);
+    return { success: true };
   }
 
   // TODO: Add JwtAuthGuard when AuthModule is ready

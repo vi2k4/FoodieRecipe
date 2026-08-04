@@ -8,6 +8,7 @@ import { ChefHat } from "@phosphor-icons/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { auth, type AuthSession } from "@/lib/auth";
 import { toast } from "sonner";
+import { NotificationDropdown } from "@/components/layout/NotificationDropdown";
 
 export function Header() {
   const router = useRouter();
@@ -70,6 +71,7 @@ export function Header() {
             />
           ) : session ? (
             <>
+              <NotificationDropdown />
               <Link
                 href="/profile"
                 className="flex items-center gap-2 rounded-full px-2 py-1.5 font-medium text-neutral-700 transition-colors hover:bg-orange-50 hover:text-orange-600"

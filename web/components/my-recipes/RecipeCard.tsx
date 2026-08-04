@@ -11,10 +11,13 @@ import {
   ChefHat,
   Users,
   UserRound,
+  Eye,
+  ThumbsUp,
 } from "lucide-react";
 import { BowlFood } from "@phosphor-icons/react";
 
 import { Recipe } from "@/types/recipe";
+import { LikeButton } from "@/components/recipes/LikeButton";
 import VisibilityBadge from "./VisibilityBadge";
 
 interface Props {
@@ -129,6 +132,18 @@ export default function RecipeCard({ recipe }: Props) {
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Flame size={17} className="text-orange-400" />
             <span>{recipe.calories ?? "—"} kcal</span>
+          </div>
+
+          <div className="flex items-center gap-4 text-sm text-gray-600 pt-1">
+            <span className="flex items-center gap-1.5 font-medium text-neutral-600 bg-neutral-100 px-2.5 py-1 rounded-lg">
+              <Eye size={16} className="text-neutral-500" />
+              {Number(recipe.viewCount || 0)} xem
+            </span>
+            <LikeButton
+              recipeId={recipe.id}
+              initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)}
+              showText
+            />
           </div>
 
           {diffLabel && (

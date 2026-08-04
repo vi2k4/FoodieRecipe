@@ -24,6 +24,8 @@ import {
 } from '../../generated/prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from '../../common/storage/s3.service';
+import { NotificationsService } from '../social/notifications/notifications.service';
+import { NotificationType } from '../../generated/prisma/client';
 
 @Injectable()
 export class RecipesService {
@@ -31,6 +33,7 @@ export class RecipesService {
     private readonly prisma: PrismaService,
     private readonly s3Service: S3Service,
     private readonly configService: ConfigService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private getConfiguredS3Key(value?: string | null): string | null {
@@ -293,6 +296,30 @@ export class RecipesService {
         },
       },
     });
+
+    // Notify all followers if recipe is public
+    if (recipe.isPublic !== false) {
+      try {
+        const followers = await this.prisma.userFollow.findMany({
+          where: { followingId: userId },
+          select: { followerId: true },
+        });
+
+        const authorName = recipe.author?.username || 'Người dùng bạn theo dõi';
+        for (const f of followers) {
+          await this.notificationsService.createNotification({
+            userId: f.followerId,
+            title: `Công thức mới từ ${authorName}`,
+            content: `${authorName} vừa đăng công thức mới: "${recipe.title}"`,
+            type: NotificationType.FOLLOW,
+            referenceId: recipe.id,
+          });
+        }
+      } catch (e) {
+        console.error('Failed to notify followers for new recipe:', e);
+      }
+    }
+
     return this.serializeObj(await this.resolveRecipeImages(recipe));
   }
 
