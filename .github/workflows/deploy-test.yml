@@ -3,7 +3,7 @@ name: Deploy Develop
 on:
     push:
         branches:
-            - viet
+            - Viet
 
 concurrency:
     group: foodie-develop
