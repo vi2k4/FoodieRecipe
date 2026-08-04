@@ -21,6 +21,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -98,6 +99,16 @@ export class AuthController {
   ) {
     const userId = this.getUserId(authorization);
     return { user: await this.authService.updateProfile(userId, dto, avatar) };
+  }
+
+  @Post('google')
+  async googleLogin(
+    @Body() dto: GoogleLoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const session = await this.authService.loginWithGoogle(dto.credential);
+    this.setRefreshCookie(response, session.refreshToken);
+    return this.withoutRefreshToken(session);
   }
 
   private getUserId(authorization?: string) {

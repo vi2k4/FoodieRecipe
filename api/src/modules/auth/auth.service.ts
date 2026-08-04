@@ -4,7 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { resolveMx } from 'node:dns/promises';
+import { resolve4, resolve6, resolveMx } from 'node:dns/promises';
 import {
   createHmac,
   randomBytes,
@@ -100,6 +100,75 @@ export class AuthService {
       throw new UnauthorizedException(
         'Email chưa được xác minh. Vui lòng xác minh bằng mã OTP trước.',
       );
+    }
+
+    return this.createSession(user);
+  }
+
+  async loginWithGoogle(credential: string) {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      throw new UnauthorizedException('Google OAuth chưa được cấu hình');
+    }
+
+    const tokenResponse = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`,
+    );
+    if (!tokenResponse.ok) {
+      throw new UnauthorizedException('Google token không hợp lệ');
+    }
+
+    const profile = (await tokenResponse.json()) as {
+      aud?: string;
+      iss?: string;
+      sub?: string;
+      email?: string;
+      email_verified?: string | boolean;
+      name?: string;
+      picture?: string;
+    };
+    const isVerifiedEmail =
+      profile.email_verified === true || profile.email_verified === 'true';
+
+    if (
+      profile.aud !== clientId ||
+      !['accounts.google.com', 'https://accounts.google.com'].includes(profile.iss ?? '') ||
+      !profile.sub ||
+      !profile.email ||
+      !isVerifiedEmail
+    ) {
+      throw new UnauthorizedException('Thông tin tài khoản Google không hợp lệ');
+    }
+
+    const email = profile.email.trim().toLowerCase();
+    let user = await this.usersService.findByEmail(email);
+
+    if (user) {
+      if (user.isLocked) {
+        throw new UnauthorizedException('Tài khoản đã bị khóa');
+      }
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          isVerified: true,
+          ...(profile.picture && !user.avatarUrl ? { avatarUrl: profile.picture } : {}),
+        },
+      });
+    } else {
+      const usernameBase = (profile.name || email.split('@')[0])
+        .replace(/[^a-zA-Z0-9_]/g, '')
+        .slice(0, 35) || 'googleuser';
+      const username = `${usernameBase}_${profile.sub.slice(-8)}`.slice(0, 50);
+
+      user = await this.prisma.user.create({
+        data: {
+          username,
+          email,
+          passwordHash: this.hashPassword(randomBytes(32).toString('hex')),
+          avatarUrl: profile.picture || null,
+          isVerified: true,
+        },
+      });
     }
 
     return this.createSession(user);
@@ -423,10 +492,30 @@ export class AuthService {
 
     try {
       const records = await resolveMx(domain);
-      if (!records.length) throw new Error('NO_MX');
-    } catch {
+      if (records.length > 0) return;
+    } catch (error: any) {
+      if (error?.code === 'ENOTFOUND') {
+        throw new ConflictException(
+          `Tên miền email "${domain}" không tồn tại. Hãy kiểm tra lại phần sau dấu @.`,
+        );
+      }
+
+      if (error?.code !== 'ENODATA') {
+        throw new ConflictException(
+          `Không thể kiểm tra tên miền email "${domain}" lúc này. Vui lòng thử lại sau.`,
+        );
+      }
+    }
+
+    // SMTP cho phép dùng A/AAAA khi domain không khai báo MX.
+    const [ipv4, ipv6] = await Promise.all([
+      resolve4(domain).catch(() => []),
+      resolve6(domain).catch(() => []),
+    ]);
+
+    if (ipv4.length === 0 && ipv6.length === 0) {
       throw new ConflictException(
-        'Tên miền email không tồn tại hoặc không thể nhận thư',
+        `Tên miền email "${domain}" chưa cấu hình máy chủ nhận thư. Hãy dùng email thật như example@gmail.com.`,
       );
     }
   }

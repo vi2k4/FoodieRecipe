@@ -772,6 +772,14 @@ async function main() {
     ],
   });
 
+  // Fix PostgreSQL sequence desync after inserting hardcoded IDs
+  const tables = ['comments', 'notifications', 'recipes', 'users', 'tags', 'reports', 'ai_generation_history'];
+  for (const table of tables) {
+    try {
+      await pool.query(`SELECT setval(pg_get_serial_sequence('${table}', 'id'), COALESCE(max(id), 1)) FROM "${table}"`);
+    } catch (e) {}
+  }
+
   console.log('Seed dữ liệu thành công!');
   await prisma.$disconnect();
   await pool.end();

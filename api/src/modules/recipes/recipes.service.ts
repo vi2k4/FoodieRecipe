@@ -161,6 +161,13 @@ export class RecipesService {
           category: {
             select: { id: true, name: true, icon: true },
           },
+          _count: {
+            select: {
+              comments: { where: { deletedAt: null } },
+              likes: true,
+              favorites: true,
+            },
+          },
         },
       }),
       this.prisma.recipe.count({ where }),
@@ -190,7 +197,7 @@ export class RecipesService {
         },
         _count: {
           select: {
-            comments: true,
+            comments: { where: { deletedAt: null } },
             likes: true,
             favorites: true,
           },

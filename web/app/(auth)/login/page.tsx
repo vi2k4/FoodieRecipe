@@ -13,6 +13,7 @@ import { auth } from "@/lib/auth";
 import { toast } from "sonner";
 import { loginSchema, type LoginFormValues } from "@/lib/validations/auth";
 import { GuestOnly } from "@/components/auth/GuestOnly";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,6 +37,20 @@ export default function LoginPage() {
     }
   }
 
+  async function submitGoogle(credential: string) {
+    setError("");
+    try {
+      await auth.loginWithGoogle(credential);
+      toast.success("Đăng nhập Google thành công");
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Đăng nhập Google thất bại";
+      setError(message);
+      toast.error("Đăng nhập Google thất bại", { description: message });
+    }
+  }
+
   return <GuestOnly><AuthCard title="Chào mừng trở lại" description="Đăng nhập để tiếp tục hành trình bếp núc của bạn." footer={<>Chưa có tài khoản? <Link className="font-semibold text-orange-600 hover:underline" href="/register">Đăng ký ngay</Link></>}>
     <form className="space-y-5" onSubmit={handleSubmit(submit)} noValidate>
       <AuthField id="email" label="Email" type="email" autoComplete="email" placeholder="you@example.com" error={errors.email?.message} {...register("email")} />
@@ -46,5 +61,7 @@ export default function LoginPage() {
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
       <Button type="submit" size="lg" className="h-11 w-full bg-orange-500 hover:bg-orange-600" disabled={isSubmitting}>{isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}</Button>
     </form>
+    <div className="my-5 flex items-center gap-3 text-xs text-stone-400"><span className="h-px flex-1 bg-stone-200" /><span>HOẶC</span><span className="h-px flex-1 bg-stone-200" /></div>
+    <GoogleSignInButton onCredential={submitGoogle} />
   </AuthCard></GuestOnly>;
 }

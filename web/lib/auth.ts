@@ -33,6 +33,11 @@ export const auth = {
     this.saveSession(session);
     return session;
   },
+  async loginWithGoogle(credential: string) {
+    const { data: session } = await apiClient.post<AuthSession>('/auth/google', { credential });
+    this.saveSession(session);
+    return session;
+  },
   async register(username: string, email: string, password: string) {
     const { data } = await apiClient.post<PendingRegistration>("/auth/register", { username, email, password });
     return data;

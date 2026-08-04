@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
+const devDistDir = `.next-${process.env.NEXT_DEV_PORT || "3000"}`;
+
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Allow two local Next.js dev servers to run at the same time.
+  // Production builds continue to use the default `.next` directory.
+  ...(process.env.NODE_ENV === "development" ? { distDir: devDistDir } : {}),
   images: {
     remotePatterns: [
       {
@@ -18,6 +23,19 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin-allow-popups",
+          },
+        ],
+      },
+    ];
   },
   turbopack: {
     root: __dirname,

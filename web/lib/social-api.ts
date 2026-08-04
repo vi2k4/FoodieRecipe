@@ -23,18 +23,36 @@ export const socialApi = {
     }
   },
   
+  getRatingStats: async (recipeId: string | number) => {
+    const res = await apiClient.get(`/recipes/${recipeId}/rating`);
+    return res.data;
+  },
+
   submitRating: async (recipeId: string | number, rating: number) => {
     const res = await apiClient.post(`/recipes/${recipeId}/rating`, { rating });
     return res.data;
   },
   
-  getComments: async (recipeId: string | number) => {
-    const res = await apiClient.get(`/recipes/${recipeId}/comments`);
+  getComments: async (recipeId: string | number, page = 1, limit = 10) => {
+    const res = await apiClient.get(`/recipes/${recipeId}/comments`, {
+      params: { page, limit },
+    });
     return res.data;
   },
   
-  postComment: async (recipeId: string | number, content: string) => {
-    const res = await apiClient.post(`/recipes/${recipeId}/comments`, { content });
+  postComment: async (recipeId: string | number, content: string, parentCommentId?: string | number) => {
+    const params = parentCommentId ? { parentCommentId: String(parentCommentId) } : {};
+    const res = await apiClient.post(`/recipes/${recipeId}/comments`, { content }, { params });
+    return res.data;
+  },
+
+  updateComment: async (commentId: string | number, content: string) => {
+    const res = await apiClient.patch(`/comments/${commentId}`, { content });
+    return res.data;
+  },
+
+  deleteComment: async (commentId: string | number) => {
+    const res = await apiClient.delete(`/comments/${commentId}`);
     return res.data;
   },
 

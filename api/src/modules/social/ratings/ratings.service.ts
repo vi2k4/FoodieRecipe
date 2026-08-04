@@ -36,9 +36,14 @@ export class RatingsService {
     });
 
     // 3. Recalculate average rating
-    await this.updateRecipeAverageRating(recipeId);
+    const { averageRating, totalRatings } = await this.updateRecipeAverageRating(recipeId);
 
-    return { message: 'Recipe rated successfully', rating };
+    return {
+      message: 'Recipe rated successfully',
+      rating,
+      newAverageRating: averageRating,
+      totalRatings,
+    };
   }
 
   async updateRating(userId: bigint, recipeId: bigint, ratingDto: RatingDto) {
@@ -124,15 +129,43 @@ export class RatingsService {
     return { message: 'Rating deleted successfully' };
   }
 
+  async getRatingStats(recipeId: bigint, userId?: bigint) {
+    const aggregate = await this.prisma.rating.aggregate({
+      where: { recipeId },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    let userRating: number | null = null;
+    if (userId) {
+      const userRatingObj = await this.prisma.rating.findUnique({
+        where: {
+          userId_recipeId: { userId, recipeId },
+        },
+      });
+      userRating = userRatingObj ? userRatingObj.rating : null;
+    }
+
+    return {
+      averageRating: aggregate._avg.rating || 0,
+      totalRatings: aggregate._count.rating || 0,
+      userRating,
+    };
+  }
+
   private async updateRecipeAverageRating(recipeId: bigint) {
     const aggregate = await this.prisma.rating.aggregate({
       where: { recipeId },
       _avg: {
         rating: true,
       },
+      _count: {
+        rating: true,
+      },
     });
 
     const averageRating = aggregate._avg.rating || 0;
+    const totalRatings = aggregate._count.rating || 0;
 
     await this.prisma.recipe.update({
       where: { id: recipeId },
@@ -140,5 +173,7 @@ export class RatingsService {
         averageRating,
       },
     });
+
+    return { averageRating, totalRatings };
   }
 }
