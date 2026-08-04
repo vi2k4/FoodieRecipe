@@ -317,6 +317,15 @@ export class AuthService {
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: BigInt(userId) },
+      include: {
+        _count: {
+          select: {
+            followers: true,
+            following: true,
+            recipes: true,
+          },
+        },
+      },
     });
     if (!user) throw new UnauthorizedException('Tài khoản không tồn tại');
     return this.toSafeUser(user);
@@ -444,7 +453,14 @@ export class AuthService {
       bio: user.bio,
       role: user.role,
       isVerified: user.isVerified,
-    };
+      _count: user._count
+        ? {
+            followers: user._count.followers ?? 0,
+            following: user._count.following ?? 0,
+            recipes: user._count.recipes ?? 0,
+          }
+        : undefined,
+    } as any;
   }
 
   private hashPassword(password: string) {

@@ -11,7 +11,14 @@ describe('AdminService', () => {
     id: 1n,
     username: 'testuser',
     email: 'test@example.com',
+    passwordHash: 'hash',
+    avatarUrl: null,
+    bio: null,
+    role: 'USER' as any,
+    isVerified: true,
     isLocked: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     deletedAt: null,
   };
 

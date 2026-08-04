@@ -88,6 +88,10 @@ export const api = {
       const { data } = await apiClient.get<any>(`/recipes/${id}`);
       return data;
     },
+    incrementView: async (id: string | number) => {
+      const { data } = await apiClient.post<any>(`/recipes/${id}/view`);
+      return data;
+    },
     create: async (body: Record<string, unknown>) => {
       const headers = body?.userId ? { 'x-user-id': String(body.userId) } : undefined;
       const { data } = await apiClient.post<any>('/recipes', body, { headers });

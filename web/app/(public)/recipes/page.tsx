@@ -7,7 +7,9 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
 import { BowlFood, ChefHat, Sparkle } from '@phosphor-icons/react';
+import { Eye, ThumbsUp, Flame, Clock } from 'lucide-react';
 import { FavoriteButton } from '@/components/recipes/FavoriteButton';
+import { LikeButton } from '@/components/recipes/LikeButton';
 
 export default function RecipesPage() {
   const { user } = useAuth();
@@ -292,10 +294,23 @@ export default function RecipesPage() {
                         {recipe.title}
                       </h3>
 
-                      <div className="flex items-center gap-4 text-xs text-neutral-500 mb-4">
-                        <span className="flex items-center gap-1 font-medium">{recipe.calories || '—'} kcal</span>
-                        <span className="flex items-center gap-1 font-medium">⏱️ {recipe.cookTime || '—'} phút</span>
-                        <span className="flex items-center gap-1 font-medium">{recipe.servings || 4} người</span>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500 mb-4">
+                        <span className="flex items-center gap-1 font-medium text-neutral-700">
+                          <Flame className="w-3.5 h-3.5 text-orange-500" />
+                          {recipe.calories || '—'} kcal
+                        </span>
+                        <span className="flex items-center gap-1 font-medium text-neutral-700">
+                          <Clock className="w-3.5 h-3.5 text-neutral-400" />
+                          {recipe.cookTime || '—'} phút
+                        </span>
+                        <span className="flex items-center gap-1 font-medium text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md">
+                          <Eye className="w-3.5 h-3.5 text-neutral-400" />
+                          {Number(recipe.viewCount || 0)} xem
+                        </span>
+                        <LikeButton
+                          recipeId={recipe.id}
+                          initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)}
+                        />
                       </div>
 
                       {recipe.description && (

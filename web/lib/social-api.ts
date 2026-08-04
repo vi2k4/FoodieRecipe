@@ -7,6 +7,11 @@ export const socialApi = {
     return res.data;
   },
   
+  getMyLikes: async () => {
+    const res = await apiClient.get<string[]>("/recipes/my-likes");
+    return res.data;
+  },
+
   toggleLike: async (recipeId: string | number, nextLiked: boolean) => {
     if (nextLiked) {
       await apiClient.post(`/recipes/${recipeId}/like`);
@@ -69,6 +74,11 @@ export const socialApi = {
   
   getFollowing: async (userId: string | number) => {
     const res = await apiClient.get(`/users/${userId}/following`);
+    return res.data;
+  },
+
+  getMyFollowing: async () => {
+    const res = await apiClient.get("/users/me/following");
     return res.data;
   },
   

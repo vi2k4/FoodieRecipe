@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
 import { BowlFood, ChefHat, Sparkle } from '@phosphor-icons/react';
+import { Eye, ThumbsUp, Flame, Clock } from 'lucide-react';
+import { LikeButton } from '@/components/recipes/LikeButton';
 
 export default function Home() {
   const [recipes, setRecipes] = useState<any[]>([]);
@@ -137,9 +139,17 @@ export default function Home() {
                 </div>
                 <div className="p-5 flex-1 flex flex-col">
                   <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-orange-500 transition-colors line-clamp-2">{recipe.title}</h3>
-                  <div className="flex items-center gap-4 text-sm text-neutral-500 mb-4">
-                    <span className="flex items-center gap-1">{recipe.calories || '—'} kcal</span>
-                    <span className="flex items-center gap-1">⏱️ {recipe.cookTime || '—'} ph</span>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500 mb-4">
+                    <span className="flex items-center gap-1 font-medium"><Flame className="w-3.5 h-3.5 text-orange-500" /> {recipe.calories || '—'} kcal</span>
+                    <span className="flex items-center gap-1 font-medium"><Clock className="w-3.5 h-3.5 text-neutral-400" /> {recipe.cookTime || '—'} ph</span>
+                    <span className="flex items-center gap-1 text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md font-medium">
+                      <Eye className="w-3.5 h-3.5 text-neutral-400" />
+                      {Number(recipe.viewCount || 0)} xem
+                    </span>
+                    <LikeButton
+                      recipeId={recipe.id}
+                      initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)}
+                    />
                   </div>
                   <div className="mt-auto flex items-center gap-2 pt-4 border-t border-neutral-100">
                     <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-xs">
