@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Utensils, Cookie, Leaf, Coffee, Flame, Clock, Star, BrainCircuit, Search, ArrowRight } from "lucide-react";
+import { FavoriteButton } from "@/components/recipes/FavoriteButton";
 
 interface Recipe {
   id: number;
@@ -185,18 +186,21 @@ export default async function PublicHomePage() {
                 </div>
 
                 {/* Author footer */}
-                {recipe.author && (
-                  <div className="pt-3 border-t border-neutral-100 flex items-center gap-2">
-                    <img 
-                      src={recipe.author.avatarUrl || "/default-avatar.png"} 
-                      alt={recipe.author.username}
-                      className="w-6.5 h-6.5 rounded-full object-cover border border-neutral-200"
-                    />
-                    <span className="text-[11px] font-medium text-neutral-600">
-                      Bởi <span className="text-neutral-800 font-semibold">{recipe.author.username}</span>
-                    </span>
-                  </div>
-                )}
+                <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
+                  {recipe.author ? (
+                    <div className="flex items-center gap-2 min-w-0">
+                      <img 
+                        src={recipe.author.avatarUrl || "/default-avatar.png"} 
+                        alt={recipe.author.username}
+                        className="w-6.5 h-6.5 rounded-full object-cover border border-neutral-200 shrink-0"
+                      />
+                      <span className="text-[11px] font-medium text-neutral-600 truncate">
+                        Bởi <span className="text-neutral-800 font-semibold">{recipe.author.username}</span>
+                      </span>
+                    </div>
+                  ) : <div />}
+                  <FavoriteButton recipeId={recipe.id} />
+                </div>
               </div>
             </Link>
           ))}
