@@ -12,6 +12,7 @@ import { RecipeCommentSection } from '@/components/recipes/RecipeCommentSection'
 import { FavoriteButton } from '@/components/recipes/FavoriteButton';
 import { LikeButton } from '@/components/recipes/LikeButton';
 import { FollowButton } from '@/components/recipes/FollowButton';
+import { ReportButton } from '@/components/recipes/ReportButton';
 
 export default function RecipeDetailPage() {
   const { user } = useAuth();
@@ -110,16 +111,20 @@ export default function RecipeDetailPage() {
                 &larr; Quay lại danh sách
               </Link>
               
-              {isOwner && (
-                <div className="flex gap-2">
-                  <Link href={`/recipes/${recipe.id}/edit`} className="px-3.5 py-1.5 bg-amber-500/20 text-amber-300 hover:bg-amber-500 hover:text-white rounded-lg text-xs font-semibold transition-colors border border-amber-500/30 flex items-center gap-1">
-                    Sửa công thức
-                  </Link>
-                  <button onClick={handleDelete} className="px-3.5 py-1.5 bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white rounded-lg text-xs font-semibold transition-colors border border-red-500/30 flex items-center gap-1">
-                    Xóa
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {isOwner ? (
+                  <div className="flex gap-2">
+                    <Link href={`/recipes/${recipe.id}/edit`} className="px-3.5 py-1.5 bg-amber-500/20 text-amber-300 hover:bg-amber-500 hover:text-white rounded-lg text-xs font-semibold transition-colors border border-amber-500/30 flex items-center gap-1">
+                      Sửa công thức
+                    </Link>
+                    <button onClick={handleDelete} className="px-3.5 py-1.5 bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white rounded-lg text-xs font-semibold transition-colors border border-red-500/30 flex items-center gap-1">
+                      Xóa
+                    </button>
+                  </div>
+                ) : (
+                  <ReportButton recipeId={recipe.id} recipeTitle={recipe.title} variant="button" />
+                )}
+              </div>
             </div>
             
             <div className="flex flex-wrap items-center gap-3 mb-3">
@@ -169,6 +174,9 @@ export default function RecipeDetailPage() {
               <div className="flex items-center gap-3 md:ml-auto">
                 <FavoriteButton recipeId={recipe.id} showText />
                 <LikeButton recipeId={recipe.id} initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)} showText />
+                {!isOwner && (
+                  <ReportButton recipeId={recipe.id} recipeTitle={recipe.title} variant="icon" />
+                )}
               </div>
             </div>
 
