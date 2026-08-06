@@ -174,9 +174,6 @@ export default function RecipeDetailPage() {
               <div className="flex items-center gap-3 md:ml-auto">
                 <FavoriteButton recipeId={recipe.id} showText />
                 <LikeButton recipeId={recipe.id} initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)} showText />
-                {!isOwner && (
-                  <ReportButton recipeId={recipe.id} recipeTitle={recipe.title} variant="icon" />
-                )}
               </div>
             </div>
 
