@@ -12,13 +12,26 @@ export class BedrockService {
   private readonly client: BedrockRuntimeClient;
 
   constructor(private readonly config: ConfigService) {
+    // Bedrock có thể dùng credentials của một AWS account riêng.
+    // Không dùng AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY chung với S3
+    // và Rekognition của EC2.
+    const accessKeyId = this.config.get<string>(
+      'BEDROCK_AWS_ACCESS_KEY_ID',
+    );
+    const secretAccessKey = this.config.get<string>(
+      'BEDROCK_AWS_SECRET_ACCESS_KEY',
+    );
+
     this.client = new BedrockRuntimeClient({
-      region: this.config.get<string>('AWS_REGION') || 'ap-southeast-1',
-      ...(this.config.get<string>('AWS_ACCESS_KEY_ID') && this.config.get<string>('AWS_SECRET_ACCESS_KEY')
+      region:
+        this.config.get<string>('BEDROCK_REGION') ||
+        this.config.get<string>('AWS_REGION') ||
+        'ap-southeast-1',
+      ...(accessKeyId && secretAccessKey
         ? {
             credentials: {
-              accessKeyId: this.config.get<string>('AWS_ACCESS_KEY_ID')!,
-              secretAccessKey: this.config.get<string>('AWS_SECRET_ACCESS_KEY')!,
+              accessKeyId,
+              secretAccessKey,
             },
           }
         : {}),

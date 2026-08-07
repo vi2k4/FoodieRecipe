@@ -7,7 +7,6 @@ import RecipeHeader from "@/components/my-recipes/RecipeHeader";
 import RecipeInfo from "@/components/my-recipes/RecipeInfo";
 import IngredientList from "@/components/my-recipes/IngredientList";
 import InstructionList from "@/components/my-recipes/InstructionList";
-import NutritionCard from "@/components/my-recipes/NutritionCard";
 import UpdateButton from "@/components/my-recipes/UpdateButton";
 import { api } from "@/lib/api-client";
 import { Recipe } from "@/types/recipe";
@@ -113,7 +112,6 @@ export default function RecipeDetailPage() {
         <RecipeInfo recipe={recipe} />
         <IngredientList ingredients={recipe.ingredients} />
         <InstructionList steps={recipe.steps} />
-        <NutritionCard calories={recipe.calories} />
         <UpdateButton recipeId={recipe.id} />
       </div>
     </main>
