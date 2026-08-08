@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReportsService } from './reports.service';
 import { PrismaService } from '../../database/prisma.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationsService } from '../social/notifications/notifications.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ReportStatus, NotificationType } from '../../generated/prisma/client';
 
@@ -119,13 +119,13 @@ describe('ReportsService', () => {
         where: { id: mockReport.recipeId },
         data: { isPublic: false },
       });
-      expect(notificationsService.createNotification).toHaveBeenCalledWith(
-        mockRecipe.userId,
-        'Công thức của bạn đã bị ẩn',
-        expect.stringContaining(mockRecipe.title),
-        NotificationType.SYSTEM,
-        mockRecipe.id,
-      );
+      expect(notificationsService.createNotification).toHaveBeenCalledWith({
+        userId: mockRecipe.userId,
+        title: 'Công thức của bạn đã bị ẩn',
+        content: expect.stringContaining(mockRecipe.title),
+        type: NotificationType.SYSTEM,
+        referenceId: mockRecipe.id,
+      });
     });
   });
 });

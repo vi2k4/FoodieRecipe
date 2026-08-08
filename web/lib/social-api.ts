@@ -33,6 +33,11 @@ export const socialApi = {
     return res.data;
   },
 
+  reportRecipe: async (recipeId: string | number, payload: { reason: string; description?: string }) => {
+    const res = await apiClient.post(`/recipes/${recipeId}/report`, payload);
+    return res.data;
+  },
+
   submitRating: async (recipeId: string | number, rating: number) => {
     const res = await apiClient.post(`/recipes/${recipeId}/rating`, { rating });
     return res.data;
