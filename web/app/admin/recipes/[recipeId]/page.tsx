@@ -125,7 +125,7 @@ export default function AdminRecipeDetailPage() {
   if (loading) {
     return (
       <div>
-        <AdminHeader title="Chi tiết công thức" subtitle="Đang tải..." />
+        <AdminHeader title="Chi tiết công thức" subtitle="Đang tải thông tin công thức..." />
         <div className="p-6">
           <div className="h-72 w-full animate-pulse rounded-2xl" style={{ backgroundColor: "#e7e5e4" }} />
           <div className="mx-auto max-w-4xl py-8 space-y-6">

@@ -231,7 +231,7 @@ export default function MyRecipesPage() {
                 <div className="mb-4 animate-bounce text-4xl">⏳</div>
 
                 <p className="font-medium text-gray-600">
-                  Loading your recipes...
+                  Đang tải công thức của bạn...
                 </p>
               </div>
             ) : error ? (

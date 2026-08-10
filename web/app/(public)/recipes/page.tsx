@@ -232,7 +232,7 @@ export default function RecipesPage() {
           {loading ? (
             <div className="min-h-[50vh] flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-neutral-200">
               <div className="text-4xl mb-3 animate-bounce">⏳</div>
-              <p className="font-medium text-neutral-600">Đang tải dữ liệu thẻ công thức từ Database...</p>
+              <p className="font-medium text-neutral-600">Đang tải danh mục công thức...</p>
             </div>
           ) : recipes.length === 0 ? (
             <div className="p-16 text-center bg-white rounded-3xl border border-neutral-200 space-y-4">

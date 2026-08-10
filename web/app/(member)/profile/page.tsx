@@ -169,7 +169,10 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <main className="grid min-h-[calc(100vh-9rem)] place-items-center bg-[#fffaf5]">
-        <Loader2 className="size-8 animate-spin text-orange-500" />
+        <div className="flex flex-col items-center gap-3 text-neutral-500">
+          <Loader2 className="size-8 animate-spin text-orange-500" />
+          <p className="text-sm">Đang tải hồ sơ của bạn...</p>
+        </div>
       </main>
     );
   }
