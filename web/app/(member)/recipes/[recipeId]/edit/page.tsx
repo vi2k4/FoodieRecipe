@@ -319,7 +319,7 @@ export default function EditRecipePage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-neutral-500">
         <div className="text-4xl mb-3 animate-bounce">⏳</div>
-        <p className="font-medium text-lg">Đang tải dữ liệu công thức...</p>
+        <p className="font-medium text-lg">Đang chuẩn bị thông tin công thức...</p>
       </div>
     );
   }

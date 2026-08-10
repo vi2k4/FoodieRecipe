@@ -70,7 +70,7 @@ export default function RecipeDetailPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-neutral-500">
         <div className="text-4xl mb-3 animate-bounce">⏳</div>
-        <p className="font-medium text-lg">Đang tải chi tiết công thức từ Database...</p>
+        <p className="font-medium text-lg">Đang tải chi tiết công thức...</p>
       </div>
     );
   }

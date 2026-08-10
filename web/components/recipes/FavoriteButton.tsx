@@ -46,9 +46,9 @@ export function FavoriteButton({ recipeId, className = "", showText = false }: F
       setLoading(false);
       queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
       if (!isFavorited) {
-        toast.success("Đã thêm món ăn vào danh sách yêu thích ❤️");
+        toast.success("Đã lưu công thức vào danh sách yêu thích ❤️");
       } else {
-        toast.info("Đã xóa món ăn khỏi danh sách yêu thích");
+        toast.info("Đã bỏ công thức khỏi danh sách yêu thích");
       }
     },
     onError: (err: any) => {
@@ -62,7 +62,7 @@ export function FavoriteButton({ recipeId, className = "", showText = false }: F
     e.stopPropagation();
 
     if (!isLoggedIn) {
-      toast.error("Vui lòng đăng nhập để lưu món ăn yêu thích!");
+      toast.error("Vui lòng đăng nhập để lưu công thức yêu thích!");
       router.push("/login");
       return;
     }
@@ -88,14 +88,14 @@ export function FavoriteButton({ recipeId, className = "", showText = false }: F
           ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
           : "bg-neutral-100/90 hover:bg-red-50 text-neutral-600 hover:text-red-500 border border-neutral-200/60"
       } ${className}`}
-      title={isFavorited ? "Xóa khỏi yêu thích" : "Thêm vào yêu thích"}
+      title={isFavorited ? "Bỏ lưu công thức" : "Lưu công thức"}
     >
       <Heart
         className={`w-4 h-4 transition-transform duration-200 ${
           isFavorited ? "fill-red-500 text-red-500 scale-110" : "text-neutral-500 group-hover:text-red-500"
         }`}
       />
-      {showText && <span>{isFavorited ? "Đã thích" : "Yêu thích"}</span>}
+      {showText && <span>{loading ? "Đang cập nhật..." : isFavorited ? "Đã lưu" : "Lưu công thức"}</span>}
     </span>
   );
 }

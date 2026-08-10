@@ -200,7 +200,7 @@ export default function CreateRecipePage() {
         await api.recipeTags.add(recipeId, tagId, currentUserId);
       }
 
-      alert('Tạo công thức mới thành công và đã lưu vào Database!');
+      alert('Lưu công thức mới thành công!');
       router.push(`/recipes/${recipeId}`);
     } catch (err: any) {
       console.error('Tạo công thức thất bại:', err);
@@ -219,7 +219,7 @@ export default function CreateRecipePage() {
           &larr; Quay lại danh sách
         </Link>
         <h1 className="text-3xl font-bold text-neutral-900">Đóng góp công thức mới</h1>
-        <p className="text-neutral-500 mt-2">Chia sẻ công thức nấu ăn của bạn – lưu trực tiếp vào cơ sở dữ liệu.</p>
+        <p className="text-neutral-500 mt-2">Chia sẻ công thức nấu ăn của bạn với cộng đồng FoodiRecipe.</p>
       </div>
 
       {errorMsg && (
@@ -556,7 +556,7 @@ export default function CreateRecipePage() {
             disabled={loading}
             className="px-8 py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20 disabled:opacity-50"
           >
-            {loading ? 'Đang lưu vào Database...' : 'Đăng công thức (Lưu vào DB)'}
+            {loading ? 'Đang lưu công thức...' : 'Lưu công thức'}
           </button>
         </div>
 

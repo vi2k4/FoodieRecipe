@@ -104,7 +104,7 @@ export default function Home() {
       <section className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-neutral-900">Công thức mới từ Database</h2>
+            <h2 className="text-2xl font-bold text-neutral-900">Công thức mới nhất</h2>
             <p className="text-neutral-500 text-sm">Các công thức tươi ngon cập nhật từ cộng đồng</p>
           </div>
           <Link href="/recipes" className="text-orange-500 hover:text-orange-600 font-medium flex items-center gap-1">
@@ -115,7 +115,7 @@ export default function Home() {
         {loading ? (
           <div className="p-12 text-center text-neutral-500 bg-white rounded-2xl border border-neutral-100">
             <div className="text-3xl mb-2 animate-bounce">⏳</div>
-            <p>Đang tải dữ liệu từ Database...</p>
+            <p>Đang tải các công thức mới nhất...</p>
           </div>
         ) : recipes.length === 0 ? (
           <div className="p-12 text-center text-neutral-500 bg-white rounded-2xl border border-neutral-100">

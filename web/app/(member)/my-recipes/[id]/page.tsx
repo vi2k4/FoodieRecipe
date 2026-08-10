@@ -48,6 +48,7 @@ export default function RecipeDetailPage() {
     return (
       <main className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
         <div className="mx-auto max-w-5xl px-4 py-10">
+          <p className="mb-4 text-sm text-neutral-500">Đang tải công thức của bạn...</p>
           <div className="mb-6 h-5 w-24 animate-pulse rounded bg-gray-200" />
           <div className="overflow-hidden rounded-3xl">
             <div className="relative aspect-video animate-pulse bg-gray-200" />
