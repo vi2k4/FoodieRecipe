@@ -99,9 +99,17 @@ export default function AdminRecipeDetailPage() {
     if (!recipe) return;
     setActionLoading(true);
     try {
-      await apiClient.patch(`/admin/recipes/${recipe.id}`, { isPublic: !recipe.isPublic });
-      toast.success(recipe.isPublic ? `Đã ẩn công thức "${recipe.title}"` : `Đã hiện công thức "${recipe.title}"`);
-      setRecipe((prev) => (prev ? { ...prev, isPublic: !prev.isPublic } : null));
+      await apiClient.patch(`/admin/recipes/${recipe.id}`, {
+        isPublic: !recipe.isPublic,
+      });
+      toast.success(
+        recipe.isPublic
+          ? `Đã ẩn công thức "${recipe.title}"`
+          : `Đã hiện công thức "${recipe.title}"`,
+      );
+      setRecipe((prev) =>
+        prev ? { ...prev, isPublic: !prev.isPublic } : null,
+      );
     } catch {
       toast.error("Không thể thay đổi trạng thái công thức");
     } finally {
@@ -110,7 +118,11 @@ export default function AdminRecipeDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!recipe || !confirm(`Bạn có chắc muốn xóa công thức "${recipe.title}"?`)) return;
+    if (
+      !recipe ||
+      !confirm(`Bạn có chắc muốn xóa công thức "${recipe.title}"?`)
+    )
+      return;
     setActionLoading(true);
     try {
       await deleteAdminRecipe(recipe.id);
@@ -125,12 +137,22 @@ export default function AdminRecipeDetailPage() {
   if (loading) {
     return (
       <div>
-        <AdminHeader title="Chi tiết công thức" subtitle="Đang tải thông tin công thức..." />
+        <AdminHeader
+          title="Chi tiết công thức"
+          subtitle="Đang tải thông tin công thức..."
+        />
         <div className="p-6">
-          <div className="h-72 w-full animate-pulse rounded-2xl" style={{ backgroundColor: "#e7e5e4" }} />
+          <div
+            className="h-72 w-full animate-pulse rounded-2xl"
+            style={{ backgroundColor: "#e7e5e4" }}
+          />
           <div className="mx-auto max-w-4xl py-8 space-y-6">
             {[200, 100, 300, 250].map((w, i) => (
-              <div key={i} className="h-6 animate-pulse rounded-xl" style={{ backgroundColor: "#e7e5e4", maxWidth: `${w}px` }} />
+              <div
+                key={i}
+                className="h-6 animate-pulse rounded-xl"
+                style={{ backgroundColor: "#e7e5e4", maxWidth: `${w}px` }}
+              />
             ))}
           </div>
         </div>
@@ -143,8 +165,14 @@ export default function AdminRecipeDetailPage() {
       <div>
         <AdminHeader title="Chi tiết công thức" subtitle="Lỗi" />
         <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
-          <AlertCircle className="h-16 w-16" style={{ color: "var(--danger)" }} />
-          <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
+          <AlertCircle
+            className="h-16 w-16"
+            style={{ color: "var(--danger)" }}
+          />
+          <h1
+            className="text-xl font-bold"
+            style={{ color: "var(--text-primary)" }}
+          >
             {error || "Không tìm thấy công thức"}
           </h1>
           <button
@@ -160,17 +188,24 @@ export default function AdminRecipeDetailPage() {
     );
   }
 
-  const diff = difficultyConfig[recipe.difficulty] || { label: recipe.difficulty, color: "#78716c", bg: "#f5f5f4" };
+  const diff = difficultyConfig[recipe.difficulty] || {
+    label: recipe.difficulty,
+    color: "#78716c",
+    bg: "#f5f5f4",
+  };
 
   return (
     <div>
-      <AdminHeader 
-        title="Chi tiết công thức" 
-        subtitle={`Quản lý công thức: ${recipe.title}`} 
+      <AdminHeader
+        title="Chi tiết công thức"
+        subtitle={`Quản lý công thức: ${recipe.title}`}
       />
-      
+
       {/* Admin Action Bar */}
-      <div className="bg-white border-b px-6 py-4 flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
+      <div
+        className="flex flex-col items-stretch gap-3 border-b bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+        style={{ borderColor: "var(--border)" }}
+      >
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-sm font-medium hover:underline"
@@ -179,30 +214,46 @@ export default function AdminRecipeDetailPage() {
           <ArrowLeft className="h-4 w-4" />
           Trở về danh sách
         </button>
-        
-        <div className="flex items-center gap-3">
+
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={handleToggleVisibility}
             disabled={actionLoading}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all disabled:opacity-50 sm:flex-none sm:px-4"
             style={
               recipe.isPublic
-                ? { backgroundColor: "#fff7ed", color: "var(--primary)", border: "1px solid #fed7aa" }
-                : { backgroundColor: "#ecfdf5", color: "#16a34a", border: "1px solid #bbf7d0" }
+                ? {
+                    backgroundColor: "#fff7ed",
+                    color: "var(--primary)",
+                    border: "1px solid #fed7aa",
+                  }
+                : {
+                    backgroundColor: "#ecfdf5",
+                    color: "#16a34a",
+                    border: "1px solid #bbf7d0",
+                  }
             }
           >
             {recipe.isPublic ? (
-              <><EyeOff className="h-4 w-4" /> Ẩn công thức</>
+              <>
+                <EyeOff className="h-4 w-4" /> Ẩn công thức
+              </>
             ) : (
-              <><Eye className="h-4 w-4" /> Hiện công thức</>
+              <>
+                <Eye className="h-4 w-4" /> Hiện công thức
+              </>
             )}
           </button>
-          
+
           <button
             onClick={handleDelete}
             disabled={actionLoading}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all disabled:opacity-50"
-            style={{ backgroundColor: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all disabled:opacity-50 sm:flex-none sm:px-4"
+            style={{
+              backgroundColor: "#fef2f2",
+              color: "#dc2626",
+              border: "1px solid #fecaca",
+            }}
           >
             <Trash2 className="h-4 w-4" /> Xóa công thức
           </button>
@@ -220,8 +271,14 @@ export default function AdminRecipeDetailPage() {
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="h-full w-full flex items-center justify-center" style={{ backgroundColor: "var(--surface-muted)" }}>
-              <ChefHat className="h-20 w-20" style={{ color: "var(--border)" }} />
+            <div
+              className="h-full w-full flex items-center justify-center"
+              style={{ backgroundColor: "var(--surface-muted)" }}
+            >
+              <ChefHat
+                className="h-20 w-20"
+                style={{ color: "var(--border)" }}
+              />
             </div>
           )}
           {/* Gradient overlay */}
@@ -246,7 +303,9 @@ export default function AdminRecipeDetailPage() {
                 {recipe.category.name}
               </span>
             )}
-            <h1 className="text-2xl font-bold text-white sm:text-4xl">{recipe.title}</h1>
+            <h1 className="text-2xl font-bold text-white sm:text-4xl">
+              {recipe.title}
+            </h1>
           </div>
         </div>
 
@@ -257,9 +316,15 @@ export default function AdminRecipeDetailPage() {
             {recipe.description && (
               <div
                 className="rounded-2xl p-5"
-                style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+                style={{
+                  backgroundColor: "var(--surface)",
+                  border: "1px solid var(--border)",
+                }}
               >
-                <p className="leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                <p
+                  className="leading-relaxed"
+                  style={{ color: "var(--text-secondary)" }}
+                >
                   {recipe.description}
                 </p>
               </div>
@@ -268,22 +333,39 @@ export default function AdminRecipeDetailPage() {
             {/* Ingredients */}
             <div
               className="rounded-2xl p-5"
-              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+              style={{
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--border)",
+              }}
             >
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg text-sm" style={{ backgroundColor: "var(--primary)", color: "white" }}>
+              <h2
+                className="mb-4 flex items-center gap-2 text-lg font-bold"
+                style={{ color: "var(--text-primary)" }}
+              >
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-sm"
+                  style={{ backgroundColor: "var(--primary)", color: "white" }}
+                >
                   Ingredients
                 </span>
                 Nguyên liệu
                 {recipe.servings && (
-                  <span className="ml-auto text-sm font-normal" style={{ color: "var(--text-secondary)" }}>
+                  <span
+                    className="ml-auto text-sm font-normal"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
                     {recipe.servings} khẩu phần
                   </span>
                 )}
               </h2>
 
               {recipe.ingredients.length === 0 ? (
-                <p className="text-sm italic" style={{ color: "var(--text-secondary)" }}>Chưa có nguyên liệu</p>
+                <p
+                  className="text-sm italic"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Chưa có nguyên liệu
+                </p>
               ) : (
                 <ul className="space-y-2">
                   {recipe.ingredients.map((ing) => (
@@ -292,12 +374,21 @@ export default function AdminRecipeDetailPage() {
                       className="flex items-center gap-3 rounded-xl px-4 py-2.5"
                       style={{ backgroundColor: "var(--surface-muted)" }}
                     >
-                      <CheckCircle2 className="h-4 w-4 flex-shrink-0" style={{ color: "var(--primary)" }} />
-                      <span className="flex-1 font-medium text-sm" style={{ color: "var(--text-primary)" }}>
+                      <CheckCircle2
+                        className="h-4 w-4 flex-shrink-0"
+                        style={{ color: "var(--primary)" }}
+                      />
+                      <span
+                        className="flex-1 font-medium text-sm"
+                        style={{ color: "var(--text-primary)" }}
+                      >
                         {ing.ingredientName}
                       </span>
                       {(ing.quantity || ing.unit) && (
-                        <span className="text-sm font-semibold" style={{ color: "var(--primary)" }}>
+                        <span
+                          className="text-sm font-semibold"
+                          style={{ color: "var(--primary)" }}
+                        >
                           {ing.quantity} {ing.unit}
                         </span>
                       )}
@@ -310,17 +401,31 @@ export default function AdminRecipeDetailPage() {
             {/* Steps */}
             <div
               className="rounded-2xl p-5"
-              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+              style={{
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--border)",
+              }}
             >
-              <h2 className="mb-5 flex items-center gap-2 text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg text-sm" style={{ backgroundColor: "var(--primary)", color: "white" }}>
+              <h2
+                className="mb-5 flex items-center gap-2 text-lg font-bold"
+                style={{ color: "var(--text-primary)" }}
+              >
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-sm"
+                  style={{ backgroundColor: "var(--primary)", color: "white" }}
+                >
                   Instructions
                 </span>
                 Các bước thực hiện
               </h2>
 
               {recipe.steps.length === 0 ? (
-                <p className="text-sm italic" style={{ color: "var(--text-secondary)" }}>Chưa có hướng dẫn các bước</p>
+                <p
+                  className="text-sm italic"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Chưa có hướng dẫn các bước
+                </p>
               ) : (
                 <ol className="space-y-5">
                   {recipe.steps.map((step) => (
@@ -335,7 +440,10 @@ export default function AdminRecipeDetailPage() {
                         className="flex-1 rounded-xl p-4"
                         style={{ backgroundColor: "var(--surface-muted)" }}
                       >
-                        <p className="leading-relaxed text-sm" style={{ color: "var(--text-primary)" }}>
+                        <p
+                          className="leading-relaxed text-sm"
+                          style={{ color: "var(--text-primary)" }}
+                        >
                           {step.content}
                         </p>
                       </div>
@@ -351,54 +459,141 @@ export default function AdminRecipeDetailPage() {
             {/* Quick Stats */}
             <div
               className="rounded-2xl p-5 space-y-4"
-              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+              style={{
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--border)",
+              }}
             >
-              <h3 className="font-bold" style={{ color: "var(--text-primary)" }}>Thông tin nhanh</h3>
+              <h3
+                className="font-bold"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Thông tin nhanh
+              </h3>
 
               <div className="grid grid-cols-2 gap-3">
                 {recipe.cookTime && (
-                  <div className="flex flex-col items-center rounded-xl py-3 px-2 gap-1" style={{ backgroundColor: "var(--surface-muted)" }}>
-                    <Clock className="h-5 w-5" style={{ color: "var(--primary)" }} />
-                    <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{recipe.cookTime} phút</span>
-                    <span className="text-xs" style={{ color: "var(--text-secondary)" }}>Thời gian</span>
+                  <div
+                    className="flex flex-col items-center rounded-xl py-3 px-2 gap-1"
+                    style={{ backgroundColor: "var(--surface-muted)" }}
+                  >
+                    <Clock
+                      className="h-5 w-5"
+                      style={{ color: "var(--primary)" }}
+                    />
+                    <span
+                      className="text-sm font-bold"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      {recipe.cookTime} phút
+                    </span>
+                    <span
+                      className="text-xs"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      Thời gian
+                    </span>
                   </div>
                 )}
                 {recipe.servings && (
-                  <div className="flex flex-col items-center rounded-xl py-3 px-2 gap-1" style={{ backgroundColor: "var(--surface-muted)" }}>
-                    <Users className="h-5 w-5" style={{ color: "var(--primary)" }} />
-                    <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{recipe.servings}</span>
-                    <span className="text-xs" style={{ color: "var(--text-secondary)" }}>Khẩu phần</span>
+                  <div
+                    className="flex flex-col items-center rounded-xl py-3 px-2 gap-1"
+                    style={{ backgroundColor: "var(--surface-muted)" }}
+                  >
+                    <Users
+                      className="h-5 w-5"
+                      style={{ color: "var(--primary)" }}
+                    />
+                    <span
+                      className="text-sm font-bold"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      {recipe.servings}
+                    </span>
+                    <span
+                      className="text-xs"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      Khẩu phần
+                    </span>
                   </div>
                 )}
-                <div className="flex flex-col items-center rounded-xl py-3 px-2 gap-1" style={{ backgroundColor: "var(--surface-muted)" }}>
+                <div
+                  className="flex flex-col items-center rounded-xl py-3 px-2 gap-1"
+                  style={{ backgroundColor: "var(--surface-muted)" }}
+                >
                   <ChefHat className="h-5 w-5" style={{ color: diff.color }} />
-                  <span className="text-sm font-bold" style={{ color: diff.color }}>{diff.label}</span>
-                  <span className="text-xs" style={{ color: "var(--text-secondary)" }}>Độ khó</span>
+                  <span
+                    className="text-sm font-bold"
+                    style={{ color: diff.color }}
+                  >
+                    {diff.label}
+                  </span>
+                  <span
+                    className="text-xs"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    Độ khó
+                  </span>
                 </div>
                 {recipe.calories && (
-                  <div className="flex flex-col items-center rounded-xl py-3 px-2 gap-1" style={{ backgroundColor: "var(--surface-muted)" }}>
+                  <div
+                    className="flex flex-col items-center rounded-xl py-3 px-2 gap-1"
+                    style={{ backgroundColor: "var(--surface-muted)" }}
+                  >
                     <Flame className="h-5 w-5" style={{ color: "#f97316" }} />
-                    <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{recipe.calories}</span>
-                    <span className="text-xs" style={{ color: "var(--text-secondary)" }}>Calories</span>
+                    <span
+                      className="text-sm font-bold"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      {recipe.calories}
+                    </span>
+                    <span
+                      className="text-xs"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      Calories
+                    </span>
                   </div>
                 )}
               </div>
 
               {/* Engagement stats */}
-              <div className="flex items-center justify-around pt-2 border-t" style={{ borderColor: "var(--border)" }}>
-                <div className="flex items-center gap-1 text-sm" style={{ color: "var(--text-secondary)" }}>
+              <div
+                className="flex items-center justify-around pt-2 border-t"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <div
+                  className="flex items-center gap-1 text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
                   <Heart className="h-4 w-4" style={{ color: "#ec4899" }} />
                   <span>{recipe.likeCount}</span>
                 </div>
-                <div className="flex items-center gap-1 text-sm" style={{ color: "var(--text-secondary)" }}>
-                  <Bookmark className="h-4 w-4" style={{ color: "var(--primary)" }} />
+                <div
+                  className="flex items-center gap-1 text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <Bookmark
+                    className="h-4 w-4"
+                    style={{ color: "var(--primary)" }}
+                  />
                   <span>{recipe.favoriteCount}</span>
                 </div>
-                <div className="flex items-center gap-1 text-sm" style={{ color: "var(--text-secondary)" }}>
-                  <MessageCircle className="h-4 w-4" style={{ color: "#3b82f6" }} />
+                <div
+                  className="flex items-center gap-1 text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <MessageCircle
+                    className="h-4 w-4"
+                    style={{ color: "#3b82f6" }}
+                  />
                   <span>{recipe._count?.comments ?? 0}</span>
                 </div>
-                <div className="flex items-center gap-1 text-sm" style={{ color: "var(--text-secondary)" }}>
+                <div
+                  className="flex items-center gap-1 text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
                   <Eye className="h-4 w-4" />
                   <span>{recipe.viewCount}</span>
                 </div>
@@ -408,10 +603,18 @@ export default function AdminRecipeDetailPage() {
               {recipe.averageRating > 0 && (
                 <div className="flex items-center gap-2 pt-1">
                   <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                  <span className="font-bold" style={{ color: "var(--text-primary)" }}>
+                  <span
+                    className="font-bold"
+                    style={{ color: "var(--text-primary)" }}
+                  >
                     {Number(recipe.averageRating).toFixed(1)}
                   </span>
-                  <span className="text-sm" style={{ color: "var(--text-secondary)" }}>/ 5.0</span>
+                  <span
+                    className="text-sm"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    / 5.0
+                  </span>
                 </div>
               )}
             </div>
@@ -419,9 +622,17 @@ export default function AdminRecipeDetailPage() {
             {/* Author */}
             <div
               className="rounded-2xl p-5"
-              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+              style={{
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--border)",
+              }}
             >
-              <h3 className="mb-3 font-bold" style={{ color: "var(--text-primary)" }}>Tác giả</h3>
+              <h3
+                className="mb-3 font-bold"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Tác giả
+              </h3>
               <div className="flex items-center gap-3">
                 {recipe.author.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -440,10 +651,16 @@ export default function AdminRecipeDetailPage() {
                   </div>
                 )}
                 <div>
-                  <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                  <p
+                    className="font-semibold"
+                    style={{ color: "var(--text-primary)" }}
+                  >
                     {recipe.author.username}
                   </p>
-                  <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                  <p
+                    className="text-xs"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
                     ID: {recipe.author.id}
                   </p>
                 </div>
@@ -454,10 +671,19 @@ export default function AdminRecipeDetailPage() {
             {recipe.tags && recipe.tags.length > 0 && (
               <div
                 className="rounded-2xl p-5"
-                style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+                style={{
+                  backgroundColor: "var(--surface)",
+                  border: "1px solid var(--border)",
+                }}
               >
-                <h3 className="mb-3 font-bold flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
-                  <Tag className="h-4 w-4" style={{ color: "var(--primary)" }} />
+                <h3
+                  className="mb-3 font-bold flex items-center gap-2"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  <Tag
+                    className="h-4 w-4"
+                    style={{ color: "var(--primary)" }}
+                  />
                   Tags
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -465,7 +691,11 @@ export default function AdminRecipeDetailPage() {
                     <span
                       key={tag.id}
                       className="rounded-full px-3 py-1 text-xs font-medium"
-                      style={{ backgroundColor: "var(--surface-muted)", color: "var(--primary)", border: "1px solid var(--border)" }}
+                      style={{
+                        backgroundColor: "var(--surface-muted)",
+                        color: "var(--primary)",
+                        border: "1px solid var(--border)",
+                      }}
                     >
                       #{tag.name}
                     </span>

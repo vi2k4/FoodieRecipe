@@ -3,9 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChefHat } from '@phosphor-icons/react';
+import { useState } from 'react';
+import { useAuth } from '@/lib/auth-context';
+import { LoginRequiredDialog } from '@/components/auth/LoginRequiredDialog';
 
 export function Footer() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   if (pathname?.startsWith('/admin')) return null;
   return (
     <footer className="bg-neutral-950 text-neutral-400 py-12 mt-auto">
@@ -31,7 +36,7 @@ export function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/recipes/create" className="hover:text-orange-400 transition-colors">
+              <Link href="/recipes/create" onClick={(event) => { if (user.role === 'GUEST') { event.preventDefault(); setLoginDialogOpen(true); } }} className="hover:text-orange-400 transition-colors">
                 Đóng góp công thức
               </Link>
             </li>
@@ -58,6 +63,7 @@ export function Footer() {
       <div className="container mx-auto px-4 mt-12 pt-8 border-t border-neutral-800 text-sm text-center">
         <p>&copy; {new Date().getFullYear()} FoodieRecipe. All rights reserved.</p>
       </div>
+      <LoginRequiredDialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen} action="đóng góp công thức mới" />
     </footer>
   );
 }

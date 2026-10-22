@@ -35,18 +35,18 @@ export function AdminSidebar() {
 
   return (
     <aside
-      className="fixed inset-y-0 left-0 z-40 flex flex-col"
-      style={{ width: "var(--sidebar-width)", backgroundColor: "#1c1917" }}
+      className="fixed inset-y-0 left-0 z-40 flex w-16 flex-col lg:w-[var(--sidebar-width)]"
+      style={{ backgroundColor: "#1c1917" }}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 border-b border-stone-700 px-5">
+      <div className="flex h-16 items-center justify-center gap-3 border-b border-stone-700 px-2 lg:justify-start lg:px-5">
         <div
           className="flex h-8 w-8 items-center justify-center rounded-lg"
           style={{ backgroundColor: "var(--primary)" }}
         >
           <ChefHat className="h-4 w-4 text-white" />
         </div>
-        <div>
+        <div className="hidden lg:block">
           <p className="text-sm font-bold text-white">FoodiRecipe</p>
           <p className="text-xs" style={{ color: "#a78bfa" }}>
             Quản trị viên
@@ -56,7 +56,7 @@ export function AdminSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4">
-        <ul className="space-y-1 px-3">
+        <ul className="space-y-1 px-2 lg:px-3">
           {navItems.map((item) => {
             const active = isActive(item.href, item.exact);
             return (
@@ -64,10 +64,10 @@ export function AdminSidebar() {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                    "flex items-center justify-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 lg:justify-start",
                     active
                       ? "text-white"
-                      : "text-stone-400 hover:bg-stone-700 hover:text-white"
+                      : "text-stone-400 hover:bg-stone-700 hover:text-white",
                   )}
                   style={
                     active
@@ -79,7 +79,7 @@ export function AdminSidebar() {
                   }
                 >
                   <item.icon className="h-4 w-4 flex-shrink-0" />
-                  {item.label}
+                  <span className="hidden lg:inline">{item.label}</span>
                 </Link>
               </li>
             );
@@ -87,19 +87,19 @@ export function AdminSidebar() {
         </ul>
 
         {/* Main site link */}
-        <div className="mt-6 px-3">
+        <div className="mt-6 px-2 lg:px-3">
           <Link
             href="/recipes"
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-stone-400 transition-all duration-200 hover:bg-stone-700 hover:text-white"
           >
             <LogOut className="h-4 w-4 flex-shrink-0" />
-            Về trang chính
+            <span className="hidden lg:inline">Về trang chính</span>
           </Link>
         </div>
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-stone-700 p-4">
+      <div className="hidden border-t border-stone-700 p-4 lg:block">
         {currentUser && (
           <div className="flex items-center gap-3">
             {currentUser.avatarUrl && (

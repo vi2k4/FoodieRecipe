@@ -10,12 +10,12 @@ export const metadata = {
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <AdminGuard>
-      <div className="flex min-h-screen" style={{ backgroundColor: "var(--background)" }}>
+      <div
+        className="flex min-h-screen"
+        style={{ backgroundColor: "var(--background)" }}
+      >
         <AdminSidebar />
-        <main
-          className="flex min-w-0 flex-1 flex-col"
-          style={{ marginLeft: "var(--sidebar-width)" }}
-        >
+        <main className="ml-16 flex min-w-0 flex-1 flex-col lg:ml-[var(--sidebar-width)]">
           {children}
         </main>
       </div>

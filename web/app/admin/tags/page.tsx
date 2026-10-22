@@ -27,7 +27,10 @@ export default function AdminTagsPage() {
   }, []);
 
   const handleCreate = async () => {
-    if (!newName.trim()) { toast.error("Tên tag không được để trống"); return; }
+    if (!newName.trim()) {
+      toast.error("Tên tag không được để trống");
+      return;
+    }
     setSaving(true);
     try {
       const created = await createTag(newName.trim());
@@ -42,7 +45,10 @@ export default function AdminTagsPage() {
   };
 
   const handleUpdate = async (id: string) => {
-    if (!editName.trim()) { toast.error("Tên tag không được để trống"); return; }
+    if (!editName.trim()) {
+      toast.error("Tên tag không được để trống");
+      return;
+    }
     setSaving(true);
     try {
       const updated = await updateTag(id, editName.trim());
@@ -69,18 +75,26 @@ export default function AdminTagsPage() {
 
   return (
     <div>
-      <AdminHeader title="Quản lý Tags" subtitle={`${tags.length} tags trong hệ thống`} />
+      <AdminHeader
+        title="Quản lý Tags"
+        subtitle={`${tags.length} tags trong hệ thống`}
+      />
       <div className="p-6 space-y-6">
-
         {/* Add Tag */}
         <div
           className="rounded-2xl p-5"
-          style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+          style={{
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--border)",
+          }}
         >
-          <h3 className="mb-3 font-semibold" style={{ color: "var(--text-primary)" }}>
+          <h3
+            className="mb-3 font-semibold"
+            style={{ color: "var(--text-primary)" }}
+          >
             Thêm tag mới
           </h3>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <input
               id="new-tag-input"
               type="text"
@@ -89,13 +103,16 @@ export default function AdminTagsPage() {
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
               placeholder="Tên tag mới... (Enter để thêm)"
               className="flex-1 rounded-xl px-4 py-2.5 text-sm outline-none"
-              style={{ border: "1px solid var(--border)", color: "var(--text-primary)" }}
+              style={{
+                border: "1px solid var(--border)",
+                color: "var(--text-primary)",
+              }}
             />
             <button
               id="add-tag-btn"
               onClick={handleCreate}
               disabled={saving || !newName.trim()}
-              className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 transition-all hover:opacity-90"
+              className="flex w-full items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 transition-all hover:opacity-90 sm:w-auto"
               style={{ backgroundColor: "var(--primary)" }}
             >
               <Plus className="h-4 w-4" />
@@ -108,20 +125,33 @@ export default function AdminTagsPage() {
         {loading ? (
           <div className="flex flex-wrap gap-3">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-9 w-24 animate-pulse rounded-full" style={{ backgroundColor: "#f5f5f4" }} />
+              <div
+                key={i}
+                className="h-9 w-24 animate-pulse rounded-full"
+                style={{ backgroundColor: "#f5f5f4" }}
+              />
             ))}
           </div>
         ) : tags.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
-            <Tag className="h-12 w-12 mb-3" style={{ color: "var(--border)" }} />
+            <Tag
+              className="h-12 w-12 mb-3"
+              style={{ color: "var(--border)" }}
+            />
             <p style={{ color: "var(--text-secondary)" }}>Chưa có tag nào</p>
           </div>
         ) : (
           <div
             className="rounded-2xl p-5"
-            style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+            style={{
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--border)",
+            }}
           >
-            <h3 className="mb-4 font-semibold" style={{ color: "var(--text-primary)" }}>
+            <h3
+              className="mb-4 font-semibold"
+              style={{ color: "var(--text-primary)" }}
+            >
               Tất cả tags ({tags.length})
             </h3>
             <div className="flex flex-wrap gap-2">
@@ -130,11 +160,18 @@ export default function AdminTagsPage() {
                   key={tag.id}
                   className="group flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-all"
                   style={{
-                    backgroundColor: editId === tag.id ? "#fff7ed" : "var(--surface-muted)",
-                    border: editId === tag.id ? "1px solid var(--primary)" : "1px solid var(--border)",
+                    backgroundColor:
+                      editId === tag.id ? "#fff7ed" : "var(--surface-muted)",
+                    border:
+                      editId === tag.id
+                        ? "1px solid var(--primary)"
+                        : "1px solid var(--border)",
                   }}
                 >
-                  <Tag className="h-3 w-3" style={{ color: "var(--primary)" }} />
+                  <Tag
+                    className="h-3 w-3"
+                    style={{ color: "var(--primary)" }}
+                  />
 
                   {editId === tag.id ? (
                     <>
@@ -143,29 +180,49 @@ export default function AdminTagsPage() {
                         type="text"
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") handleUpdate(tag.id); if (e.key === "Escape") setEditId(null); }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleUpdate(tag.id);
+                          if (e.key === "Escape") setEditId(null);
+                        }}
                         autoFocus
                         className="w-24 bg-transparent text-sm outline-none"
                         style={{ color: "var(--text-primary)" }}
                       />
-                      <button onClick={() => handleUpdate(tag.id)} disabled={saving} className="rounded-full p-0.5 hover:bg-green-100" title="Lưu">
+                      <button
+                        onClick={() => handleUpdate(tag.id)}
+                        disabled={saving}
+                        className="rounded-full p-0.5 hover:bg-green-100"
+                        title="Lưu"
+                      >
                         <Check className="h-3 w-3 text-green-600" />
                       </button>
-                      <button onClick={() => setEditId(null)} className="rounded-full p-0.5 hover:bg-red-100" title="Hủy">
+                      <button
+                        onClick={() => setEditId(null)}
+                        className="rounded-full p-0.5 hover:bg-red-100"
+                        title="Hủy"
+                      >
                         <X className="h-3 w-3 text-red-500" />
                       </button>
                     </>
                   ) : (
                     <>
-                      <span style={{ color: "var(--text-primary)" }}>{tag.name}</span>
+                      <span style={{ color: "var(--text-primary)" }}>
+                        {tag.name}
+                      </span>
                       <div className="hidden items-center gap-1 group-hover:flex">
                         <button
                           id={`edit-tag-btn-${tag.id}`}
-                          onClick={() => { setEditId(tag.id); setEditName(tag.name); }}
+                          onClick={() => {
+                            setEditId(tag.id);
+                            setEditName(tag.name);
+                          }}
                           className="rounded-full p-0.5 hover:bg-orange-100"
                           title="Đổi tên"
                         >
-                          <Pencil className="h-3 w-3" style={{ color: "var(--primary)" }} />
+                          <Pencil
+                            className="h-3 w-3"
+                            style={{ color: "var(--primary)" }}
+                          />
                         </button>
                         <button
                           id={`delete-tag-btn-${tag.id}`}

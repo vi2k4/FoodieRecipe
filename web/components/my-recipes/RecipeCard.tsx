@@ -10,7 +10,6 @@ import {
   ArrowRight,
   ChefHat,
   Users,
-  UserRound,
   Eye,
   ThumbsUp,
 } from "lucide-react";
@@ -27,6 +26,9 @@ interface Props {
 export default function RecipeCard({ recipe }: Props) {
   const imageUrl = recipe.thumbnail || recipe.image;
   const cookTime = recipe.cookTime || recipe.cookingTime;
+  const createdDate = recipe.createdAt
+    ? new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(recipe.createdAt))
+    : "Chưa rõ ngày tạo";
 
   const visibility: "PUBLIC" | "PRIVATE" =
     recipe.visibility === "PRIVATE"
@@ -81,9 +83,10 @@ export default function RecipeCard({ recipe }: Props) {
           </div>
         )}
 
-        {/* My Recipe Badge */}
-        <div className="absolute top-3 left-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1">
-          <UserRound className="size-3.5" aria-hidden="true" /> My Recipe
+        {/* Created date */}
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-white bg-white px-3 py-1 text-xs font-semibold text-neutral-700 shadow-md">
+          <CalendarDays className="size-3.5 text-orange-500" aria-hidden="true" />
+          {createdDate}
         </div>
 
         {/* Visibility */}
@@ -160,12 +163,6 @@ export default function RecipeCard({ recipe }: Props) {
             </div>
           )}
 
-          {recipe.createdAt && (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <CalendarDays size={17} className="text-orange-400" />
-              <span>{recipe.createdAt}</span>
-            </div>
-          )}
         </div>
 
         {/* Button */}

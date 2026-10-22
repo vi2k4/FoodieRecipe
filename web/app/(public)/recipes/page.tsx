@@ -10,6 +10,7 @@ import { BowlFood, ChefHat, Sparkle } from '@phosphor-icons/react';
 import { Eye, ThumbsUp, Flame, Clock } from 'lucide-react';
 import { FavoriteButton } from '@/components/recipes/FavoriteButton';
 import { LikeButton } from '@/components/recipes/LikeButton';
+import { LoginRequiredDialog } from '@/components/auth/LoginRequiredDialog';
 
 export default function RecipesPage() {
   const { user } = useAuth();
@@ -30,6 +31,7 @@ export default function RecipesPage() {
   const [difficulty, setDifficulty] = useState('');
   const [maxCalories, setMaxCalories] = useState('');
   const [maxCookTime, setMaxCookTime] = useState('');
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
   const loadRecipes = async (
     targetPage = page,
@@ -108,6 +110,10 @@ export default function RecipesPage() {
   };
 
   const handleCreateClick = () => {
+    if (user.role === 'GUEST') {
+      setLoginDialogOpen(true);
+      return;
+    }
     router.push('/recipes/create');
   };
 
@@ -389,6 +395,11 @@ export default function RecipesPage() {
 
         </div>
       </div>
+      <LoginRequiredDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        action="đóng góp công thức mới"
+      />
     </div>
   );
 }

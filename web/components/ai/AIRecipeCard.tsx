@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Sparkle } from "@phosphor-icons/react";
+import { LoginRequiredDialog } from "@/components/auth/LoginRequiredDialog";
+import { useAuth } from "@/lib/auth-context";
 
 import UploadBox from "./UploadBox";
 import GenerateButton from "./GenerateButton";
@@ -12,11 +14,13 @@ import { analyzeImage } from "@/lib/ai-api";
 import type { Ingredient, SavedRecipe } from "@/types/ai";
 
 export default function AIRecipeCard() {
+  const { user } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [recipe, setRecipe] = useState<SavedRecipe | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!selectedFile) {
@@ -39,6 +43,11 @@ export default function AIRecipeCard() {
   };
 
   const handleGenerate = async () => {
+    if (user.role === "GUEST") {
+      setLoginDialogOpen(true);
+      return;
+    }
+
     if (!selectedFile) {
       toast.error("Vui lòng chọn ảnh nguyên liệu trước");
       return;
@@ -97,6 +106,12 @@ export default function AIRecipeCard() {
       )}
 
       {recipe && <ResultCard recipe={recipe} />}
+
+      <LoginRequiredDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        action="tạo công thức bằng AI"
+      />
     </div>
   );
 }
