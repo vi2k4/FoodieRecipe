@@ -2,7 +2,16 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, CheckCheck, Trash2, Heart, MessageSquare, UserPlus, Sparkles, ChefHat } from "lucide-react";
+import {
+  Bell,
+  CheckCheck,
+  Trash2,
+  Heart,
+  MessageSquare,
+  UserPlus,
+  Sparkles,
+  ChefHat,
+} from "lucide-react";
 import { socialApi } from "@/lib/social-api";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
@@ -31,7 +40,10 @@ export function NotificationDropdown() {
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -140,7 +152,7 @@ export function NotificationDropdown() {
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full border-2 border-white animate-pulse">
+          <span className="absolute top-1 right-1 flex h-4.5 min-w-4.5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-bold text-white animate-pulse">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
@@ -148,7 +160,7 @@ export function NotificationDropdown() {
 
       {/* Popover Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-neutral-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="fixed left-3 right-3 top-18 z-60 w-auto overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 md:absolute md:right-0 md:left-auto md:top-auto md:mt-2 md:w-96 md:max-w-96">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-neutral-50/80 border-b border-neutral-100">
             <div className="flex items-center gap-2">
@@ -185,7 +197,9 @@ export function NotificationDropdown() {
                   key={n.id}
                   onClick={() => handleNotificationClick(n)}
                   className={`group relative flex items-start gap-3 p-3.5 transition-colors cursor-pointer ${
-                    n.isRead ? "bg-white hover:bg-neutral-50/80" : "bg-orange-50/40 hover:bg-orange-50/80"
+                    n.isRead
+                      ? "bg-white hover:bg-neutral-50/80"
+                      : "bg-orange-50/40 hover:bg-orange-50/80"
                   }`}
                 >
                   {/* Icon */}
@@ -195,7 +209,9 @@ export function NotificationDropdown() {
 
                   {/* Body */}
                   <div className="flex-1 min-w-0 pr-4">
-                    <p className={`text-xs ${!n.isRead ? "font-bold text-neutral-900" : "font-semibold text-neutral-700"}`}>
+                    <p
+                      className={`text-xs ${!n.isRead ? "font-bold text-neutral-900" : "font-semibold text-neutral-700"}`}
+                    >
                       {n.title}
                     </p>
                     <p className="text-xs text-neutral-500 line-clamp-2 mt-0.5 leading-relaxed">

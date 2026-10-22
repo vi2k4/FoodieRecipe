@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth-context';
-import { useRouter, useParams } from 'next/navigation';
-import Link from 'next/link';
-import { Check, Hash } from 'lucide-react';
-import { Globe, LockKey } from '@phosphor-icons/react';
-import { api } from '@/lib/api-client';
-import { ImageUploader } from '@/components/ui/ImageUploader';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
+import { Check, Hash } from "lucide-react";
+import { Globe, LockKey } from "@phosphor-icons/react";
+import { api } from "@/lib/api-client";
+import { ImageUploader } from "@/components/ui/ImageUploader";
 
 export default function EditRecipePage() {
   const { user } = useAuth();
@@ -16,49 +16,51 @@ export default function EditRecipePage() {
   const params = useParams();
   const recipeId = params.recipeId as string;
 
-  const [activeTab, setActiveTab] = useState<'info' | 'ingredients' | 'steps' | 'tags'>('info');
+  const [activeTab, setActiveTab] = useState<
+    "info" | "ingredients" | "steps" | "tags"
+  >("info");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   // Recipe basic info state
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [calories, setCalories] = useState('');
-  const [cookTime, setCookTime] = useState('');
-  const [servings, setServings] = useState('4');
-  const [difficulty, setDifficulty] = useState('EASY');
-  const [categoryId, setCategoryId] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [calories, setCalories] = useState("");
+  const [cookTime, setCookTime] = useState("");
+  const [servings, setServings] = useState("4");
+  const [difficulty, setDifficulty] = useState("EASY");
+  const [categoryId, setCategoryId] = useState("");
   const [isPublic, setIsPublic] = useState(true);
-  const [thumbnail, setThumbnail] = useState('');
+  const [thumbnail, setThumbnail] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
 
   // Sub-resources state
   const [ingredients, setIngredients] = useState<any[]>([]);
   const [steps, setSteps] = useState<any[]>([]);
-  
+
   // Tags state
   const [allTags, setAllTags] = useState<any[]>([]);
   const [recipeTagIds, setRecipeTagIds] = useState<(string | number)[]>([]);
-  const [newTagName, setNewTagName] = useState('');
+  const [newTagName, setNewTagName] = useState("");
 
   // New sub-resource input state
-  const [newIngName, setNewIngName] = useState('');
-  const [newIngQuantity, setNewIngQuantity] = useState('');
-  const [newIngUnit, setNewIngUnit] = useState('');
+  const [newIngName, setNewIngName] = useState("");
+  const [newIngQuantity, setNewIngQuantity] = useState("");
+  const [newIngUnit, setNewIngUnit] = useState("");
 
-  const [newStepContent, setNewStepContent] = useState('');
+  const [newStepContent, setNewStepContent] = useState("");
 
   useEffect(() => {
     if (!user.isVerified) {
-      router.push('/');
+      router.push("/");
     }
   }, [user, router]);
 
   const loadData = async () => {
     setLoading(true);
-    setErrorMsg('');
+    setErrorMsg("");
     try {
       const [recipeData, cats, tagList] = await Promise.all([
         api.recipes.get(recipeId),
@@ -66,15 +68,17 @@ export default function EditRecipePage() {
         api.tags.list().catch(() => []),
       ]);
 
-      setTitle(recipeData.title || '');
-      setDescription(recipeData.description || '');
-      setCalories(recipeData.calories ? String(recipeData.calories) : '');
-      setCookTime(recipeData.cookTime ? String(recipeData.cookTime) : '');
-      setServings(recipeData.servings ? String(recipeData.servings) : '4');
-      setDifficulty(recipeData.difficulty || 'EASY');
-      setCategoryId(recipeData.categoryId ? String(recipeData.categoryId) : '');
-      setIsPublic(recipeData.isPublic !== undefined ? Boolean(recipeData.isPublic) : true);
-      setThumbnail(recipeData.thumbnail || '');
+      setTitle(recipeData.title || "");
+      setDescription(recipeData.description || "");
+      setCalories(recipeData.calories ? String(recipeData.calories) : "");
+      setCookTime(recipeData.cookTime ? String(recipeData.cookTime) : "");
+      setServings(recipeData.servings ? String(recipeData.servings) : "4");
+      setDifficulty(recipeData.difficulty || "EASY");
+      setCategoryId(recipeData.categoryId ? String(recipeData.categoryId) : "");
+      setIsPublic(
+        recipeData.isPublic !== undefined ? Boolean(recipeData.isPublic) : true,
+      );
+      setThumbnail(recipeData.thumbnail || "");
 
       setIngredients(recipeData.ingredients || []);
       setSteps(recipeData.steps || []);
@@ -85,8 +89,8 @@ export default function EditRecipePage() {
       const existingTagIds = (recipeData.tags || []).map((t: any) => t.id);
       setRecipeTagIds(existingTagIds);
     } catch (err: any) {
-      console.error('Failed to load recipe for edit:', err);
-      setErrorMsg(err.message || 'Không tìm thấy công thức này!');
+      console.error("Failed to load recipe for edit:", err);
+      setErrorMsg(err.message || "Không tìm thấy công thức này!");
     } finally {
       setLoading(false);
     }
@@ -104,13 +108,15 @@ export default function EditRecipePage() {
     try {
       if (isAttached) {
         await api.recipeTags.remove(recipeId, tagId, currentUserId);
-        setRecipeTagIds(recipeTagIds.filter((t) => String(t) !== String(tagId)));
+        setRecipeTagIds(
+          recipeTagIds.filter((t) => String(t) !== String(tagId)),
+        );
       } else {
         await api.recipeTags.add(recipeId, tagId, currentUserId);
         setRecipeTagIds([...recipeTagIds, tagId]);
       }
     } catch (err: any) {
-      alert(err.message || 'Cập nhật Tag thất bại');
+      alert(err.message || "Cập nhật Tag thất bại");
     } finally {
       setSaving(false);
     }
@@ -123,51 +129,51 @@ export default function EditRecipePage() {
     setSaving(true);
     try {
       const created = await api.tags.create(newTagName.trim());
-      setNewTagName('');
+      setNewTagName("");
       // Associate with recipe immediately
       if (created?.id) {
-        await api.recipeTags.add(recipeId, created.id, currentUserId).catch(console.error);
+        await api.recipeTags
+          .add(recipeId, created.id, currentUserId)
+          .catch(console.error);
       }
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Thêm Tag mới thất bại');
+      alert(err.message || "Thêm Tag mới thất bại");
     } finally {
       setSaving(false);
     }
   };
 
-
-
   // Update basic info
   const handleUpdateInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert('Vui lòng nhập tên món ăn!');
+      alert("Vui lòng nhập tên món ăn!");
       return;
     }
 
     if (!thumbnail.trim()) {
-      setErrorMsg('Vui lòng tải lên ảnh món ăn trước khi lưu!');
+      setErrorMsg("Vui lòng tải lên ảnh món ăn trước khi lưu!");
       return;
     }
 
     const currentUserId = user.id || 1;
     if (servings && Number(servings) < 1) {
-      setErrorMsg('Khẩu phần ăn phải lớn hơn hoặc bằng 1!');
+      setErrorMsg("Khẩu phần ăn phải lớn hơn hoặc bằng 1!");
       return;
     }
     if (calories && Number(calories) < 0) {
-      setErrorMsg('Số lượng calo không được là số âm!');
+      setErrorMsg("Số lượng calo không được là số âm!");
       return;
     }
     if (cookTime && Number(cookTime) < 0) {
-      setErrorMsg('Thời gian nấu không được là số âm!');
+      setErrorMsg("Thời gian nấu không được là số âm!");
       return;
     }
 
     setSaving(true);
-    setSuccessMsg('');
-    setErrorMsg('');
+    setSuccessMsg("");
+    setErrorMsg("");
 
     try {
       await api.recipes.update(recipeId, {
@@ -183,12 +189,14 @@ export default function EditRecipePage() {
         isPublic: isPublic,
       });
 
-      setSuccessMsg('Cập nhật thông tin cơ bản thành công! Đang quay lại trang chi tiết...');
+      setSuccessMsg(
+        "Cập nhật thông tin cơ bản thành công! Đang quay lại trang chi tiết...",
+      );
       setTimeout(() => {
         router.push(`/my-recipes/${recipeId}`);
       }, 800);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Cập nhật thất bại');
+      setErrorMsg(err.message || "Cập nhật thất bại");
     } finally {
       setSaving(false);
     }
@@ -198,27 +206,31 @@ export default function EditRecipePage() {
   const handleAddIngredient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newIngName.trim()) return;
-    if (newIngQuantity !== '' && Number(newIngQuantity) < 0) {
-      alert('Số lượng nguyên liệu không được là số âm!');
+    if (newIngQuantity !== "" && Number(newIngQuantity) < 0) {
+      alert("Số lượng nguyên liệu không được là số âm!");
       return;
     }
 
     const currentUserId = user.id || 1;
     setSaving(true);
     try {
-      await api.ingredients.add(recipeId, {
-        ingredientName: newIngName.trim(),
-        quantity: newIngQuantity ? Number(newIngQuantity) : undefined,
-        unit: newIngUnit.trim() || undefined,
-        displayOrder: ingredients.length + 1,
-        userId: currentUserId,
-      }, currentUserId);
-      setNewIngName('');
-      setNewIngQuantity('');
-      setNewIngUnit('');
+      await api.ingredients.add(
+        recipeId,
+        {
+          ingredientName: newIngName.trim(),
+          quantity: newIngQuantity ? Number(newIngQuantity) : undefined,
+          unit: newIngUnit.trim() || undefined,
+          displayOrder: ingredients.length + 1,
+          userId: currentUserId,
+        },
+        currentUserId,
+      );
+      setNewIngName("");
+      setNewIngQuantity("");
+      setNewIngUnit("");
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Thêm nguyên liệu thất bại');
+      alert(err.message || "Thêm nguyên liệu thất bại");
     } finally {
       setSaving(false);
     }
@@ -226,13 +238,13 @@ export default function EditRecipePage() {
 
   // Delete ingredient
   const handleDeleteIngredient = async (ingId: string | number) => {
-    if (!confirm('Xóa nguyên liệu này?')) return;
+    if (!confirm("Xóa nguyên liệu này?")) return;
     const currentUserId = user.id || 1;
     try {
       await api.ingredients.remove(ingId, currentUserId);
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Xóa thất bại');
+      alert(err.message || "Xóa thất bại");
     }
   };
 
@@ -244,15 +256,19 @@ export default function EditRecipePage() {
     const currentUserId = user.id || 1;
     setSaving(true);
     try {
-      await api.steps.add(recipeId, {
-        stepNumber: steps.length + 1,
-        content: newStepContent.trim(),
-        userId: currentUserId,
-      }, currentUserId);
-      setNewStepContent('');
+      await api.steps.add(
+        recipeId,
+        {
+          stepNumber: steps.length + 1,
+          content: newStepContent.trim(),
+          userId: currentUserId,
+        },
+        currentUserId,
+      );
+      setNewStepContent("");
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Thêm bước thất bại');
+      alert(err.message || "Thêm bước thất bại");
     } finally {
       setSaving(false);
     }
@@ -260,7 +276,7 @@ export default function EditRecipePage() {
 
   // Delete step & re-sequence remaining step numbers
   const handleDeleteStep = async (stepId: string | number) => {
-    if (!confirm('Xóa bước này?')) return;
+    if (!confirm("Xóa bước này?")) return;
     const currentUserId = user.id || 1;
     setSaving(true);
     try {
@@ -269,24 +285,30 @@ export default function EditRecipePage() {
       for (let i = 0; i < remaining.length; i++) {
         const targetNumber = i + 1;
         if (Number(remaining[i].stepNumber) !== targetNumber) {
-          await api.steps.update(remaining[i].id, {
-            stepNumber: targetNumber,
-            content: remaining[i].content,
-            userId: currentUserId,
-          }, currentUserId).catch(console.error);
+          await api.steps
+            .update(
+              remaining[i].id,
+              {
+                stepNumber: targetNumber,
+                content: remaining[i].content,
+                userId: currentUserId,
+              },
+              currentUserId,
+            )
+            .catch(console.error);
         }
       }
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Xóa thất bại');
+      alert(err.message || "Xóa thất bại");
     } finally {
       setSaving(false);
     }
   };
 
   // Reorder step up or down
-  const handleMoveStep = async (index: number, direction: 'up' | 'down') => {
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+  const handleMoveStep = async (index: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= steps.length) return;
 
     const currentUserId = user.id || 1;
@@ -294,15 +316,19 @@ export default function EditRecipePage() {
 
     setSaving(true);
     try {
-      await api.steps.update(stepA.id, {
-        stepNumber: targetIndex + 1,
-        content: stepA.content,
-        userId: currentUserId,
-      }, currentUserId);
+      await api.steps.update(
+        stepA.id,
+        {
+          stepNumber: targetIndex + 1,
+          content: stepA.content,
+          userId: currentUserId,
+        },
+        currentUserId,
+      );
 
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Sắp xếp bước thất bại');
+      alert(err.message || "Sắp xếp bước thất bại");
     } finally {
       setSaving(false);
     }
@@ -310,7 +336,11 @@ export default function EditRecipePage() {
 
   // Cancel edits and return to detail page
   const handleCancel = () => {
-    if (confirm('Bạn có chắc chắn muốn HỦY TẤT CẢ thay đổi chưa lưu và quay lại trang chi tiết không?')) {
+    if (
+      confirm(
+        "Bạn có chắc chắn muốn HỦY TẤT CẢ thay đổi chưa lưu và quay lại trang chi tiết không?",
+      )
+    ) {
       router.push(`/my-recipes/${recipeId}`);
     }
   };
@@ -319,7 +349,9 @@ export default function EditRecipePage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-neutral-500">
         <div className="text-4xl mb-3 animate-bounce">⏳</div>
-        <p className="font-medium text-lg">Đang chuẩn bị thông tin công thức...</p>
+        <p className="font-medium text-lg">
+          Đang chuẩn bị thông tin công thức...
+        </p>
       </div>
     );
   }
@@ -335,8 +367,12 @@ export default function EditRecipePage() {
         >
           &larr; Quay lại chi tiết công thức
         </button>
-        <h1 className="text-3xl font-bold text-neutral-900">Chỉnh sửa công thức</h1>
-        <p className="text-neutral-500 text-sm mt-1">ID công thức: #{recipeId}</p>
+        <h1 className="text-3xl font-bold text-neutral-900">
+          Chỉnh sửa công thức
+        </h1>
+        <p className="text-neutral-500 text-sm mt-1">
+          ID công thức: #{recipeId}
+        </p>
       </div>
 
       {successMsg && (
@@ -354,41 +390,41 @@ export default function EditRecipePage() {
       {/* Tabs */}
       <div className="flex border-b border-neutral-200 mb-8 bg-white p-2 rounded-2xl border shadow-sm">
         <button
-          onClick={() => setActiveTab('info')}
+          onClick={() => setActiveTab("info")}
           className={`flex-1 py-3 font-medium rounded-xl text-sm transition-all ${
-            activeTab === 'info'
-              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-              : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+            activeTab === "info"
+              ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
+              : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50"
           }`}
         >
           Thông tin cơ bản
         </button>
         <button
-          onClick={() => setActiveTab('ingredients')}
+          onClick={() => setActiveTab("ingredients")}
           className={`flex-1 py-3 font-medium rounded-xl text-sm transition-all ${
-            activeTab === 'ingredients'
-              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-              : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+            activeTab === "ingredients"
+              ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
+              : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50"
           }`}
         >
           Nguyên liệu ({ingredients.length})
         </button>
         <button
-          onClick={() => setActiveTab('steps')}
+          onClick={() => setActiveTab("steps")}
           className={`flex-1 py-3 font-medium rounded-xl text-sm transition-all ${
-            activeTab === 'steps'
-              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-              : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+            activeTab === "steps"
+              ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
+              : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50"
           }`}
         >
           Các bước nấu ({steps.length})
         </button>
         <button
-          onClick={() => setActiveTab('tags')}
+          onClick={() => setActiveTab("tags")}
           className={`flex-1 py-3 font-medium rounded-xl text-sm transition-all ${
-            activeTab === 'tags'
-              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-              : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+            activeTab === "tags"
+              ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
+              : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50"
           }`}
         >
           Thẻ Tags ({recipeTagIds.length})
@@ -396,9 +432,11 @@ export default function EditRecipePage() {
       </div>
 
       {/* Tab 1: Basic Info */}
-      {activeTab === 'info' && (
-        <form onSubmit={handleUpdateInfo} className="bg-white p-6 md:p-8 rounded-2xl border border-neutral-200 shadow-sm space-y-6">
-          
+      {activeTab === "info" && (
+        <form
+          onSubmit={handleUpdateInfo}
+          className="bg-white p-6 md:p-8 rounded-2xl border border-neutral-200 shadow-sm space-y-6"
+        >
           {/* Privacy Option */}
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -410,14 +448,23 @@ export default function EditRecipePage() {
                 onClick={() => setIsPublic(true)}
                 className={`p-4 rounded-xl border flex items-center gap-3 text-left transition-all ${
                   isPublic
-                    ? 'bg-orange-50/60 border-orange-500 ring-2 ring-orange-500/20 text-neutral-900'
-                    : 'bg-white border-neutral-200 hover:bg-neutral-50 text-neutral-600'
+                    ? "bg-orange-50/60 border-orange-500 ring-2 ring-orange-500/20 text-neutral-900"
+                    : "bg-white border-neutral-200 hover:bg-neutral-50 text-neutral-600"
                 }`}
               >
-                <Globe size={30} weight="duotone" className="text-emerald-500" aria-hidden="true" />
+                <Globe
+                  size={30}
+                  weight="duotone"
+                  className="text-emerald-500"
+                  aria-hidden="true"
+                />
                 <div>
-                  <div className="font-semibold text-sm">Công khai (Public)</div>
-                  <div className="text-xs text-neutral-500 mt-0.5">Mọi người đều có thể tìm thấy và xem công thức này</div>
+                  <div className="font-semibold text-sm">
+                    Công khai (Public)
+                  </div>
+                  <div className="text-xs text-neutral-500 mt-0.5">
+                    Mọi người đều có thể tìm thấy và xem công thức này
+                  </div>
                 </div>
               </button>
 
@@ -426,21 +473,32 @@ export default function EditRecipePage() {
                 onClick={() => setIsPublic(false)}
                 className={`p-4 rounded-xl border flex items-center gap-3 text-left transition-all ${
                   !isPublic
-                    ? 'bg-orange-50/60 border-orange-500 ring-2 ring-orange-500/20 text-neutral-900'
-                    : 'bg-white border-neutral-200 hover:bg-neutral-50 text-neutral-600'
+                    ? "bg-orange-50/60 border-orange-500 ring-2 ring-orange-500/20 text-neutral-900"
+                    : "bg-white border-neutral-200 hover:bg-neutral-50 text-neutral-600"
                 }`}
               >
-                <LockKey size={30} weight="duotone" className="text-slate-500" aria-hidden="true" />
+                <LockKey
+                  size={30}
+                  weight="duotone"
+                  className="text-slate-500"
+                  aria-hidden="true"
+                />
                 <div>
-                  <div className="font-semibold text-sm">Riêng tư (Private)</div>
-                  <div className="text-xs text-neutral-500 mt-0.5">Chỉ một mình bạn có thể xem công thức này</div>
+                  <div className="font-semibold text-sm">
+                    Riêng tư (Private)
+                  </div>
+                  <div className="text-xs text-neutral-500 mt-0.5">
+                    Chỉ một mình bạn có thể xem công thức này
+                  </div>
                 </div>
               </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Tên món ăn <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Tên món ăn <span className="text-red-500">*</span>
+            </label>
             <input
               required
               type="text"
@@ -451,7 +509,9 @@ export default function EditRecipePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Mô tả món ăn</label>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Mô tả món ăn
+            </label>
             <textarea
               rows={3}
               value={description}
@@ -462,7 +522,9 @@ export default function EditRecipePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Độ khó</label>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Độ khó
+              </label>
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
@@ -474,7 +536,9 @@ export default function EditRecipePage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Số người ăn</label>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Số người ăn
+              </label>
               <input
                 type="number"
                 min="1"
@@ -485,7 +549,9 @@ export default function EditRecipePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Số Calo (kcal)</label>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Số Calo (kcal)
+              </label>
               <input
                 type="number"
                 min="0"
@@ -495,7 +561,9 @@ export default function EditRecipePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Thời gian nấu (phút)</label>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Thời gian nấu (phút)
+              </label>
               <input
                 type="number"
                 min="0"
@@ -508,7 +576,9 @@ export default function EditRecipePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Danh mục</label>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Danh mục
+              </label>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
@@ -523,7 +593,11 @@ export default function EditRecipePage() {
               </select>
             </div>
             <div>
-              <ImageUploader value={thumbnail} onChange={setThumbnail} label="Hình ảnh món ăn thành phẩm" />
+              <ImageUploader
+                value={thumbnail}
+                onChange={setThumbnail}
+                label="Hình ảnh món ăn thành phẩm"
+              />
             </div>
           </div>
 
@@ -533,27 +607,36 @@ export default function EditRecipePage() {
               disabled={saving}
               className="px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-medium transition-colors shadow-lg shadow-orange-500/20 disabled:opacity-50 text-sm"
             >
-              {saving ? 'Đang lưu...' : 'Lưu thay đổi thông tin cơ bản'}
+              {saving ? "Đang lưu..." : "Lưu thay đổi thông tin cơ bản"}
             </button>
           </div>
         </form>
       )}
 
       {/* Tab 2: Ingredients Management */}
-      {activeTab === 'ingredients' && (
+      {activeTab === "ingredients" && (
         <div className="bg-white p-6 md:p-8 rounded-2xl border border-neutral-200 shadow-sm space-y-6">
-          <h2 className="text-xl font-bold text-neutral-900 border-b border-neutral-100 pb-3">Danh sách nguyên liệu hiện có</h2>
-          
+          <h2 className="text-xl font-bold text-neutral-900 border-b border-neutral-100 pb-3">
+            Danh sách nguyên liệu hiện có
+          </h2>
+
           {ingredients.length === 0 ? (
             <p className="text-neutral-400 text-sm">Chưa có nguyên liệu nào.</p>
           ) : (
             <div className="divide-y divide-neutral-100">
               {ingredients.map((ing) => (
-                <div key={String(ing.id)} className="py-3 flex items-center justify-between">
+                <div
+                  key={String(ing.id)}
+                  className="py-3 flex items-center justify-between"
+                >
                   <div>
-                    <span className="font-semibold text-neutral-900">{ing.ingredientName}</span>
+                    <span className="font-semibold text-neutral-900">
+                      {ing.ingredientName}
+                    </span>
                     {(ing.quantity || ing.unit) && (
-                      <span className="text-sm text-neutral-500 ml-2">({ing.quantity || ''} {ing.unit || ''})</span>
+                      <span className="text-sm text-neutral-500 ml-2">
+                        ({ing.quantity || ""} {ing.unit || ""})
+                      </span>
                     )}
                   </div>
                   <button
@@ -569,8 +652,13 @@ export default function EditRecipePage() {
           )}
 
           {/* Form add ingredient */}
-          <form onSubmit={handleAddIngredient} className="pt-6 border-t border-neutral-200 space-y-4">
-            <h3 className="font-bold text-neutral-900 text-sm">Thêm nguyên liệu mới</h3>
+          <form
+            onSubmit={handleAddIngredient}
+            className="pt-6 border-t border-neutral-200 space-y-4"
+          >
+            <h3 className="font-bold text-neutral-900 text-sm">
+              Thêm nguyên liệu mới
+            </h3>
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 required
@@ -584,21 +672,23 @@ export default function EditRecipePage() {
                 type="number"
                 min="0"
                 value={newIngQuantity}
-                onChange={(e) => setNewIngQuantity(e.target.value.replace(/^-/, ''))}
+                onChange={(e) =>
+                  setNewIngQuantity(e.target.value.replace(/^-/, ""))
+                }
                 placeholder="Số lượng"
-                className="w-28 px-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 text-sm sm:w-28"
               />
               <input
                 type="text"
                 value={newIngUnit}
                 onChange={(e) => setNewIngUnit(e.target.value)}
                 placeholder="Đơn vị"
-                className="w-28 px-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 text-sm sm:w-28"
               />
               <button
                 type="submit"
                 disabled={saving}
-                className="px-6 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-sm font-medium transition-colors whitespace-nowrap"
+                className="w-full px-6 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-sm font-medium transition-colors sm:w-auto"
               >
                 + Thêm
               </button>
@@ -608,16 +698,23 @@ export default function EditRecipePage() {
       )}
 
       {/* Tab 3: Steps Management */}
-      {activeTab === 'steps' && (
+      {activeTab === "steps" && (
         <div className="bg-white p-6 md:p-8 rounded-2xl border border-neutral-200 shadow-sm space-y-6">
-          <h2 className="text-xl font-bold text-neutral-900 border-b border-neutral-100 pb-3">Danh sách các bước hiện có</h2>
+          <h2 className="text-xl font-bold text-neutral-900 border-b border-neutral-100 pb-3">
+            Danh sách các bước hiện có
+          </h2>
 
           {steps.length === 0 ? (
-            <p className="text-neutral-400 text-sm">Chưa có bước thực hiện nào.</p>
+            <p className="text-neutral-400 text-sm">
+              Chưa có bước thực hiện nào.
+            </p>
           ) : (
             <div className="space-y-4">
               {steps.map((step, idx) => (
-                <div key={String(step.id)} className="p-4 bg-neutral-50 rounded-xl border border-neutral-100 flex items-start gap-4">
+                <div
+                  key={String(step.id)}
+                  className="p-4 bg-neutral-50 rounded-xl border border-neutral-100 flex items-start gap-4"
+                >
                   <div className="flex flex-col items-center gap-1 shrink-0">
                     <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-sm">
                       {step.stepNumber || idx + 1}
@@ -625,7 +722,7 @@ export default function EditRecipePage() {
                     <div className="flex flex-col gap-0.5 mt-0.5">
                       <button
                         type="button"
-                        onClick={() => handleMoveStep(idx, 'up')}
+                        onClick={() => handleMoveStep(idx, "up")}
                         disabled={idx === 0 || saving}
                         className="w-5 h-5 rounded bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-600 disabled:opacity-30 text-[10px] font-bold flex items-center justify-center transition-colors shadow-sm"
                         title="Chuyển lên"
@@ -634,7 +731,7 @@ export default function EditRecipePage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleMoveStep(idx, 'down')}
+                        onClick={() => handleMoveStep(idx, "down")}
                         disabled={idx === steps.length - 1 || saving}
                         className="w-5 h-5 rounded bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-600 disabled:opacity-30 text-[10px] font-bold flex items-center justify-center transition-colors shadow-sm"
                         title="Chuyển xuống"
@@ -643,7 +740,9 @@ export default function EditRecipePage() {
                       </button>
                     </div>
                   </div>
-                  <p className="flex-1 text-neutral-800 text-sm pt-1 leading-relaxed">{step.content}</p>
+                  <p className="flex-1 text-neutral-800 text-sm pt-1 leading-relaxed">
+                    {step.content}
+                  </p>
                   <button
                     onClick={() => handleDeleteStep(step.id)}
                     className="p-1.5 text-neutral-400 hover:text-red-500 transition-colors text-sm shrink-0"
@@ -657,8 +756,13 @@ export default function EditRecipePage() {
           )}
 
           {/* Form add step */}
-          <form onSubmit={handleAddStep} className="pt-6 border-t border-neutral-200 space-y-4">
-            <h3 className="font-bold text-neutral-900 text-sm">Thêm bước thực hiện tiếp theo</h3>
+          <form
+            onSubmit={handleAddStep}
+            className="pt-6 border-t border-neutral-200 space-y-4"
+          >
+            <h3 className="font-bold text-neutral-900 text-sm">
+              Thêm bước thực hiện tiếp theo
+            </h3>
             <textarea
               required
               rows={3}
@@ -681,31 +785,36 @@ export default function EditRecipePage() {
       )}
 
       {/* Tab 4: Tags Management */}
-      {activeTab === 'tags' && (
+      {activeTab === "tags" && (
         <div className="bg-white p-6 md:p-8 rounded-2xl border border-neutral-200 shadow-sm space-y-6">
-          <h2 className="text-xl font-bold text-neutral-900 border-b border-neutral-100 pb-3">Quản lý Thẻ phân loại (Tags) của món ăn</h2>
-          <p className="text-neutral-500 text-sm">Nhấp vào thẻ tag để gắn hoặc gỡ khỏi món ăn. Thêm tag mới ở bên dưới.</p>
+          <h2 className="text-xl font-bold text-neutral-900 border-b border-neutral-100 pb-3">
+            Quản lý Thẻ phân loại (Tags) của món ăn
+          </h2>
+          <p className="text-neutral-500 text-sm">
+            Nhấp vào thẻ tag để gắn hoặc gỡ khỏi món ăn. Thêm tag mới ở bên
+            dưới.
+          </p>
 
           {/* Add custom tag */}
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               type="text"
               value={newTagName}
               onChange={(e) => setNewTagName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   e.preventDefault();
                   handleAddNewTag();
                 }
               }}
               placeholder="Tên tag mới (vd: Ăn vặt, Tiết kiệm)..."
-              className="flex-1 px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900"
+              className="min-w-0 flex-1 px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900"
             />
             <button
               type="button"
               onClick={handleAddNewTag}
               disabled={saving || !newTagName.trim()}
-              className="px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 whitespace-nowrap"
+              className="w-full px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 sm:w-auto"
             >
               Thêm Tag mới
             </button>
@@ -714,7 +823,9 @@ export default function EditRecipePage() {
           {/* Tag Chips Grid */}
           <div className="flex flex-wrap gap-2.5 pt-4">
             {allTags.map((tag) => {
-              const isAttached = recipeTagIds.map(String).includes(String(tag.id));
+              const isAttached = recipeTagIds
+                .map(String)
+                .includes(String(tag.id));
               return (
                 <button
                   type="button"
@@ -723,11 +834,15 @@ export default function EditRecipePage() {
                   disabled={saving}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all border flex items-center gap-1.5 ${
                     isAttached
-                      ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/25'
-                      : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'
+                      ? "bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/25"
+                      : "bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100"
                   }`}
                 >
-                  {isAttached ? <Check className="size-4" aria-hidden="true" /> : <Hash className="size-4" aria-hidden="true" />}
+                  {isAttached ? (
+                    <Check className="size-4" aria-hidden="true" />
+                  ) : (
+                    <Hash className="size-4" aria-hidden="true" />
+                  )}
                   <span>{tag.name}</span>
                 </button>
               );

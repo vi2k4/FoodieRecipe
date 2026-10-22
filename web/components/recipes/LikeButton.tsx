@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThumbsUp } from "lucide-react";
 import { socialApi } from "@/lib/social-api";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { LoginRequiredDialog } from "@/components/auth/LoginRequiredDialog";
+import { updateLikedRecipeIds } from "./like-button-logic";
 
 interface LikeButtonProps {
   recipeId: number | string;
@@ -24,8 +25,9 @@ export function LikeButton({
   showText = false,
 }: LikeButtonProps) {
   const queryClient = useQueryClient();
-  const router = useRouter();
   const { user } = useAuth();
+  const pendingActionRef = useRef<"like" | "unlike" | null>(null);
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
 
   const isLoggedIn = user.role !== "GUEST" && Boolean(user.id);
 
@@ -55,9 +57,10 @@ export function LikeButton({
   });
 
   // Calculate actual liked state from server query or initial prop
-  const isLikedFromQuery = isLoggedIn && Array.isArray(myLikes)
-    ? myLikes.some((id: string | number) => String(id) === String(recipeId))
-    : initialLiked;
+  const isLikedFromQuery =
+    isLoggedIn && Array.isArray(myLikes)
+      ? myLikes.some((id: string | number) => String(id) === String(recipeId))
+      : initialLiked;
 
   // Reset override whenever myLikes or recipeId changes
   useEffect(() => {
@@ -71,7 +74,26 @@ export function LikeButton({
       await socialApi.toggleLike(recipeId, targetLikedState);
       return targetLikedState;
     },
+    onMutate: async (targetLikedState) => {
+      pendingActionRef.current = targetLikedState ? "like" : "unlike";
+      await queryClient.cancelQueries({ queryKey: ["myLikes"] });
+
+      const previousMyLikes =
+        queryClient.getQueryData<Array<string | number>>(["myLikes"]) ?? [];
+      const nextMyLikes = updateLikedRecipeIds(
+        previousMyLikes,
+        recipeId,
+        targetLikedState,
+      );
+
+      queryClient.setQueryData(["myLikes"], nextMyLikes);
+      setOverrideLiked(targetLikedState);
+      setCount((prev) => (targetLikedState ? prev + 1 : Math.max(0, prev - 1)));
+
+      return { previousMyLikes };
+    },
     onSuccess: (targetLikedState) => {
+      pendingActionRef.current = null;
       setOverrideLiked(null);
       queryClient.invalidateQueries({ queryKey: ["myLikes"] });
       if (targetLikedState) {
@@ -80,10 +102,13 @@ export function LikeButton({
         toast.info("Đã bỏ thích công thức");
       }
     },
-    onError: (err: any, targetLikedState) => {
-      // Revert optimistic state
-      setOverrideLiked(!targetLikedState);
+    onError: (err: any, targetLikedState, context: any) => {
+      pendingActionRef.current = null;
+      setOverrideLiked(null);
       setCount((prev) => (targetLikedState ? Math.max(0, prev - 1) : prev + 1));
+      if (context?.previousMyLikes) {
+        queryClient.setQueryData(["myLikes"], context.previousMyLikes);
+      }
       toast.error(err?.message || "Có lỗi xảy ra khi cập nhật lượt thích");
     },
   });
@@ -93,47 +118,51 @@ export function LikeButton({
     e.stopPropagation();
 
     if (!isLoggedIn) {
-      toast.error("Vui lòng đăng nhập để thích công thức!");
-      router.push("/login");
+      setLoginPromptOpen(true);
       return;
     }
 
-    if (toggleMutation.isPending) return;
+    if (toggleMutation.isPending || pendingActionRef.current) return;
 
     const nextState = !liked;
-    // Optimistic UI update
-    setOverrideLiked(nextState);
-    setCount((prev) => (nextState ? prev + 1 : Math.max(0, prev - 1)));
-
     toggleMutation.mutate(nextState);
   };
 
   return (
-    <span
-      role="button"
-      tabIndex={0}
-      onClick={handleClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          handleClick(e as any);
-        }
-      }}
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold cursor-pointer select-none transition-all duration-200 shrink-0 ${
-        toggleMutation.isPending ? "opacity-60 pointer-events-none" : ""
-      } ${
-        liked
-          ? "bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/20 hover:bg-blue-700"
-          : "bg-neutral-100/90 text-neutral-600 hover:bg-blue-50 hover:text-blue-600 border border-neutral-200/60"
-      } ${className}`}
-      title={liked ? "Bỏ thích công thức" : "Thích công thức"}
-    >
-      <ThumbsUp
-        className={`w-3.5 h-3.5 transition-transform duration-200 ${
-          liked ? "fill-white text-white scale-110" : "text-neutral-500 group-hover:text-blue-600"
-        }`}
+    <>
+      <span
+        role="button"
+        tabIndex={0}
+        onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            handleClick(e as any);
+          }
+        }}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold cursor-pointer select-none transition-all duration-200 shrink-0 ${
+          toggleMutation.isPending ? "opacity-60 pointer-events-none" : ""
+        } ${
+          liked
+            ? "bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/20 hover:bg-blue-700"
+            : "bg-neutral-100/90 text-neutral-600 hover:bg-blue-50 hover:text-blue-600 border border-neutral-200/60"
+        } ${className}`}
+        title={liked ? "Bỏ thích công thức" : "Thích công thức"}
+      >
+        <ThumbsUp
+          className={`w-3.5 h-3.5 transition-transform duration-200 ${
+            liked
+              ? "fill-white text-white scale-110"
+              : "text-neutral-500 group-hover:text-blue-600"
+          }`}
+        />
+        <span>{count}</span>
+        {showText && <span>{liked ? "Đã thích" : "Thích"}</span>}
+      </span>
+      <LoginRequiredDialog
+        open={loginPromptOpen}
+        onOpenChange={setLoginPromptOpen}
+        action="thích công thức"
       />
-      <span>{count}</span>
-      {showText && <span>{liked ? "Đã thích" : "Thích"}</span>}
-    </span>
+    </>
   );
 }

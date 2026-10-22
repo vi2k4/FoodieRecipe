@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { Bell, CheckCheck } from "lucide-react";
 import { useNotificationStore } from "@/stores/notification.store";
-import { getNotifications, markNotificationRead, markAllNotificationsRead } from "@/lib/admin-api";
+import {
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from "@/lib/admin-api";
 import { format } from "date-fns";
 
 type Props = {
@@ -31,8 +35,13 @@ const typeLabels: Record<string, string> = {
 
 export function AdminHeader({ title, subtitle }: Props) {
   const [open, setOpen] = useState(false);
-  const { notifications, unreadCount, setNotifications, markRead, markAllRead } =
-    useNotificationStore();
+  const {
+    notifications,
+    unreadCount,
+    setNotifications,
+    markRead,
+    markAllRead,
+  } = useNotificationStore();
 
   useEffect(() => {
     getNotifications()
@@ -56,18 +65,24 @@ export function AdminHeader({ title, subtitle }: Props) {
 
   return (
     <header
-      className="sticky top-0 z-30 flex h-16 items-center justify-between border-b px-6"
+      className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b px-3 py-2 sm:px-6"
       style={{
         backgroundColor: "var(--surface)",
         borderColor: "var(--border)",
       }}
     >
-      <div>
-        <h1 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+      <div className="min-w-0">
+        <h1
+          className="truncate text-lg font-bold"
+          style={{ color: "var(--text-primary)" }}
+        >
           {title}
         </h1>
         {subtitle && (
-          <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+          <p
+            className="truncate text-xs"
+            style={{ color: "var(--text-secondary)" }}
+          >
             {subtitle}
           </p>
         )}
@@ -81,7 +96,10 @@ export function AdminHeader({ title, subtitle }: Props) {
           className="relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 hover:bg-orange-50"
           style={{ border: "1px solid var(--border)" }}
         >
-          <Bell className="h-5 w-5" style={{ color: "var(--text-secondary)" }} />
+          <Bell
+            className="h-5 w-5"
+            style={{ color: "var(--text-secondary)" }}
+          />
           {unreadCount > 0 && (
             <span
               className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-white"
@@ -109,7 +127,10 @@ export function AdminHeader({ title, subtitle }: Props) {
                 className="flex items-center justify-between border-b px-4 py-3"
                 style={{ borderColor: "var(--border)" }}
               >
-                <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
+                <p
+                  className="font-semibold text-sm"
+                  style={{ color: "var(--text-primary)" }}
+                >
                   Thông báo
                   {unreadCount > 0 && (
                     <span
@@ -135,8 +156,14 @@ export function AdminHeader({ title, subtitle }: Props) {
               <div className="max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="py-8 text-center">
-                    <Bell className="mx-auto mb-2 h-8 w-8" style={{ color: "var(--border)" }} />
-                    <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                    <Bell
+                      className="mx-auto mb-2 h-8 w-8"
+                      style={{ color: "var(--border)" }}
+                    />
+                    <p
+                      className="text-sm"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
                       Chưa có thông báo nào
                     </p>
                   </div>
@@ -152,7 +179,7 @@ export function AdminHeader({ title, subtitle }: Props) {
                       }}
                     >
                       <span
-                        className={`mt-0.5 rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${
+                        className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
                           typeColors[n.type] || typeColors.SYSTEM
                         }`}
                       >
@@ -171,13 +198,16 @@ export function AdminHeader({ title, subtitle }: Props) {
                         >
                           {n.content}
                         </p>
-                        <p className="mt-1 text-xs" style={{ color: "var(--border)" }}>
+                        <p
+                          className="mt-1 text-xs"
+                          style={{ color: "var(--border)" }}
+                        >
                           {new Date(n.createdAt).toLocaleDateString("vi-VN")}
                         </p>
                       </div>
                       {!n.isRead && (
                         <div
-                          className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full"
+                          className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                           style={{ backgroundColor: "var(--primary)" }}
                         />
                       )}

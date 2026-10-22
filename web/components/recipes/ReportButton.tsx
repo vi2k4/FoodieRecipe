@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Flag, X, AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
+import {
+  Flag,
+  X,
+  AlertTriangle,
+  CheckCircle2,
+  ShieldAlert,
+} from "lucide-react";
 import { socialApi } from "@/lib/social-api";
 import { auth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -60,9 +66,7 @@ export function ReportButton({
     e.preventDefault();
 
     const finalReason =
-      selectedReason === "Lý do khác"
-        ? customReason.trim()
-        : selectedReason;
+      selectedReason === "Lý do khác" ? customReason.trim() : selectedReason;
 
     if (!finalReason) {
       toast.error("Vui lòng chọn hoặc nhập lý do báo cáo!");
@@ -140,11 +144,11 @@ export function ReportButton({
           onClick={handleClose}
         >
           <div
-            className="relative w-full max-w-lg bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden"
+            className="relative max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-900"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
+            <div className="flex items-start justify-between gap-3 border-b border-neutral-100 bg-neutral-50/50 p-5 dark:border-neutral-800 dark:bg-neutral-900/50">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400">
                   <ShieldAlert className="w-5 h-5" />
@@ -178,7 +182,8 @@ export function ReportButton({
                   Đã gửi báo cáo thành công!
                 </h4>
                 <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-xs">
-                  Cảm ơn bạn đã phản hồi. Ban quản trị sẽ sớm kiểm tra và xử lý công thức này.
+                  Cảm ơn bạn đã phản hồi. Ban quản trị sẽ sớm kiểm tra và xử lý
+                  công thức này.
                 </p>
               </div>
             ) : (
@@ -245,7 +250,8 @@ export function ReportButton({
                 <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                   <span>
-                    Báo cáo của bạn sẽ gửi trực tiếp đến hệ thống quản trị. Vui lòng cung cấp thông tin trung thực.
+                    Báo cáo của bạn sẽ gửi trực tiếp đến hệ thống quản trị. Vui
+                    lòng cung cấp thông tin trung thực.
                   </span>
                 </div>
 
