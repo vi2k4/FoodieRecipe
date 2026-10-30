@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/providers";
+import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
+            <ScrollToTop />
             <Toaster />
           </AuthProvider>
         </Providers>
@@ -31,5 +33,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-  

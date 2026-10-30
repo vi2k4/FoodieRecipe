@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   MessageSquare,
@@ -18,6 +18,10 @@ import { auth } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { LoginRequiredDialog } from "@/components/auth/LoginRequiredDialog";
+import { io } from "socket.io-client";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const SOCKET_URL = API_URL.replace(/\/api\/?$/, "");
 
 interface CommentUser {
   id: number | string;
@@ -78,6 +82,49 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
   const session = auth.getSession();
   const isLoggedIn = !!session?.accessToken;
   const currentUserId = session?.user?.id;
+
+  useEffect(() => {
+    const socket = io(`${SOCKET_URL}/comments`, {
+      transports: ["websocket", "polling"],
+    });
+
+    const joinRecipeRoom = () => {
+      console.info("[comments] connected", socket.id);
+      socket.emit("joinRecipe", { recipeId: String(recipeId) });
+    };
+
+    const handleConnectError = (error: Error) => {
+      console.error("[comments] connection failed", error.message);
+    };
+
+    socket.on("connect", joinRecipeRoom);
+    socket.on("connect_error", handleConnectError);
+    const refreshComments = (event: string, payload: unknown) => {
+      console.info(`[comments] received ${event}`, payload);
+      queryClient.refetchQueries({
+        queryKey: ["recipeComments", String(recipeId)],
+      });
+    };
+
+    socket.on("comment.created", (comment) =>
+      refreshComments("comment.created", comment),
+    );
+    socket.on("comment.updated", (comment) =>
+      refreshComments("comment.updated", comment),
+    );
+    socket.on("comment.deleted", (comment) =>
+      refreshComments("comment.deleted", comment),
+    );
+
+    return () => {
+      socket.off("connect", joinRecipeRoom);
+      socket.off("connect_error", handleConnectError);
+      socket.off("comment.created");
+      socket.off("comment.updated");
+      socket.off("comment.deleted");
+      socket.disconnect();
+    };
+  }, [recipeId, queryClient]);
 
   // Query comments with pagination
   const {

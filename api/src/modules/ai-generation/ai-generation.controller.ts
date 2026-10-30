@@ -41,19 +41,19 @@ export class AIGenerationController {
 
   @Post('generate')
   async generate(
-    @CurrentUser() user: { id: bigint },
+    @CurrentUser() user: { id: bigint; role: string },
     @Body() dto: GenerateRecipeDto,
   ): Promise<GenerateRecipeResponseDto> {
-    return this.aiService.generate(user.id, dto);
+    return this.aiService.generate(user.id, dto, user.role);
   }
 
   @Post('analyze-image')
   @UseInterceptors(FileInterceptor('image'))
   async analyzeImage(
     @UploadedFile() file: Express.Multer.File,
-    @CurrentUser() user: { id: bigint },
+    @CurrentUser() user: { id: bigint; role: string },
   ) {
-    return this.aiService.analyzeImage(file, user.id);
+    return this.aiService.analyzeImage(file, user.id, user.role);
   }
 
   @Get('history')

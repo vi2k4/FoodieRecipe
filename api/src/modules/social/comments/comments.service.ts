@@ -8,12 +8,14 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../../../generated/prisma/client';
+import { CommentsGateway } from './comments.gateway';
 
 @Injectable()
 export class CommentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly commentsGateway: CommentsGateway,
   ) {}
 
   async createComment(
@@ -93,6 +95,8 @@ export class CommentsService {
         referenceId: recipe.id,
       });
     }
+
+    this.commentsGateway.emitCommentCreated(recipeId.toString(), newComment);
 
     return newComment;
   }
@@ -250,6 +254,13 @@ export class CommentsService {
       },
     });
 
+    if (updated.recipeId !== undefined && updated.recipeId !== null) {
+      this.commentsGateway.emitCommentUpdated(
+        updated.recipeId.toString(),
+        updated,
+      );
+    }
+
     return updated;
   }
 
@@ -276,6 +287,13 @@ export class CommentsService {
       where: { id: commentId },
       data: { deletedAt: new Date() },
     });
+
+    if (comment.recipeId !== undefined && comment.recipeId !== null) {
+      this.commentsGateway.emitCommentDeleted(
+        comment.recipeId.toString(),
+        commentId.toString(),
+      );
+    }
 
     return { message: 'Comment deleted successfully' };
   }

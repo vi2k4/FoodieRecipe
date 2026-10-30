@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
-import { BowlFood, ChefHat, Sparkle } from '@phosphor-icons/react';
+import { BowlFood, Sparkle } from '@phosphor-icons/react';
 import { Eye, ThumbsUp, Flame, Clock } from 'lucide-react';
 import { FavoriteButton } from '@/components/recipes/FavoriteButton';
 import { LikeButton } from '@/components/recipes/LikeButton';
@@ -328,9 +328,12 @@ export default function RecipesPage() {
                       {/* Card Footer: Author & Source */}
                       <div className="mt-auto pt-4 border-t border-neutral-100 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-7 h-7 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs shrink-0">
-                            <ChefHat size={18} weight="duotone" aria-label="Chef recipe" />
-                          </div>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={recipe.author?.avatarUrl || "/file.svg"}
+                            alt={recipe.author?.username || "Người dùng"}
+                            className="w-7 h-7 rounded-full border border-neutral-200 object-cover shrink-0"
+                          />
                           <span className="text-xs font-medium text-neutral-700 truncate">
                             {recipe.author?.username || 'Người dùng'}
                           </span>
