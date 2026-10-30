@@ -4,9 +4,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
-import { BowlFood, ChefHat, Sparkle } from '@phosphor-icons/react';
+import { BowlFood } from '@phosphor-icons/react';
 import { Eye, ThumbsUp, Flame, Clock } from 'lucide-react';
 import { LikeButton } from '@/components/recipes/LikeButton';
+import { HeroSlider } from '@/components/home/HeroSlider';
+import { RecipeSection } from '@/components/home/RecipeSection';
 
 export default function Home() {
   const [recipes, setRecipes] = useState<any[]>([]);
@@ -23,7 +25,7 @@ export default function Home() {
       setLoading(true);
       try {
         const [resRecipes, resCats] = await Promise.all([
-          api.recipes.list({ isPublic: true, page: 1, limit: 6 }).catch(() => []),
+          api.recipes.list({ isPublic: true, page: 1, limit: 30 }).catch(() => []),
           api.categories.list().catch(() => []),
         ]);
         setRecipes(Array.isArray(resRecipes) ? resRecipes : resRecipes?.data || []);
@@ -37,29 +39,44 @@ export default function Home() {
     loadData();
   }, []);
 
+  const mostViewed = [...recipes].sort((a, b) => Number(b.viewCount || 0) - Number(a.viewCount || 0)).slice(0, 6);
+  const mostLiked = [...recipes].sort((a, b) => Number(b.likeCount || b._count?.likes || 0) - Number(a.likeCount || a._count?.likes || 0)).slice(0, 6);
+  const topRated = [...recipes].sort((a, b) => Number(b.averageRating || 0) - Number(a.averageRating || 0)).slice(0, 6);
+
   return (
     <div className="flex flex-col gap-12 pb-16">
+      <HeroSlider />
       {/* Hero Section */}
-      <section className="relative pt-20 pb-28 px-4 overflow-hidden">
+      <section className="relative px-4 py-8 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-orange-100/50 -z-10" />
         <div className="container mx-auto max-w-5xl text-center">
-          <h1 className="mx-auto mb-6 max-w-3xl text-4xl font-bold leading-tight tracking-tight text-neutral-900 md:text-6xl">
+          <h1 className="hidden">
             My Foodie Recipes <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-400">
               Nền tảng chia sẻ công thức nấu ăn tích hợp AI/GenAI
             </span>
           </h1>
-          <p className="mx-auto mb-10 max-w-2xl text-lg text-neutral-600">
+          <p className="hidden">
             Khám phá hàng ngàn công thức nấu ăn hấp dẫn, dinh dưỡng và dễ làm. Đặc biệt, trải nghiệm công nghệ AI đột phá giúp tạo công thức từ ảnh nguyên liệu của bạn.
           </p>
 
-          {/* Quick Search Box */}
+          <p className="mb-4 whitespace-nowrap text-center text-xs font-bold tracking-wide text-orange-700 sm:text-base">
+            Khám phá hàng ngàn công thức · Lọc theo nguyên liệu · danh mục · độ khó · lượng calo
+          </p>
+          <Link
+            href="/recipes"
+            className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-6 py-3 font-medium text-white shadow-lg shadow-orange-500/20 transition-colors hover:bg-orange-600"
+          >
+            Tìm kiếm nâng cao
+          </Link>
+
+          {/* Quick Search Box is kept disabled in the source for backwards compatibility. */}
           <form 
             onSubmit={(e) => {
               e.preventDefault();
               window.location.href = `/recipes?search=${encodeURIComponent(search)}&categoryId=${categoryId}&maxCalories=${maxCalories}`;
             }}
-            className="grid grid-cols-1 gap-4 rounded-2xl border border-orange-100 bg-white p-4 text-left shadow-xl shadow-orange-500/5 sm:grid-cols-2 lg:grid-cols-12"
+            className="hidden"
           >
             <input 
               type="text" 
@@ -123,10 +140,10 @@ export default function Home() {
             <p>Chưa có công thức nào. Hãy đóng góp công thức đầu tiên!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recipes.map((recipe) => (
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
+            {recipes.slice(0, 6).map((recipe) => (
               <Link href={`/recipes/${recipe.id}`} key={String(recipe.id)} className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-neutral-100 shadow-sm hover:shadow-xl hover:shadow-orange-500/5 transition-all duration-300">
-                <div className="relative h-48 overflow-hidden bg-neutral-100">
+                <div className="relative h-32 overflow-hidden bg-neutral-100 sm:h-48">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src={recipe.thumbnail || "/file.svg"} 
@@ -137,9 +154,9 @@ export default function Home() {
                     {recipe.difficulty === 'EASY' ? 'Dễ' : recipe.difficulty === 'MEDIUM' ? 'Trung bình' : 'Khó'}
                   </div>
                 </div>
-                <div className="p-5 flex-1 flex flex-col">
-                  <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-orange-500 transition-colors line-clamp-2">{recipe.title}</h3>
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500 mb-4">
+                <div className="flex flex-1 flex-col p-3 sm:p-5">
+                  <h3 className="mb-2 line-clamp-2 text-sm font-bold text-neutral-900 transition-colors group-hover:text-orange-500 sm:text-lg">{recipe.title}</h3>
+                  <div className="mb-4 flex flex-wrap items-center gap-2 text-[10px] text-neutral-500 sm:gap-3 sm:text-xs">
                     <span className="flex items-center gap-1 font-medium"><Flame className="w-3.5 h-3.5 text-orange-500" /> {recipe.calories || '—'} kcal</span>
                     <span className="flex items-center gap-1 font-medium"><Clock className="w-3.5 h-3.5 text-neutral-400" /> {recipe.cookTime || '—'} ph</span>
                     <span className="flex items-center gap-1 text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md font-medium">
@@ -151,24 +168,16 @@ export default function Home() {
                       initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)}
                     />
                   </div>
-                  <div className="mt-auto flex items-center gap-2 pt-4 border-t border-neutral-100">
-                    <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-xs">
-                      {recipe.source === 'AI GenAI' || recipe.source === 'AI' ? (
-                        <Sparkle size={16} weight="duotone" aria-label="AI generated" />
-                      ) : (
-                        <ChefHat size={16} weight="duotone" aria-label="Chef recipe" />
-                      )}
-                    </div>
-                    <span className="text-sm font-medium text-neutral-700 truncate">{recipe.author?.username || 'Ẩn danh'}</span>
-                    {recipe.source === 'AI GenAI' || recipe.source === 'AI' ? (
-                      <span className="ml-auto text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2 py-0.5 rounded-md">
-                        AI GenAI
-                      </span>
-                    ) : (
-                      <span className="ml-auto text-xs font-medium bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-md border border-neutral-200">
-                        USER
-                      </span>
-                    )}
+                  <div className="mt-auto flex items-center gap-2 border-t border-neutral-100 pt-3 sm:pt-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={recipe.author?.avatarUrl || "/file.svg"}
+                      alt={recipe.author?.username || "Ẩn danh"}
+                      className="h-6 w-6 shrink-0 rounded-full border border-neutral-200 object-cover"
+                    />
+                    <span className="truncate text-xs font-medium text-neutral-700 sm:text-sm">
+                      {recipe.author?.username || 'Ẩn danh'}
+                    </span>
                   </div>
                 </div>
               </Link>
@@ -176,6 +185,10 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      <RecipeSection title="Xem nhiều nhất" description="Những công thức đang được cộng đồng quan tâm" recipes={mostViewed} />
+      <RecipeSection title="Được yêu thích" description="Các món ăn nhận nhiều lượt thích" recipes={mostLiked} />
+      <RecipeSection title="Đang hot" description="Công thức nổi bật dựa trên lượt xem, thích và đánh giá" recipes={topRated} />
     </div>
   );
 }

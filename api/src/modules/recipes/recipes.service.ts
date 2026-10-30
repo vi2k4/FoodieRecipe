@@ -159,7 +159,7 @@ export class RecipesService {
         orderBy: { id: 'desc' },
         include: {
           author: {
-            select: { id: true, username: true, email: true },
+            select: { id: true, username: true, email: true, avatarUrl: true },
           },
           category: {
             select: { id: true, name: true, icon: true },
@@ -193,7 +193,7 @@ export class RecipesService {
       where: { id, deletedAt: null },
       include: {
         author: {
-          select: { id: true, username: true, email: true },
+          select: { id: true, username: true, email: true, avatarUrl: true },
         },
         category: {
           select: { id: true, name: true, icon: true },
@@ -289,7 +289,7 @@ export class RecipesService {
       },
       include: {
         author: {
-          select: { id: true, username: true, email: true },
+          select: { id: true, username: true, email: true, avatarUrl: true },
         },
         category: {
           select: { id: true, name: true, icon: true },
@@ -395,7 +395,7 @@ export class RecipesService {
       },
       include: {
         author: {
-          select: { id: true, username: true, email: true },
+          select: { id: true, username: true, email: true, avatarUrl: true },
         },
         category: {
           select: { id: true, name: true, icon: true },

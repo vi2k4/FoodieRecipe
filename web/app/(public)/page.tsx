@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Utensils, Cookie, Leaf, Coffee, Flame, Clock, Star, BrainCircuit, Search, ArrowRight, Eye, ThumbsUp } from "lucide-react";
 import { FavoriteButton } from "@/components/recipes/FavoriteButton";
 import { LikeButton } from "@/components/recipes/LikeButton";
+import { HeroSlider } from "@/components/home/HeroSlider";
 
 interface Recipe {
   id: number;
@@ -60,6 +61,7 @@ export default async function PublicHomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-neutral-50/50">
+      <HeroSlider />
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-orange-50/70 via-amber-50/30 to-transparent">
         <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-orange-200/10 to-transparent pointer-events-none rounded-full blur-3xl" />

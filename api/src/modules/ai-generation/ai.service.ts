@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -30,6 +32,7 @@ import { localizeDetectedIngredients } from './services/ingredient-localization'
 @Injectable()
 export class AIGenerationService {
   private readonly logger = new Logger(AIGenerationService.name);
+  private readonly dailyUserLimit = 3;
 
   constructor(
     private readonly rekognitionService: RekognitionService,
@@ -67,7 +70,9 @@ export class AIGenerationService {
   async generate(
     userId: bigint,
     dto: GenerateRecipeDto,
+    userRole = 'USER',
   ): Promise<GenerateRecipeResponseDto> {
+    await this.assertDailyLimit(userId, userRole);
     const prompt = this.promptBuilder.buildRecipePromptFromNames(
       dto.ingredients,
     );
@@ -89,10 +94,12 @@ export class AIGenerationService {
   async analyzeImage(
     file: Express.Multer.File,
     userId: bigint | null = null,
+    userRole = 'USER',
   ): Promise<AnalyzeImageResponseDto> {
     if (userId == null) {
       throw new BadRequestException('Thiếu userId để lưu lịch sử');
     }
+    await this.assertDailyLimit(userId, userRole);
     this.logger.log(`[AI] analyze-image started for user ${userId.toString()}`);
 
     try {
@@ -138,6 +145,27 @@ export class AIGenerationService {
         error instanceof Error ? error.stack : JSON.stringify(error),
       );
       throw error;
+    }
+  }
+
+  private async assertDailyLimit(userId: bigint, userRole: string) {
+    if (userRole === 'ADMIN') return;
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const usageCount = await this.prisma.aIGenerationHistory.count({
+      where: {
+        userId,
+        createdAt: { gte: startOfDay },
+      },
+    });
+
+    if (usageCount >= this.dailyUserLimit) {
+      throw new HttpException(
+        `Bạn đã sử dụng hết ${this.dailyUserLimit} lượt AI hôm nay. Vui lòng thử lại vào ngày mai.`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
   }
 

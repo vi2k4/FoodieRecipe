@@ -47,7 +47,6 @@ interface Recipe {
 interface UserProfile {
   id: number;
   username: string;
-  fullName: string;
   avatarUrl: string | null;
   bio: string | null;
   createdAt: string;
@@ -61,7 +60,6 @@ interface UserProfile {
 interface FollowUser {
   id: number;
   username: string;
-  fullName: string;
   avatarUrl: string | null;
   bio: string | null;
 }
@@ -86,6 +84,7 @@ export default function UserProfilePage() {
   });
 
   const profile = profileQuery.data;
+  const profileName = profile?.username || "Người dùng";
 
   // Query followers
   const followersQuery = useQuery<FollowUser[]>({
@@ -189,7 +188,7 @@ export default function UserProfilePage() {
         <nav className="flex mb-8 text-sm text-neutral-500 items-center gap-2">
           <Link href="/" className="hover:text-orange-600 transition-colors">Trang chủ</Link>
           <ChevronRight className="w-4 h-4" />
-          <span className="text-neutral-800 font-medium">Đầu bếp {profile.fullName}</span>
+          <span className="text-neutral-800 font-medium">Đầu bếp {profileName}</span>
         </nav>
 
         {/* Profile Card Header */}
@@ -203,7 +202,7 @@ export default function UserProfilePage() {
                   src={profile.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"} 
                   className="object-cover"
                 />
-                <AvatarFallback>{profile.fullName.slice(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>{profileName.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
             </div>
 
@@ -211,7 +210,7 @@ export default function UserProfilePage() {
             <div className="flex-1 text-center md:text-left">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
-                  <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight">{profile.fullName}</h1>
+                  <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight">{profileName}</h1>
                   <p className="text-orange-600 font-semibold mt-1">@{profile.username}</p>
                 </div>
                 
@@ -385,10 +384,10 @@ export default function UserProfilePage() {
                       <Link href={`/users/${u.id}`} className="flex items-center gap-3 group">
                         <Avatar className="w-12 h-12 border border-neutral-100 group-hover:scale-105 transition-transform">
                           <AvatarImage src={u.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"} className="object-cover" />
-                          <AvatarFallback>{u.fullName.slice(0, 2).toUpperCase()}</AvatarFallback>
+                          <AvatarFallback>{u.username.slice(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <h4 className="font-bold text-neutral-800 group-hover:text-orange-600 transition-colors text-sm">{u.fullName}</h4>
+                          <h4 className="font-bold text-neutral-800 group-hover:text-orange-600 transition-colors text-sm">{u.username}</h4>
                           <p className="text-xs text-neutral-400 line-clamp-1">@{u.username}</p>
                         </div>
                       </Link>
@@ -433,10 +432,10 @@ export default function UserProfilePage() {
                       <Link href={`/users/${u.id}`} className="flex items-center gap-3 group">
                         <Avatar className="w-12 h-12 border border-neutral-100 group-hover:scale-105 transition-transform">
                           <AvatarImage src={u.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"} className="object-cover" />
-                          <AvatarFallback>{u.fullName.slice(0, 2).toUpperCase()}</AvatarFallback>
+                          <AvatarFallback>{u.username.slice(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <h4 className="font-bold text-neutral-800 group-hover:text-orange-600 transition-colors text-sm">{u.fullName}</h4>
+                          <h4 className="font-bold text-neutral-800 group-hover:text-orange-600 transition-colors text-sm">{u.username}</h4>
                           <p className="text-xs text-neutral-400 line-clamp-1">@{u.username}</p>
                         </div>
                       </Link>

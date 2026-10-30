@@ -4,6 +4,7 @@ import { PrismaService } from '../../../database/prisma.service';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 
 import { NotificationsService } from '../notifications/notifications.service';
+import { CommentsGateway } from './comments.gateway';
 
 describe('CommentsService', () => {
   let service: CommentsService;
@@ -26,6 +27,10 @@ describe('CommentsService', () => {
     createNotification: jest.fn(),
   };
 
+  const mockCommentsGateway = {
+    emitCommentCreated: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -37,6 +42,10 @@ describe('CommentsService', () => {
         {
           provide: NotificationsService,
           useValue: mockNotificationsService,
+        },
+        {
+          provide: CommentsGateway,
+          useValue: mockCommentsGateway,
         },
       ],
     }).compile();
