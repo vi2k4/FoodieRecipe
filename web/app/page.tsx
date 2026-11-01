@@ -47,7 +47,7 @@ export default function Home() {
     <div className="flex flex-col gap-12 pb-16">
       <HeroSlider />
       {/* Hero Section */}
-      <section className="relative px-4 py-8 overflow-hidden">
+      <section className="hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-orange-100/50 -z-10" />
         <div className="container mx-auto max-w-5xl text-center">
           <h1 className="hidden">
@@ -60,24 +60,8 @@ export default function Home() {
             Khám phá hàng ngàn công thức nấu ăn hấp dẫn, dinh dưỡng và dễ làm. Đặc biệt, trải nghiệm công nghệ AI đột phá giúp tạo công thức từ ảnh nguyên liệu của bạn.
           </p>
 
-          <p className="mb-4 whitespace-nowrap text-center text-xs font-bold tracking-wide text-orange-700 sm:text-base">
-            Khám phá hàng ngàn công thức · Lọc theo nguyên liệu · danh mục · độ khó · lượng calo
-          </p>
-          <Link
-            href="/recipes"
-            className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-6 py-3 font-medium text-white shadow-lg shadow-orange-500/20 transition-colors hover:bg-orange-600"
-          >
-            Tìm kiếm nâng cao
-          </Link>
-
-          {/* Quick Search Box is kept disabled in the source for backwards compatibility. */}
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              window.location.href = `/recipes?search=${encodeURIComponent(search)}&categoryId=${categoryId}&maxCalories=${maxCalories}`;
-            }}
-            className="hidden"
-          >
+          {/* Quick search is available on the dedicated recipes page. */}
+          <form className="hidden" onSubmit={(e) => e.preventDefault()}>
             <input 
               type="text" 
               value={search}

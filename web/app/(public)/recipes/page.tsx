@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api-client';
 import { BowlFood, Sparkle } from '@phosphor-icons/react';
 import { Eye, ThumbsUp, Flame, Clock } from 'lucide-react';
@@ -15,6 +15,7 @@ import { LoginRequiredDialog } from '@/components/auth/LoginRequiredDialog';
 export default function RecipesPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [recipes, setRecipes] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -80,6 +81,13 @@ export default function RecipesPage() {
   useEffect(() => {
     loadRecipes(page);
   }, [page, limit]);
+
+  useEffect(() => {
+    const querySearch = searchParams.get('search')?.trim() || '';
+    setSearch(querySearch);
+    setPage(1);
+    loadRecipes(1, { search: querySearch });
+  }, [searchParams]);
 
   useEffect(() => {
     async function loadCats() {
@@ -259,7 +267,7 @@ export default function RecipesPage() {
             <div className="space-y-8">
               
               {/* Recipe Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
                 {recipes.map((recipe) => (
                   <Link
                     href={`/recipes/${recipe.id}`}
@@ -267,7 +275,7 @@ export default function RecipesPage() {
                     className="group flex flex-col bg-white rounded-3xl overflow-hidden border border-neutral-200/80 shadow-sm hover:shadow-xl hover:shadow-orange-500/10 hover:-translate-y-1 transition-all duration-300"
                   >
                     {/* Thumbnail Image */}
-                    <div className="relative h-48 overflow-hidden bg-neutral-100">
+                    <div className="relative h-32 overflow-hidden bg-neutral-100 sm:h-48">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       {recipe.thumbnail ? (
                         <img
@@ -295,8 +303,8 @@ export default function RecipesPage() {
                     </div>
 
                     {/* Card Content */}
-                    <div className="p-5 flex-1 flex flex-col">
-                      <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-orange-500 transition-colors line-clamp-2 leading-snug">
+                    <div className="flex flex-1 flex-col p-3 sm:p-5">
+                      <h3 className="mb-2 line-clamp-2 text-sm font-bold leading-snug text-neutral-900 transition-colors group-hover:text-orange-500 sm:text-lg">
                         {recipe.title}
                       </h3>
 
@@ -320,7 +328,7 @@ export default function RecipesPage() {
                       </div>
 
                       {recipe.description && (
-                        <p className="text-neutral-500 text-xs line-clamp-2 mb-4">
+                        <p className="mb-4 hidden text-xs text-neutral-500 line-clamp-2 sm:block">
                           {recipe.description}
                         </p>
                       )}

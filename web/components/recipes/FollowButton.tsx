@@ -69,11 +69,6 @@ export function FollowButton({
     onSuccess: (currentlyFollowing) => {
       setOverrideFollowing(null);
       queryClient.invalidateQueries({ queryKey: ["myFollowing"] });
-      if (!currentlyFollowing) {
-        toast.success(`Đã theo dõi ${targetUsername}! 🎉`);
-      } else {
-        toast.info(`Đã hủy theo dõi ${targetUsername}`);
-      }
     },
     onError: (err: any, currentlyFollowing) => {
       setOverrideFollowing(currentlyFollowing);
