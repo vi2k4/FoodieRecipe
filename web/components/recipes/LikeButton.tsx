@@ -96,11 +96,6 @@ export function LikeButton({
       pendingActionRef.current = null;
       setOverrideLiked(null);
       queryClient.invalidateQueries({ queryKey: ["myLikes"] });
-      if (targetLikedState) {
-        toast.success("Đã thích công thức! 👍");
-      } else {
-        toast.info("Đã bỏ thích công thức");
-      }
     },
     onError: (err: any, targetLikedState, context: any) => {
       pendingActionRef.current = null;

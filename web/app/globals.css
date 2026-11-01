@@ -36,6 +36,16 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  .dark body {
+    background-color: #171311;
+    color: #f5f5f4;
+  }
+
+  .dark header {
+    border-color: #3f2b20;
+    background-color: rgb(28 25 23 / 0.9);
+  }
+
   /* Scrollbar */
   ::-webkit-scrollbar {
     width: 5px;
@@ -47,5 +57,55 @@
   ::-webkit-scrollbar-thumb {
     background: #fed7aa;
     border-radius: 9999px;
+  }
+}
+
+@layer utilities {
+  .dark .bg-white {
+    background-color: #29211d;
+  }
+
+  .dark .bg-neutral-50,
+  .dark .bg-neutral-50\/50 {
+    background-color: #211b18;
+  }
+
+  .dark .bg-neutral-100 {
+    background-color: #3a2f29;
+  }
+
+  .dark .text-neutral-900,
+  .dark .text-neutral-800,
+  .dark .text-neutral-700 {
+    color: #f5f5f4;
+  }
+
+  .dark .text-neutral-600,
+  .dark .text-neutral-500 {
+    color: #d6d3d1;
+  }
+
+  .dark .text-stone-900,
+  .dark .text-stone-800,
+  .dark .text-stone-700,
+  .dark .text-stone-600 {
+    color: #f5f5f4;
+  }
+
+  .dark .text-stone-500,
+  .dark .text-stone-400 {
+    color: #d6d3d1;
+  }
+
+  .dark .border-stone-100,
+  .dark .border-stone-200,
+  .dark .border-stone-300 {
+    border-color: #4a3930;
+  }
+
+  .dark .border-neutral-100,
+  .dark .border-neutral-200,
+  .dark .border-neutral-200\/80 {
+    border-color: #4a3930;
   }
 }

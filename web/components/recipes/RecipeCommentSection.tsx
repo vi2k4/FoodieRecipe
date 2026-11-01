@@ -183,7 +183,6 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
         replyingTo ? replyingTo.id : undefined,
       );
 
-      toast.success(replyingTo ? "Đã gửi phản hồi!" : "Đã đăng bình luận!");
       setNewContent("");
       setReplyingTo(null);
       setPage(1);
@@ -203,7 +202,6 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
     if (!editContent.trim()) return;
     try {
       await socialApi.updateComment(commentId, editContent.trim());
-      toast.success("Đã cập nhật bình luận!");
       setEditingCommentId(null);
       queryClient.invalidateQueries({
         queryKey: ["recipeComments", String(recipeId)],
@@ -218,7 +216,6 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
     if (!confirm("Bạn có chắc chắn muốn xóa bình luận này không?")) return;
     try {
       await socialApi.deleteComment(commentId);
-      toast.success("Đã xóa bình luận!");
       queryClient.invalidateQueries({
         queryKey: ["recipeComments", String(recipeId)],
       });
@@ -254,13 +251,13 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
       currentDepth === 1
         ? "mt-6"
         : currentDepth === 2
-          ? "ml-6 mt-3 pl-4 border-l-2 border-orange-200/60"
-          : "ml-6 mt-3 pl-4 border-l-2 border-amber-300/80 bg-amber-50/20 rounded-r-2xl";
+          ? "ml-3 mt-3 pl-3 border-l-2 border-orange-200/60 sm:ml-6 sm:pl-4"
+        : "ml-3 mt-3 pl-3 border-l-2 border-amber-300/80 bg-amber-50/20 rounded-r-2xl sm:ml-6 sm:pl-4";
 
     return (
-      <div key={comment.id} className={`flex gap-3.5 ${containerIndent}`}>
+      <div key={comment.id} className={`flex min-w-0 gap-2 sm:gap-3.5 ${containerIndent}`}>
         {/* Avatar */}
-        <Avatar className="w-9 h-9 border border-neutral-200 shrink-0">
+        <Avatar className="h-8 w-8 shrink-0 border border-neutral-200 sm:h-9 sm:w-9">
           <AvatarImage src={avatarUrl} />
           <AvatarFallback className="bg-orange-100 text-orange-600 font-bold text-xs">
             {username.slice(0, 2).toUpperCase()}
@@ -271,11 +268,11 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
         <div className="flex-1 min-w-0 max-w-full">
           <div className="bg-neutral-50 border border-neutral-200/70 p-4 rounded-2xl relative group max-w-full overflow-hidden wrap-break-word">
             {/* Author Name & Date */}
-            <div className="flex items-center justify-between gap-2 mb-1.5">
-              <span className="font-bold text-sm text-neutral-900 truncate">
+            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+              <span className="min-w-0 truncate text-sm font-bold text-neutral-900">
                 @{username}
               </span>
-              <span className="text-[11px] text-neutral-400">
+              <span className="shrink-0 text-[10px] text-neutral-400 sm:text-[11px]">
                 {formatDate(comment.createdAt)}
               </span>
             </div>
@@ -314,7 +311,7 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
 
             {/* Actions: Reply, Edit, Delete */}
             {!isEditing && (
-              <div className="flex items-center gap-3 mt-3 pt-2 border-t border-neutral-200/40 text-xs font-medium text-neutral-500">
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-neutral-200/40 pt-2 text-xs font-medium text-neutral-500">
                 <button
                   type="button"
                   onClick={() => handleReplyClick(comment)}
@@ -364,7 +361,7 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
                       renderCommentItem(reply, Math.min(currentDepth + 1, 3)),
                     )}
                     {hiddenCount > 0 && (
-                      <div className="ml-6 mt-2">
+                      <div className="ml-3 mt-2 sm:ml-6">
                         <button
                           type="button"
                           onClick={() => toggleExpand(comment.id)}
@@ -376,7 +373,7 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
                       </div>
                     )}
                     {isExpanded && comment.replies.length > 2 && (
-                      <div className="ml-6 mt-2">
+                      <div className="ml-3 mt-2 sm:ml-6">
                         <button
                           type="button"
                           onClick={() => toggleExpand(comment.id)}
@@ -402,9 +399,9 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
 
   return (
     <>
-      <section className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 my-8 shadow-sm">
+      <section className="my-6 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm sm:my-8 sm:rounded-3xl sm:p-8">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-6 pb-4 border-b border-neutral-100">
+        <div className="mb-5 flex items-center gap-2 border-b border-neutral-100 pb-4 sm:mb-6">
           <MessageSquare className="w-6 h-6 text-orange-500" />
           <h2 className="text-xl font-bold text-neutral-900">
             Bình luận ({meta.total})
@@ -415,7 +412,7 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
         <form onSubmit={handlePostComment} className="mb-8 space-y-3">
           {replyingTo && (
             <div className="flex items-center justify-between bg-orange-50 border border-orange-200/80 px-4 py-2 rounded-xl text-xs text-orange-800">
-              <span className="flex items-center gap-1 font-medium">
+                <span className="flex min-w-0 items-center gap-1 font-medium">
                 <CornerDownRight className="w-4 h-4 text-orange-500" />
                 Đang phản hồi <strong>@{replyingUsername}</strong>
               </span>
@@ -429,8 +426,8 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
             </div>
           )}
 
-          <div className="flex items-start gap-3">
-            <Avatar className="w-10 h-10 border border-neutral-200 shrink-0">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <Avatar className="h-9 w-9 shrink-0 border border-neutral-200 sm:h-10 sm:w-10">
               <AvatarImage src={session?.user?.avatarUrl || undefined} />
               <AvatarFallback className="bg-orange-100 text-orange-600 font-bold text-xs">
                 {session?.user?.username
@@ -457,7 +454,7 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-orange-700 disabled:opacity-50 sm:w-auto"
                 >
                   {submitting ? (
                     <>

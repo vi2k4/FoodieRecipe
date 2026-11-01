@@ -64,8 +64,6 @@ export function RecipeRatingSection({
       setLoading(true);
       const res = await socialApi.submitRating(recipeId, starValue);
       setSelectedRating(starValue);
-      toast.success(`Cảm ơn bạn đã đánh giá ${starValue} sao ⭐!`);
-
       // Refetch live stats & invalidate queries
       queryClient.invalidateQueries({ queryKey: ["recipeRatingStats", String(recipeId)] });
       refetch();

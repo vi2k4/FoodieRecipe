@@ -51,11 +51,6 @@ export function FavoriteButton({
     onSuccess: () => {
       setLoading(false);
       queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
-      if (!isFavorited) {
-        toast.success("Đã lưu công thức vào danh sách yêu thích ❤️");
-      } else {
-        toast.info("Đã bỏ công thức khỏi danh sách yêu thích");
-      }
     },
     onError: (err: any) => {
       setLoading(false);
