@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   ParseIntPipe,
+  Req,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { DashboardService } from './dashboard.service';
@@ -61,6 +62,15 @@ export class AdminController {
     return this.adminService.toggleUserLock(BigInt(id), isLocked);
   }
 
+  @Patch('users/:id/role')
+  async updateUserRole(
+    @Param('id') id: string,
+    @Body('role') role: UserRole,
+    @Req() request: { user: { id: bigint } },
+  ) {
+    return this.adminService.updateUserRole(BigInt(id), role, request.user.id);
+  }
+
   @Delete('users/:id')
   async deleteUser(@Param('id') id: string) {
     return this.adminService.deleteUser(BigInt(id));
@@ -75,6 +85,16 @@ export class AdminController {
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 10;
     return this.adminService.getRecipes(search, pageNum, limitNum);
+  }
+
+  @Get('recipes/pending')
+  async getPendingRecipes() {
+    return this.adminService.getPendingRecipes();
+  }
+
+  @Patch('recipes/:id/review')
+  async reviewRecipe(@Param('id') id: string, @Body('approved') approved: boolean) {
+    return this.adminService.reviewRecipe(BigInt(id), approved);
   }
 
   @Patch('recipes/:id')

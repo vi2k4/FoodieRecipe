@@ -34,7 +34,7 @@ type SafeUser = {
 export class AuthService {
   private readonly jwtSecret =
     process.env.JWT_SECRET || 'development-only-secret';
-  private readonly accessTokenTtlSeconds = 60 * 60 * 24 * 7;
+  private readonly accessTokenTtlSeconds = 60 * 60 * 24;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -475,7 +475,7 @@ export class AuthService {
       data: {
         userId: user.id,
         token: refreshToken,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
     });
 

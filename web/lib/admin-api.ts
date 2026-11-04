@@ -28,6 +28,11 @@ export async function toggleUserLock(id: string, isLocked: boolean) {
   return res.data;
 }
 
+export async function updateAdminUserRole(id: string, role: "USER" | "ADMIN") {
+  const res = await apiClient.patch(`/admin/users/${id}/role`, { role });
+  return res.data;
+}
+
 export async function deleteAdminUser(id: string) {
   const res = await apiClient.delete(`/admin/users/${id}`);
   return res.data;
@@ -41,6 +46,16 @@ export async function getAdminRecipes(params?: {
   limit?: number;
 }) {
   const res = await apiClient.get("/admin/recipes", { params });
+  return res.data;
+}
+
+export async function getPendingAdminRecipes() {
+  const res = await apiClient.get("/admin/recipes/pending");
+  return res.data;
+}
+
+export async function reviewAdminRecipe(id: string, approved: boolean) {
+  const res = await apiClient.patch(`/admin/recipes/${id}/review`, { approved });
   return res.data;
 }
 

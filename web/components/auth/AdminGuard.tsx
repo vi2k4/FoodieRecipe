@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { auth } from "@/lib/auth";
 
 export function AdminGuard({ children }: { children: ReactNode }) {
@@ -15,17 +14,19 @@ export function AdminGuard({ children }: { children: ReactNode }) {
     auth.bootstrap().then((session) => {
       if (!mounted) return;
       if (!session || session.user.role !== "ADMIN") {
-        router.replace("/login");
+        router.replace("/404");
         return;
       }
       setReady(true);
-    });
+    }).catch(() => router.replace("/404"));
     return () => {
       mounted = false;
     };
   }, [router]);
 
   if (!ready) {
+    return null;
+  /*
     return (
       <div className="grid min-h-screen place-items-center bg-[#1c1917]">
         <div className="flex flex-col items-center gap-3 text-stone-200">
@@ -34,6 +35,7 @@ export function AdminGuard({ children }: { children: ReactNode }) {
         </div>
       </div>
     );
+  */
   }
 
   return children;

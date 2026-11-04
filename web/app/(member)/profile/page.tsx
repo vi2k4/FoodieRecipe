@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,10 +17,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { auth, type AuthUser } from "@/lib/auth";
 import { profileSchema, type ProfileFormValues } from "@/lib/validations/profile";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 
-const cardClass = "rounded-3xl border-stone-200 bg-white shadow-[0_12px_40px_-24px_rgba(120,53,15,0.35)] dark:border-neutral-700 dark:bg-neutral-800";
+const cardClass = "rounded-3xl border-stone-200 bg-[#ffffff] shadow-[0_12px_40px_-24px_rgba(120,53,15,0.35)]";
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const { resolvedTheme } = useTheme();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -41,6 +45,28 @@ export default function ProfilePage() {
     loadProfile();
     return () => { mounted = false; };
   }, [reset]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const stats = Array.from(document.querySelectorAll("main.profile-page p")).filter(
+      (element) => element.textContent === "Người theo dõi" || element.textContent === "Đang theo dõi",
+    );
+    const cleanups = stats.map((label) => {
+      const target = label.parentElement;
+      if (!target) return () => undefined;
+      const path = label.textContent === "Người theo dõi" ? "followers" : "following";
+      target.classList.add("cursor-pointer", "transition", "hover:bg-white/40");
+      target.setAttribute("role", "link");
+      target.setAttribute("tabindex", "0");
+      const open = () => router.push(`/users/${user.id}?tab=${path}`);
+      target.addEventListener("click", open);
+      target.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") open();
+      });
+      return () => target.removeEventListener("click", open);
+    });
+    return () => cleanups.forEach((cleanup) => cleanup());
+  }, [router, user?.id]);
 
   async function submit(values: ProfileFormValues) {
     try {
@@ -74,8 +100,9 @@ export default function ProfilePage() {
 
   const initials = user.username.slice(0, 2).toUpperCase();
   const count = (user as any)?._count || {};
+  const profileThemeClass = resolvedTheme === "dark" ? "profile-dark" : "profile-light";
   return (
-    <main className="min-h-[calc(100vh-9rem)] bg-[#fffaf5] px-4 py-8 dark:bg-neutral-950 sm:px-6 lg:px-8">
+    <main className={`profile-page ${profileThemeClass} min-h-[calc(100vh-9rem)] bg-[#fffaf5] px-4 py-8 sm:px-6 lg:px-8`}>
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex items-end justify-between gap-4"><div><div className="mb-3 flex items-center gap-2 text-sm font-semibold text-orange-600"><Sparkles className="size-4" /> Khu vực cá nhân</div><h1 className="text-3xl font-black tracking-tight text-stone-900 sm:text-4xl">Hồ sơ của bạn</h1><p className="mt-2 max-w-xl text-sm leading-6 text-stone-500">Giữ thông tin của bạn luôn mới để cộng đồng FoodiRecipe hiểu bạn hơn.</p></div><ChefHat className="hidden size-14 text-orange-200 sm:block" /></div>
         <div className="grid gap-6 lg:grid-cols-[330px_minmax(0,1fr)]">

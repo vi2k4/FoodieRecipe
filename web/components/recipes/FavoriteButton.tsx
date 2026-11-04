@@ -86,8 +86,8 @@ export function FavoriteButton({
           loading ? "opacity-50 pointer-events-none" : ""
         } ${
           isFavorited
-            ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
-            : "bg-neutral-100/90 hover:bg-red-50 text-neutral-600 hover:text-red-500 border border-neutral-200/60"
+            ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 dark:bg-red-950/70 dark:text-red-300 dark:border-red-800 dark:hover:bg-red-900/80"
+            : "bg-white/95 hover:bg-red-50 text-neutral-600 hover:text-red-500 border border-neutral-200/70 shadow-sm dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700 dark:hover:bg-red-950/70 dark:hover:text-red-200 dark:hover:border-red-800"
         } ${className}`}
         title={isFavorited ? "Bỏ lưu công thức" : "Lưu công thức"}
       >
@@ -95,7 +95,7 @@ export function FavoriteButton({
           className={`w-4 h-4 transition-transform duration-200 ${
             isFavorited
               ? "fill-red-500 text-red-500 scale-110"
-              : "text-neutral-500 group-hover:text-red-500"
+              : "text-neutral-500 group-hover:text-red-500 dark:text-neutral-400 dark:group-hover:text-red-200"
           }`}
         />
         {showText && (

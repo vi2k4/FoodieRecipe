@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Users,
   BookOpen,
+  CheckCircle,
   Flag,
   Tag,
   Layers,
@@ -19,6 +20,7 @@ const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
   { label: "Người dùng", href: "/admin/users", icon: Users },
   { label: "Công thức", href: "/admin/recipes", icon: BookOpen },
+  { label: "Phê duyệt", href: "/admin/recipes/pending", icon: CheckCircle },
   { label: "Báo cáo", href: "/admin/reports", icon: Flag },
   { label: "Danh mục", href: "/admin/categories", icon: Layers },
   { label: "Tags", href: "/admin/tags", icon: Tag },
@@ -30,6 +32,9 @@ export function AdminSidebar() {
 
   const isActive = (href: string, exact?: boolean) => {
     if (exact) return pathname === href;
+    if (href === "/admin/recipes" && pathname.startsWith("/admin/recipes/pending")) {
+      return false;
+    }
     return pathname.startsWith(href);
   };
 

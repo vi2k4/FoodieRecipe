@@ -311,7 +311,7 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
 
             {/* Actions: Reply, Edit, Delete */}
             {!isEditing && (
-              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-neutral-200/40 pt-2 text-xs font-medium text-neutral-500">
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 pt-2 text-xs font-medium text-neutral-500">
                 <button
                   type="button"
                   onClick={() => handleReplyClick(comment)}
@@ -490,7 +490,7 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
           </div>
         ) : (
           <>
-            <div className="space-y-6 divide-y divide-neutral-100">
+            <div className="space-y-6">
               {comments.map((comment) => renderCommentItem(comment))}
             </div>
 

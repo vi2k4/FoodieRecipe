@@ -248,7 +248,12 @@ export class RecipesService {
   }
 
   async create(userId: bigint, dto: CreateRecipeDto) {
-    if (!dto.thumbnail?.trim()) {
+    const creator = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    const isAdmin = creator?.role === 'ADMIN';
+    if (process.env.NODE_ENV === 'production' && !dto.thumbnail?.trim()) {
       throw new BadRequestException('Ảnh món ăn là bắt buộc!');
     }
     if (
@@ -285,7 +290,8 @@ export class RecipesService {
         servings: dto.servings ? Math.max(1, Number(dto.servings)) : 4,
         thumbnail: this.normalizeStoredImage(dto.thumbnail),
         source: dto.source,
-        isPublic: dto.isPublic !== undefined ? dto.isPublic : true,
+        // User-submitted recipes must be approved by an admin first.
+        isPublic: isAdmin ? (dto.isPublic !== undefined ? dto.isPublic : true) : false,
       },
       include: {
         author: {
