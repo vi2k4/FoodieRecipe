@@ -64,7 +64,7 @@ export default function AdminRecipesPage() {
     setActionId(recipe.id);
     try {
       await apiClient.patch(`/admin/recipes/${recipe.id}`, { isPublic: !recipe.isPublic });
-      toast.success(recipe.isPublic ? `Đã ẩn công thức "${recipe.title}"` : `Đã hiện công thức "${recipe.title}"`);
+      toast.success(recipe.isPublic ? `Đã ẩn công thức "${recipe.title}"` : `Đã phê duyệt công thức "${recipe.title}"`);
       setRecipes((prev) =>
         prev.map((r) => (r.id === recipe.id ? { ...r, isPublic: !r.isPublic } : r))
       );
@@ -198,7 +198,7 @@ export default function AdminRecipesPage() {
                       {recipe.isPublic ? (
                         <><EyeOff className="h-3.5 w-3.5" /> Ẩn</>
                       ) : (
-                        <><Eye className="h-3.5 w-3.5" /> Hiện</>
+                        <><Eye className="h-3.5 w-3.5" /> Phê duyệt</>
                       )}
                     </button>
                     <button

@@ -139,7 +139,7 @@ export function LikeButton({
         } ${
           liked
             ? "bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/20 hover:bg-blue-700"
-            : "bg-neutral-100/90 text-neutral-600 hover:bg-blue-50 hover:text-blue-600 border border-neutral-200/60"
+            : "bg-white/95 text-neutral-600 hover:bg-blue-50 hover:text-blue-600 border border-neutral-200/70 shadow-sm dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700 dark:hover:bg-blue-950/70 dark:hover:text-blue-200 dark:hover:border-blue-800"
         } ${className}`}
         title={liked ? "Bỏ thích công thức" : "Thích công thức"}
       >
@@ -147,7 +147,7 @@ export function LikeButton({
           className={`w-3.5 h-3.5 transition-transform duration-200 ${
             liked
               ? "fill-white text-white scale-110"
-              : "text-neutral-500 group-hover:text-blue-600"
+              : "text-neutral-500 group-hover:text-blue-600 dark:text-neutral-400 dark:group-hover:text-blue-200"
           }`}
         />
         <span>{count}</span>

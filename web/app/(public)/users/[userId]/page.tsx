@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { socialApi } from "@/lib/social-api";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { LikeButton } from "@/components/recipes/LikeButton";
 import { FollowButton } from "@/components/recipes/FollowButton";
+import { useTheme } from "next-themes";
 
 interface Recipe {
   id: number;
@@ -65,11 +66,20 @@ interface FollowUser {
 }
 
 export default function UserProfilePage() {
+  const { resolvedTheme } = useTheme();
   const params = useParams();
+  const searchParams = useSearchParams();
   const userId = params?.userId as string;
   
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState<"recipes" | "about" | "followers" | "following">("recipes");
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "followers" || tab === "following" || tab === "about" || tab === "recipes") {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   // Track follow status of users in followers/following list
   const [followedUsers, setFollowedUsers] = useState<Record<number, boolean>>({});
@@ -174,6 +184,7 @@ export default function UserProfilePage() {
 
   const followers = followersQuery.data || [];
   const following = followingQuery.data || [];
+  const profileThemeClass = resolvedTheme === "dark" ? "profile-dark" : "profile-light";
 
   // Format joined date
   const joinedDate = new Date(profile.createdAt).toLocaleDateString("vi-VN", {
@@ -182,7 +193,7 @@ export default function UserProfilePage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#fffaf5] py-12 px-4 sm:px-6 lg:px-8">
+    <div className={`public-profile ${profileThemeClass} min-h-screen bg-[#fffaf5] py-12 px-4 sm:px-6 lg:px-8`}>
       <div className="max-w-5xl mx-auto">
         {/* Breadcrumb */}
         <nav className="flex mb-8 text-sm text-neutral-500 items-center gap-2">
@@ -265,7 +276,7 @@ export default function UserProfilePage() {
               className="flex items-center gap-2 pb-4 text-sm font-semibold border-b-2 border-transparent data-[state=active]:border-orange-600 data-[state=active]:text-orange-600 text-neutral-500 hover:text-neutral-700 bg-transparent rounded-none shadow-none p-0"
             >
               <BookOpen className="w-4 h-4" />
-              Công thức của tôi ({profile.recipes?.length || 0})
+              Công thức của {profileName} ({profile.recipes?.length || 0})
             </TabsTrigger>
             
             <TabsTrigger

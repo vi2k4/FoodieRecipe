@@ -17,6 +17,16 @@ export function Providers({ children }: { children: ReactNode }) {
       })
   );
 
+  useState(() => {
+    if (typeof window === 'undefined') return null;
+    const savedTheme = window.localStorage.getItem('theme') || 'light';
+    const root = document.documentElement;
+    root.classList.toggle('dark', savedTheme === 'dark');
+    root.classList.toggle('light', savedTheme !== 'dark');
+    root.style.colorScheme = savedTheme === 'dark' ? 'dark' : 'light';
+    return null;
+  });
+
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>

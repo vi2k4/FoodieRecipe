@@ -1,9 +1,46 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { UserRole } from '../../generated/prisma/client';
+import { NotificationsService } from '../social/notifications/notifications.service';
+import { NotificationType } from '../../generated/prisma/client';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
+
+  async getPendingRecipes() {
+    return this.prisma.recipe.findMany({
+      where: { isPublic: false, deletedAt: null },
+      orderBy: { createdAt: 'asc' },
+      include: { author: { select: { id: true, username: true, email: true, avatarUrl: true } }, category: true },
+    });
+  }
+
+  async reviewRecipe(id: bigint, approved: boolean) {
+    const recipe = await this.prisma.recipe.findFirst({
+      where: { id, isPublic: false, deletedAt: null },
+      include: { author: { select: { id: true, username: true } } },
+    });
+    if (!recipe) throw new NotFoundException('Không tìm thấy công thức đang chờ duyệt');
+
+    const result = approved
+      ? await this.prisma.recipe.update({ where: { id }, data: { isPublic: true } })
+      : await this.prisma.recipe.update({ where: { id }, data: { deletedAt: new Date() } });
+
+    await this.notificationsService.createNotification({
+      userId: recipe.author.id,
+      title: approved ? 'Công thức đã được phê duyệt' : 'Công thức chưa được phê duyệt',
+      content: approved
+        ? `Công thức "${recipe.title}" đã được đăng công khai.`
+        : `Công thức "${recipe.title}" đã bị từ chối bởi quản trị viên.`,
+      type: NotificationType.SYSTEM,
+      referenceId: recipe.id,
+    });
+    return result;
+  }
 
   async getUsers(search?: string, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
@@ -48,6 +85,18 @@ export class AdminService {
       where: { id },
       data: { isLocked },
     });
+  }
+
+  async updateUserRole(id: bigint, role: UserRole, requesterId: bigint) {
+    if (!Object.values(UserRole).includes(role)) {
+      throw new BadRequestException('Role không hợp lệ');
+    }
+    if (id === requesterId) {
+      throw new ForbiddenException('Không thể tự thay đổi role của chính mình');
+    }
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
+    return this.prisma.user.update({ where: { id }, data: { role } });
   }
 
   async deleteUser(id: bigint) {

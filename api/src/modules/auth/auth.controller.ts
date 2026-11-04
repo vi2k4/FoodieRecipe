@@ -145,7 +145,7 @@ export class AuthController {
   private setRefreshCookie(response: Response, refreshToken: string) {
     response.cookie(this.refreshCookieName, refreshToken, {
       ...this.cookieOptions(),
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     });
   }
 

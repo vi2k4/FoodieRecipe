@@ -34,7 +34,7 @@ export default function CreateRecipePage() {
     { name: "", amount: "", unit: "" },
   ]);
   const [steps, setSteps] = useState([""]);
-  const [isPublic, setIsPublic] = useState(true);
+  const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -125,7 +125,8 @@ export default function CreateRecipePage() {
       return;
     }
 
-    if (!imageUrl.trim()) {
+    const isLocalhost = typeof window !== "undefined" && ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+    if (!imageUrl.trim() && !isLocalhost) {
       alert("Vui lòng tải lên ảnh món ăn trước khi tạo công thức!");
       return;
     }

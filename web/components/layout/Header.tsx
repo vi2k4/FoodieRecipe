@@ -7,7 +7,6 @@ import {
   BookOpen,
   ChefHat as ChefHatIcon,
   Heart,
-  Home,
   LogOut,
   Menu,
   Sparkles,
@@ -16,6 +15,7 @@ import {
   Moon,
   Sun,
   Search,
+  Shield,
 } from "lucide-react";
 import { ChefHat } from "@phosphor-icons/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -52,11 +52,17 @@ function ThemeToggle() {
 export function Header() {
   const router = useRouter();
   const pathname = usePathname();
+  const { resolvedTheme } = useTheme();
+  const [themeMounted, setThemeMounted] = useState(false);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    setThemeMounted(true);
+  }, []);
 
   useEffect(() => {
     const syncSession = () => {
@@ -83,9 +89,9 @@ export function Header() {
   if (pathname?.startsWith("/admin")) return null;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-orange-100 bg-white/80 backdrop-blur-md dark:border-neutral-700 dark:bg-neutral-900/90">
+    <header className={`sticky top-0 z-50 w-full border-b backdrop-blur-md ${themeMounted && resolvedTheme === "light" ? "header-light !border-orange-100 !bg-white/80" : "border-orange-100 bg-white/80 dark:border-neutral-700 dark:bg-neutral-900/90"}`}>
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="brand-logo flex items-center gap-2">
           <ChefHat
             size={26}
             weight="duotone"
@@ -157,7 +163,7 @@ export function Header() {
                   {session.user.username}
                 </span>
               </button>
-              {profileMenuOpen && <div className="absolute right-0 top-12 z-50 w-52 rounded-2xl border border-orange-100 bg-white p-2 shadow-xl dark:border-neutral-700 dark:bg-neutral-900"><Link href="/profile" onClick={() => setProfileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-orange-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><UserRound className="size-4" />Hồ sơ cá nhân</Link><Link href="/my-recipes" onClick={() => setProfileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-orange-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><ChefHatIcon className="size-4" />Công thức của tôi</Link><button type="button" onClick={logout} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"><LogOut className="size-4" />Đăng xuất</button></div>}
+              {profileMenuOpen && <div className="absolute right-0 top-12 z-50 w-52 rounded-2xl border border-orange-100 bg-white p-2 shadow-xl dark:border-neutral-700 dark:bg-neutral-900"><Link href="/profile" onClick={() => setProfileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-orange-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><UserRound className="size-4" />Hồ sơ cá nhân</Link><Link href="/my-recipes" onClick={() => setProfileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-orange-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><ChefHatIcon className="size-4" />Công thức của tôi</Link>{session.user.role === "ADMIN" && <Link href="/admin" onClick={() => setProfileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-orange-600 hover:bg-orange-50"><Shield className="size-4" />Quản trị Admin</Link>}<button type="button" onClick={logout} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"><LogOut className="size-4" />Đăng xuất</button></div>}
               </div>
               <button
                 type="button"
@@ -218,7 +224,6 @@ export function Header() {
           <div className="absolute inset-x-0 top-16 z-50 border-t border-orange-100 bg-white px-4 pb-5 pt-3 shadow-xl dark:border-neutral-700 dark:bg-neutral-900 md:hidden">
             <nav className="space-y-1" aria-label="Điều hướng chính">
               {[
-                { href: "/", label: "Trang chủ", icon: Home },
                 { href: "/recipes", label: "Công thức", icon: BookOpen },
                 { href: "/ai-generator", label: "Tủ lạnh AI", icon: Sparkles },
                 ...(session

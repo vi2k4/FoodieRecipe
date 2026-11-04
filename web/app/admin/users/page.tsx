@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Search, Lock, Unlock, Trash2, Shield, User } from "lucide-react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
-import { getAdminUsers, toggleUserLock, deleteAdminUser } from "@/lib/admin-api";
+import { getAdminUsers, toggleUserLock, updateAdminUserRole, deleteAdminUser } from "@/lib/admin-api";
 import { toast } from "sonner";
 
 type UserData = {
@@ -73,6 +73,20 @@ export default function AdminUsersPage() {
       setUsers((prev) => prev.filter((u) => u.id !== user.id));
     } catch {
       toast.error("Không thể xóa người dùng");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleRoleChange = async (user: UserData, role: "USER" | "ADMIN") => {
+    if (role === user.role) return;
+    setActionId(user.id);
+    try {
+      await updateAdminUserRole(user.id, role);
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, role } : u)));
+      toast.success(`Đã cập nhật role cho ${user.username}`);
+    } catch {
+      toast.error("Không thể thay đổi role người dùng");
     } finally {
       setActionId(null);
     }
@@ -181,6 +195,16 @@ export default function AdminUsersPage() {
                             {user.role === "ADMIN" && <Shield className="h-3 w-3" />}
                             {user.role}
                           </span>
+                          <select
+                            value={user.role}
+                            onChange={(event) => handleRoleChange(user, event.target.value as "USER" | "ADMIN")}
+                            disabled={actionId === user.id}
+                            aria-label={`Thay đổi role cho ${user.username}`}
+                            className="mt-2 rounded-lg border px-2 py-1 text-xs outline-none"
+                          >
+                            <option value="USER">USER</option>
+                            <option value="ADMIN">ADMIN</option>
+                          </select>
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell" style={{ color: "var(--text-secondary)" }}>
                           {new Date(user.createdAt).toLocaleDateString("vi-VN")}
