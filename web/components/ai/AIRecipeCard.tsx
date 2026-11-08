@@ -73,10 +73,10 @@ export default function AIRecipeCard() {
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm p-6 w-full max-w-xl">
+    <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-sm dark:bg-[#29211d] dark:text-stone-100">
       <h1 className="flex items-center gap-2 text-2xl font-bold"><Sparkle size={26} weight="duotone" className="text-orange-500" aria-hidden="true" /> Quét tủ lạnh — AI gợi ý món ăn</h1>
 
-      <p className="text-gray-500 mt-2">
+      <p className="mt-2 text-gray-500 dark:text-stone-300">
         Chụp ảnh nguyên liệu bạn có, hệ thống tự nhận diện và sáng tạo công thức
         hoàn chỉnh.
       </p>

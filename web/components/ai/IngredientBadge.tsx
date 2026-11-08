@@ -14,6 +14,8 @@ export default function IngredientBadge({ ingredient }: Props) {
       py-2
       text-orange-700
       font-medium
+      dark:bg-orange-950/70
+      dark:text-orange-200
       "
     >
       {ingredient.name} • {ingredient.confidence}%

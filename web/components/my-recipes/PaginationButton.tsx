@@ -28,7 +28,7 @@ export default function PaginationButton({
         ${
           active
             ? "border-orange-500 bg-orange-500 text-white"
-            : "border-gray-300 bg-white text-gray-700 hover:border-orange-400 hover:text-orange-500"
+            : "border-gray-300 bg-white text-gray-700 hover:border-orange-400 hover:text-orange-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200"
         }
 
         ${disabled ? "cursor-not-allowed opacity-40" : ""}

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { ContentSkeleton } from "@/components/ui/loading-skeletons";
 
 export function AdminGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -25,17 +26,7 @@ export function AdminGuard({ children }: { children: ReactNode }) {
   }, [router]);
 
   if (!ready) {
-    return null;
-  /*
-    return (
-      <div className="grid min-h-screen place-items-center bg-[#1c1917]">
-        <div className="flex flex-col items-center gap-3 text-stone-200">
-          <Loader2 className="size-8 animate-spin text-orange-500" />
-          <p className="text-sm font-medium">Đang xác thực quyền truy cập...</p>
-        </div>
-      </div>
-    );
-  */
+    return <div className="mx-auto min-h-screen max-w-3xl px-6 py-16"><ContentSkeleton /></div>;
   }
 
   return children;

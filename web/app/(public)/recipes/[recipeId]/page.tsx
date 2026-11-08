@@ -13,6 +13,7 @@ import { FavoriteButton } from '@/components/recipes/FavoriteButton';
 import { LikeButton } from '@/components/recipes/LikeButton';
 import { FollowButton } from '@/components/recipes/FollowButton';
 import { ReportButton } from '@/components/recipes/ReportButton';
+import { ContentSkeleton } from '@/components/ui/loading-skeletons';
 
 export default function RecipeDetailPage() {
   const { user } = useAuth();
@@ -68,9 +69,8 @@ export default function RecipeDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-neutral-500">
-        <div className="text-4xl mb-3 animate-bounce">⏳</div>
-        <p className="font-medium text-lg">Đang tải chi tiết công thức...</p>
+      <div className="mx-auto min-h-[60vh] max-w-4xl px-4 py-12">
+        <ContentSkeleton />
       </div>
     );
   }

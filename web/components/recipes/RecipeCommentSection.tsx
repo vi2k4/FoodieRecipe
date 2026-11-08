@@ -13,6 +13,7 @@ import {
   Loader2,
   CornerDownRight,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { socialApi } from "@/lib/social-api";
 import { auth } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -474,9 +475,17 @@ export function RecipeCommentSection({ recipeId }: RecipeCommentSectionProps) {
 
         {/* Comments List */}
         {isLoading ? (
-          <div className="text-center py-10 text-neutral-400 space-y-2">
-            <Loader2 className="w-6 h-6 animate-spin mx-auto text-orange-500" />
-            <p className="text-xs">Đang tải bình luận...</p>
+          <div aria-busy="true" aria-label="Đang tải bình luận" className="space-y-4 py-6">
+            {Array.from({ length: 3 }, (_, index) => (
+              <div key={index} className="flex gap-3">
+                <Skeleton className="size-8 shrink-0 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-3/5" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : comments.length === 0 ? (
           <div className="text-center py-12 bg-neutral-50/50 border border-dashed border-neutral-200 rounded-2xl p-6">

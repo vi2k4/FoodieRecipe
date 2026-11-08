@@ -10,6 +10,7 @@ import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { Recipe, RecipeCategory } from "@/types/recipe";
 import { BookOpenText, BowlFood, Plus } from "@phosphor-icons/react";
+import { RecipeGridSkeleton } from "@/components/ui/loading-skeletons";
 
 interface FilterValues {
   keyword: string;
@@ -147,7 +148,7 @@ export default function MyRecipesPage() {
         const errorMsg =
           err instanceof Error
             ? err.message
-            : "Failed to load recipes. Please try again.";
+            : "Không thể tải công thức. Vui lòng thử lại.";
         console.error("Failed to fetch my recipes:", err);
         setError(errorMsg);
       } finally {
@@ -187,18 +188,18 @@ export default function MyRecipesPage() {
   const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
+    <main className="min-h-screen bg-gradient-to-b from-orange-50 to-white dark:from-[#171311] dark:to-[#211b18]">
       <div className="mx-auto max-w-7xl px-4 py-8 pb-24">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="flex items-center gap-3 text-4xl font-bold">
               <BookOpenText size={36} weight="duotone" className="text-orange-500" aria-hidden="true" />
-              My Recipe Collection
+              Bộ sưu tập công thức
             </h1>
 
-            <p className="mt-2 text-gray-500">
-              Manage all your personal recipes in one place.
+            <p className="mt-2 text-gray-500 dark:text-stone-300">
+              Quản lý tất cả công thức của bạn tại một nơi.
             </p>
           </div>
 
@@ -208,7 +209,7 @@ export default function MyRecipesPage() {
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-medium text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600"
           >
             <Plus size={20} weight="bold" aria-hidden="true" />
-            Create Recipe
+            Tạo công thức
           </button>
         </div>
 
@@ -227,22 +228,16 @@ export default function MyRecipesPage() {
           {/* Recipes */}
           <section className="xl:col-span-9">
             {loading ? (
-              <div className="flex min-h-[50vh] flex-col items-center justify-center rounded-3xl border border-orange-100 bg-white p-12 text-center">
-                <div className="mb-4 animate-bounce text-4xl">⏳</div>
-
-                <p className="font-medium text-gray-600">
-                  Đang tải công thức của bạn...
-                </p>
-              </div>
+              <RecipeGridSkeleton count={PAGE_SIZE} />
             ) : error ? (
-              <div className="space-y-4 rounded-3xl border border-orange-100 bg-white p-16 text-center">
+              <div className="space-y-4 rounded-3xl border border-orange-100 bg-white p-16 text-center dark:border-orange-900 dark:bg-[#29211d]">
                 <div className="text-5xl">!</div>
 
-                <h3 className="text-xl font-bold text-gray-800">
-                  Failed to load recipes
+                <h3 className="text-xl font-bold text-gray-800 dark:text-stone-100">
+                  Không thể tải công thức
                 </h3>
 
-                <p className="mx-auto max-w-md text-sm text-gray-500">
+                <p className="mx-auto max-w-md text-sm text-gray-500 dark:text-stone-300">
                   {error}
                 </p>
 
@@ -251,21 +246,21 @@ export default function MyRecipesPage() {
                   onClick={() => fetchRecipes(page)}
                   className="rounded-xl bg-orange-50 px-5 py-2.5 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-100"
                 >
-                  Try Again
+                  Thử lại
                 </button>
               </div>
             ) : recipes.length === 0 ? (
-              <div className="space-y-4 rounded-3xl border border-orange-100 bg-white p-16 text-center">
+              <div className="space-y-4 rounded-3xl border border-orange-100 bg-white p-16 text-center dark:border-orange-900 dark:bg-[#29211d]">
                   <BowlFood size={60} weight="duotone" className="mx-auto text-orange-400" aria-label="No image" />
 
-                <h3 className="text-xl font-bold text-gray-800">
-                  No recipes found
+                <h3 className="text-xl font-bold text-gray-800 dark:text-stone-100">
+                  Không tìm thấy công thức
                 </h3>
 
-                <p className="mx-auto max-w-md text-sm text-gray-500">
+                <p className="mx-auto max-w-md text-sm text-gray-500 dark:text-stone-300">
                   {filters.keyword || filters.categoryId || filters.visibility
-                    ? "Try changing your search filters to find more recipes."
-                    : "You haven't created any recipes yet. Click Create Recipe to get started!"}
+                    ? "Hãy thử thay đổi bộ lọc tìm kiếm."
+                    : "Bạn chưa tạo công thức nào. Nhấn Tạo công thức để bắt đầu!"}
                 </p>
 
                 {(filters.keyword ||
@@ -280,23 +275,23 @@ export default function MyRecipesPage() {
                     onClick={handleReset}
                     className="rounded-xl bg-orange-50 px-5 py-2.5 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-100"
                   >
-                    Clear all filters
+                    Xóa tất cả bộ lọc
                   </button>
                 )}
               </div>
             ) : (
               <>
-                <div className="mb-4 text-sm font-medium text-gray-600">
-                  Showing{" "}
-                  <span className="font-bold text-gray-900">
+                <div className="mb-4 text-sm font-medium text-gray-600 dark:text-stone-300">
+                  Hiển thị{" "}
+                  <span className="font-bold text-gray-900 dark:text-stone-100">
                     {recipes.length > 0 ? (page - 1) * PAGE_SIZE + 1 : 0}
                   </span>{" "}
                   -{" "}
-                  <span className="font-bold text-gray-900">
+                  <span className="font-bold text-gray-900 dark:text-stone-100">
                     {Math.min(page * PAGE_SIZE, total)}
                   </span>{" "}
                   of <span className="font-bold text-orange-600">{total}</span>{" "}
-                  recipes
+                  công thức
                 </div>
 
                 <RecipeGrid recipes={recipes} />

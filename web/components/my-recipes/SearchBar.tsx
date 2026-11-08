@@ -9,7 +9,7 @@ export default function SearchBar() {
       />
 
       <input
-        placeholder="Search recipes..."
+        placeholder="Tìm kiếm công thức..."
         className="w-full rounded-xl border bg-white py-4 pl-12 pr-4 outline-none focus:border-orange-500"
       />
     </div>

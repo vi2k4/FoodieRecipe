@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Eye, Flame, Clock, ArrowRight } from "lucide-react";
 import { LikeButton } from "@/components/recipes/LikeButton";
+import { DifficultyDot } from "@/components/recipes/DifficultyDot";
 
 type Recipe = any;
 
@@ -40,8 +41,8 @@ export function RecipeSection({
             <div className="relative h-32 overflow-hidden bg-neutral-100 sm:h-48">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={recipe.thumbnail || "/file.svg"} alt={recipe.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-orange-600 backdrop-blur-sm">
-                {recipe.difficulty === "EASY" ? "Dễ" : recipe.difficulty === "MEDIUM" ? "Trung bình" : "Khó"}
+              <div className="absolute left-3 top-3">
+                <DifficultyDot difficulty={recipe.difficulty} />
               </div>
               {hot && (
                 <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-orange-700 px-2.5 py-1 text-xs font-bold text-white shadow-md shadow-orange-900/20">

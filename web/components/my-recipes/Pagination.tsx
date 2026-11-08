@@ -81,14 +81,14 @@ export default function Pagination({ page, totalPages, onPageChange }: Props) {
 
       {/* Mobile */}
 
-      <div className="flex w-full items-center justify-between rounded-xl border bg-white p-4 md:hidden">
+      <div className="flex w-full items-center justify-between rounded-xl border bg-white p-4 dark:border-stone-700 dark:bg-stone-900 md:hidden">
         <button
           disabled={page === 1}
           onClick={() => onPageChange(page - 1)}
           className="flex items-center gap-2 disabled:opacity-40"
         >
           <ChevronLeft size={18} />
-          Previous
+          Trước
         </button>
 
         <span className="font-semibold">
@@ -100,7 +100,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Props) {
           onClick={() => onPageChange(page + 1)}
           className="flex items-center gap-2 disabled:opacity-40"
         >
-          Next
+          Sau
           <ChevronRight size={18} />
         </button>
       </div>

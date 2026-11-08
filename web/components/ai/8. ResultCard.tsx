@@ -15,6 +15,8 @@ export default function ResultCard({ recipe }: Props) {
         mt-6
         rounded-3xl
         bg-green-50
+        dark:bg-green-950/40
+        dark:text-stone-100
         p-5
       "
     >
@@ -23,12 +25,12 @@ export default function ResultCard({ recipe }: Props) {
       <p className="mt-2 font-semibold">{recipe.title}</p>
 
       {recipe.description && (
-        <p className="text-gray-600 mt-2 text-sm line-clamp-3">
+        <p className="mt-2 line-clamp-3 text-sm text-gray-600 dark:text-stone-300">
           {recipe.description}
         </p>
       )}
 
-      <div className="mt-3 flex flex-wrap gap-3 text-sm text-gray-500">
+      <div className="mt-3 flex flex-wrap gap-3 text-sm text-gray-500 dark:text-stone-300">
         {recipe.nutrition?.calories != null && (
           <span>{recipe.nutrition.calories} kcal</span>
         )}

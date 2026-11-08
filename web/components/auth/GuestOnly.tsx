@@ -3,8 +3,8 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { auth } from "@/lib/auth";
+import { ContentSkeleton } from "@/components/ui/loading-skeletons";
 
 export function GuestOnly({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -24,7 +24,7 @@ export function GuestOnly({ children }: { children: ReactNode }) {
   }, [router]);
 
   if (!ready) {
-    return <div className="grid min-h-[calc(100vh-9rem)] place-items-center bg-[#fffaf5]"><Loader2 className="size-7 animate-spin text-orange-500" /></div>;
+    return <div className="mx-auto min-h-[calc(100vh-9rem)] max-w-3xl px-6 py-16"><ContentSkeleton /></div>;
   }
   return children;
 }

@@ -9,6 +9,7 @@ import { Check, Hash } from "lucide-react";
 import { Globe, LockKey } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { ImageUploader } from "@/components/ui/ImageUploader";
+import { ContentSkeleton } from "@/components/ui/loading-skeletons";
 
 export default function EditRecipePage() {
   const { user } = useAuth();
@@ -347,11 +348,8 @@ export default function EditRecipePage() {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-neutral-500">
-        <div className="text-4xl mb-3 animate-bounce">⏳</div>
-        <p className="font-medium text-lg">
-          Đang chuẩn bị thông tin công thức...
-        </p>
+      <div className="mx-auto min-h-[60vh] max-w-4xl px-4 py-12">
+        <ContentSkeleton />
       </div>
     );
   }

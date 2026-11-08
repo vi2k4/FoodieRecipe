@@ -30,7 +30,7 @@ export default function UpdateButton({ recipeId }: Props) {
         "
       >
         <Pencil size={20} />
-        Update Recipe
+        Chỉnh sửa công thức
       </Link>
     </div>
   );

@@ -7,7 +7,6 @@ import { socialApi } from "@/lib/social-api";
 import { auth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Heart, 
@@ -21,6 +20,7 @@ import {
   ThumbsUp
 } from "lucide-react";
 import { LikeButton } from "@/components/recipes/LikeButton";
+import { DifficultyDot } from "@/components/recipes/DifficultyDot";
 
 interface Recipe {
   id: number;
@@ -178,9 +178,9 @@ export default function FavoritesPage() {
                     alt={recipe.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <Badge className="absolute top-4 left-4 bg-orange-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm hover:bg-orange-700 border-none">
-                    {recipe.difficulty === "EASY" ? "Dễ" : recipe.difficulty === "MEDIUM" ? "Vừa" : "Khó"}
-                  </Badge>
+                  <div className="absolute left-4 top-4">
+                    <DifficultyDot difficulty={recipe.difficulty} />
+                  </div>
                 </div>
 
                 {/* Card Content */}

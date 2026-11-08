@@ -17,6 +17,7 @@ import {
   Clock
 } from "lucide-react";
 import { socialApi } from "@/lib/social-api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface NotificationItem {
   id: number | string;
@@ -160,9 +161,16 @@ export default function NotificationsPage() {
 
         {/* List */}
         {isLoading ? (
-          <div className="text-center py-20 bg-white rounded-3xl border border-neutral-100 p-8 shadow-sm">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
-            <p className="mt-4 text-neutral-500">Đang tải thông báo...</p>
+          <div aria-busy="true" aria-label="Đang tải thông báo" className="space-y-4 rounded-3xl border border-neutral-100 bg-white p-8 shadow-sm">
+            {Array.from({ length: 5 }, (_, index) => (
+              <div key={index} className="flex items-center gap-4">
+                <Skeleton className="size-10 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-2/5" />
+                  <Skeleton className="h-3 w-4/5" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : notifications.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-neutral-100 p-8 shadow-sm">

@@ -49,6 +49,8 @@ export default function UploadBox({
           justify-center
           cursor-pointer
           hover:bg-orange-50
+          dark:border-orange-700
+          dark:hover:bg-orange-950/40
           transition
           overflow-hidden
           disabled:opacity-60
@@ -67,7 +69,7 @@ export default function UploadBox({
         ) : (
           <div className="text-center px-6">
             <div className="flex items-center gap-2 text-orange-400"><Carrot size={48} weight="duotone" /><AppleLogo size={48} weight="duotone" className="text-red-400" /><Egg size={48} weight="duotone" className="text-yellow-500" /></div>
-            <p className="mt-3 text-sm text-gray-500">
+            <p className="mt-3 text-sm text-gray-500 dark:text-stone-300">
               Nhấn để chọn ảnh nguyên liệu
             </p>
           </div>

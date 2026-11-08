@@ -10,6 +10,7 @@ import { ArrowRight, Camera, CheckCircle2, ChefHat, Heart, ImagePlus, Loader2, L
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ContentSkeleton } from "@/components/ui/loading-skeletons";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -95,7 +96,7 @@ export default function ProfilePage() {
 
   function closePasswordDialog(open: boolean) { setPasswordOpen(open); if (!open && !changingPassword) setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" }); }
 
-  if (loading) return <main className="grid min-h-[calc(100vh-9rem)] place-items-center bg-[#fffaf5]"><div className="flex flex-col items-center gap-3 text-stone-500"><Loader2 className="size-8 animate-spin text-orange-500" /><p className="text-sm">Đang tải hồ sơ của bạn...</p></div></main>;
+  if (loading) return <main className="mx-auto min-h-[calc(100vh-9rem)] max-w-3xl bg-[#fffaf5] px-5 py-16"><ContentSkeleton /></main>;
   if (!user) return <main className="grid min-h-[calc(100vh-9rem)] place-items-center bg-[#fffaf5] px-5"><Card className={`${cardClass} max-w-md text-center`}><CardContent className="p-8"><UserRound className="mx-auto size-12 text-orange-500" /><h1 className="mt-4 text-xl font-bold">Bạn chưa đăng nhập</h1><p className="mt-2 text-sm text-stone-500">Đăng nhập để xem và chỉnh sửa hồ sơ của bạn.</p><Link href="/login" className="mt-6 inline-flex h-10 items-center rounded-xl bg-orange-500 px-5 text-sm font-semibold text-white hover:bg-orange-600">Đăng nhập</Link></CardContent></Card></main>;
 
   const initials = user.username.slice(0, 2).toUpperCase();

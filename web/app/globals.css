@@ -3,6 +3,39 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    #ffedd5 0%,
+    #fff7ed 35%,
+    #ffffff 50%,
+    #fff7ed 65%,
+    #ffedd5 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+.dark .skeleton-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    #29211d 0%,
+    #3a2f29 35%,
+    #514039 50%,
+    #3a2f29 65%,
+    #29211d 100%
+  );
+}
+
 @layer base {
   :root {
     --primary: #f97316;

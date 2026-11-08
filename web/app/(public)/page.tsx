@@ -6,6 +6,7 @@ import { api } from "@/lib/api-client";
 import { BowlFood } from "@phosphor-icons/react";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { RecipeSection } from "@/components/home/RecipeSection";
+import { RecipeGridSkeleton } from "@/components/ui/loading-skeletons";
 
 export default function PublicHomePage() {
   const [recipes, setRecipes] = useState<any[]>([]);
@@ -69,10 +70,7 @@ export default function PublicHomePage() {
 
       <section>
         {loading ? (
-          <div className="rounded-2xl border border-neutral-100 bg-white p-12 text-center text-neutral-500">
-            <div className="mb-2 animate-bounce text-3xl">⏳</div>
-            <p>Đang tải các công thức mới nhất...</p>
-          </div>
+          <RecipeGridSkeleton />
         ) : recipes.length === 0 ? (
           <div className="rounded-2xl border border-neutral-100 bg-white p-12 text-center text-neutral-500">
             <BowlFood

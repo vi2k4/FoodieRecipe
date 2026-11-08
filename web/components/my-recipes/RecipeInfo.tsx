@@ -25,50 +25,50 @@ export default function RecipeInfo({ recipe }: Props) {
 
   const diffLabel =
     recipe.difficulty === "EASY"
-      ? "Easy"
+      ? "Dễ"
       : recipe.difficulty === "MEDIUM"
-        ? "Medium"
+        ? "Trung bình"
         : recipe.difficulty === "HARD"
-          ? "Hard"
-          : recipe.difficulty || "Easy";
+          ? "Khó"
+          : recipe.difficulty || "Dễ";
 
   return (
     <section className="mt-8">
       <VisibilityBadge visibility={visibility} />
 
       <h1 className="mt-4 text-3xl md:text-4xl font-bold">
-        {recipe.title || "Untitled Recipe"}
+        {recipe.title || "Công thức chưa đặt tên"}
       </h1>
 
       {recipe.description && (
-        <p className="mt-4 text-gray-500 leading-relaxed">
+        <p className="mt-4 leading-relaxed text-gray-500 dark:text-stone-300">
           {recipe.description}
         </p>
       )}
 
       <div className="mt-8 grid gap-5 grid-cols-2 md:grid-cols-4">
-        <div className="rounded-xl bg-white p-5 shadow-sm border border-orange-100">
+        <div className="rounded-xl border border-orange-100 bg-white p-5 shadow-sm dark:border-orange-900 dark:bg-[#29211d]">
           <Fire className="text-orange-500" size={22} weight="duotone" />
-          <h3 className="mt-3 text-sm text-gray-500">Calories</h3>
+          <h3 className="mt-3 text-sm text-gray-500 dark:text-stone-400">Calo</h3>
           <p className="font-bold text-lg">{recipe.calories ?? "—"} kcal</p>
         </div>
 
-        <div className="rounded-xl bg-white p-5 shadow-sm border border-orange-100">
+        <div className="rounded-xl border border-orange-100 bg-white p-5 shadow-sm dark:border-orange-900 dark:bg-[#29211d]">
           <Clock className="text-orange-500" size={22} weight="duotone" />
-          <h3 className="mt-3 text-sm text-gray-500">Cooking</h3>
-          <p className="font-bold text-lg">{recipe.cookTime ?? "—"} mins</p>
+          <h3 className="mt-3 text-sm text-gray-500 dark:text-stone-400">Thời gian nấu</h3>
+          <p className="text-lg font-bold">{recipe.cookTime ?? "—"} phút</p>
         </div>
 
-        <div className="rounded-xl bg-white p-5 shadow-sm border border-orange-100">
+        <div className="rounded-xl border border-orange-100 bg-white p-5 shadow-sm dark:border-orange-900 dark:bg-[#29211d]">
           <ChefHat className="text-orange-500" size={22} weight="duotone" />
-          <h3 className="mt-3 text-sm text-gray-500">Difficulty</h3>
+          <h3 className="mt-3 text-sm text-gray-500 dark:text-stone-400">Độ khó</h3>
           <p className="font-bold text-lg">{diffLabel}</p>
         </div>
 
-        <div className="rounded-xl bg-white p-5 shadow-sm border border-orange-100">
+        <div className="rounded-xl border border-orange-100 bg-white p-5 shadow-sm dark:border-orange-900 dark:bg-[#29211d]">
           <UsersThree className="text-orange-500" size={22} weight="duotone" />
-          <h3 className="mt-3 text-sm text-gray-500">Servings</h3>
-          <p className="font-bold text-lg">{recipe.servings ?? 4} people</p>
+          <h3 className="mt-3 text-sm text-gray-500 dark:text-stone-400">Khẩu phần</h3>
+          <p className="font-bold text-lg">{recipe.servings ?? 4} người</p>
         </div>
       </div>
     </section>
