@@ -5,15 +5,17 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import { api } from '@/lib/api-client';
 import { BowlFood, Sparkle } from '@phosphor-icons/react';
-import { Eye, ThumbsUp, Flame, Clock } from 'lucide-react';
+import { Eye, ThumbsUp, Flame, Clock, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { FavoriteButton } from '@/components/recipes/FavoriteButton';
 import { LikeButton } from '@/components/recipes/LikeButton';
 import { LoginRequiredDialog } from '@/components/auth/LoginRequiredDialog';
 
 export default function RecipesPage() {
   const { user } = useAuth();
+  const { resolvedTheme } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -23,7 +25,8 @@ export default function RecipesPage() {
 
   // Pagination state
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(9);
+  // 12 = 3 hàng đầy đủ khi desktop hiển thị 4 cột.
+  const [limit, setLimit] = useState(12);
   const [total, setTotal] = useState(0);
 
   // Filter state
@@ -31,12 +34,15 @@ export default function RecipesPage() {
   const [categoryId, setCategoryId] = useState('');
   const [difficulty, setDifficulty] = useState('');
   const [maxCalories, setMaxCalories] = useState('');
+  const [minCalories, setMinCalories] = useState('');
   const [maxCookTime, setMaxCookTime] = useState('');
+  const [minCookTime, setMinCookTime] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
   const loadRecipes = async (
     targetPage = page,
-    overrideFilters?: { search?: string; categoryId?: string; difficulty?: string; maxCalories?: string; maxCookTime?: string }
+    overrideFilters?: { search?: string; categoryId?: string; difficulty?: string; minCalories?: string; maxCalories?: string; minCookTime?: string; maxCookTime?: string; sortBy?: string }
   ) => {
     setLoading(true);
     try {
@@ -44,7 +50,10 @@ export default function RecipesPage() {
       const activeCat = overrideFilters?.categoryId !== undefined ? overrideFilters.categoryId : categoryId;
       const activeDiff = overrideFilters?.difficulty !== undefined ? overrideFilters.difficulty : difficulty;
       const activeMaxCal = overrideFilters?.maxCalories !== undefined ? overrideFilters.maxCalories : maxCalories;
+      const activeMinCal = overrideFilters?.minCalories !== undefined ? overrideFilters.minCalories : minCalories;
       const activeMaxCook = overrideFilters?.maxCookTime !== undefined ? overrideFilters.maxCookTime : maxCookTime;
+      const activeMinCook = overrideFilters?.minCookTime !== undefined ? overrideFilters.minCookTime : minCookTime;
+      const activeSort = overrideFilters?.sortBy !== undefined ? overrideFilters.sortBy : sortBy;
 
       const params: Record<string, string | number | boolean> = {
         isPublic: true,
@@ -55,19 +64,16 @@ export default function RecipesPage() {
       if (activeSearch.trim()) params.search = activeSearch.trim();
       if (activeCat) params.categoryId = Number(activeCat);
       if (activeDiff) params.difficulty = activeDiff;
+      if (activeMinCal) params.minCalories = Number(activeMinCal);
+      if (activeMaxCal) params.maxCalories = Number(activeMaxCal);
+      if (activeMinCook) params.minCookTime = Number(activeMinCook);
+      if (activeMaxCook) params.maxCookTime = Number(activeMaxCook);
+      if (activeSort) params.sortBy = activeSort;
 
       const res = await api.recipes.list(params);
       
       let list = Array.isArray(res) ? res : res?.data || [];
       const totalCount = res?.total !== undefined ? res.total : list.length;
-
-      // Filter maxCalories / maxCookTime on client side if provided
-      if (activeMaxCal) {
-        list = list.filter((r: any) => !r.calories || Number(r.calories) <= Number(activeMaxCal));
-      }
-      if (activeMaxCook) {
-        list = list.filter((r: any) => !r.cookTime || Number(r.cookTime) <= Number(activeMaxCook));
-      }
 
       setRecipes(list);
       setTotal(totalCount);
@@ -84,9 +90,13 @@ export default function RecipesPage() {
 
   useEffect(() => {
     const querySearch = searchParams.get('search')?.trim() || '';
+    const requestedSort = searchParams.get('sortBy') || 'newest';
+    const validSorts = ['newest', 'oldest', 'popular', 'liked', 'rated', 'hot'];
+    const querySort = validSorts.includes(requestedSort) ? requestedSort : 'newest';
     setSearch(querySearch);
+    setSortBy(querySort);
     setPage(1);
-    loadRecipes(1, { search: querySearch });
+    loadRecipes(1, { search: querySearch, sortBy: querySort });
   }, [searchParams]);
 
   useEffect(() => {
@@ -112,9 +122,12 @@ export default function RecipesPage() {
     setCategoryId('');
     setDifficulty('');
     setMaxCalories('');
+    setMinCalories('');
     setMaxCookTime('');
+    setMinCookTime('');
+    setSortBy('newest');
     setPage(1);
-    loadRecipes(1, { search: '', categoryId: '', difficulty: '', maxCalories: '', maxCookTime: '' });
+    loadRecipes(1, { search: '', categoryId: '', difficulty: '', minCalories: '', maxCalories: '', minCookTime: '', maxCookTime: '', sortBy: 'newest' });
   };
 
   const handleCreateClick = () => {
@@ -126,6 +139,23 @@ export default function RecipesPage() {
   };
 
   const totalPages = Math.ceil(total / limit) || 1;
+  const hasFilters = Boolean(
+    search ||
+    categoryId ||
+    difficulty ||
+    minCalories ||
+    maxCalories ||
+    minCookTime ||
+    maxCookTime ||
+    sortBy !== 'newest'
+  );
+  const isDarkTheme = resolvedTheme === 'dark';
+  const filterSurfaceStyle = { backgroundColor: isDarkTheme ? '#171311' : '#ffffff' };
+  const filterControlStyle = {
+    backgroundColor: isDarkTheme ? '#0a0a0a' : '#ffffff',
+    color: isDarkTheme ? '#ffffff' : '#171717',
+  };
+  const filterLabelStyle = { color: isDarkTheme ? '#ffffff' : '#171717' };
 
   return (
     <div className="container mx-auto px-4 py-8 pb-24">
@@ -145,40 +175,58 @@ export default function RecipesPage() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Filter Sidebar */}
         <div className="w-full lg:w-72 shrink-0">
-          <div className="bg-white p-6 rounded-3xl border border-neutral-200 shadow-sm sticky top-24 space-y-6">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-              <h3 className="font-bold text-neutral-900 flex items-center gap-2">
-                Bộ lọc tìm kiếm
-              </h3>
-              {(search || categoryId || difficulty || maxCalories || maxCookTime) && (
+          <div
+            style={filterSurfaceStyle}
+            className="bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-sm sticky top-24 space-y-6"
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+              <div>
+                <h3 style={filterLabelStyle} className="font-bold flex items-center gap-2">
+                  <SlidersHorizontal size={18} className="text-orange-500" />
+                  Bộ lọc tìm kiếm
+                </h3>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Tìm đúng món ăn theo nhu cầu của bạn</p>
+              </div>
+              {hasFilters && (
                 <button
                   type="button"
                   onClick={handleResetFilters}
-                  className="text-xs text-orange-500 hover:text-orange-600 font-medium"
+                  className="inline-flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 font-medium whitespace-nowrap"
                 >
-                  Xóa bộ lọc
+                  <RotateCcw size={13} />
+                  Đặt lại
                 </button>
               )}
             </div>
 
             <form onSubmit={handleFilterSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Tên món ăn</label>
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Nhập tên món ăn..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 text-sm"
-                />
+                <label style={filterLabelStyle} className="block text-sm font-semibold mb-1">Tên món ăn</label>
+                <div className="flex gap-2">
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Nhập tên món ăn..."
+                    style={filterControlStyle}
+                    className="min-w-0 flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-400 dark:border-neutral-600 bg-white dark:bg-neutral-950 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500 text-neutral-900 dark:text-white placeholder:text-neutral-700 dark:placeholder:text-neutral-200 text-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="shrink-0 rounded-xl bg-orange-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                  >
+                    Tìm
+                  </button>
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Danh mục</label>
+                <label style={filterLabelStyle} className="block text-sm font-semibold mb-1">Danh mục</label>
                 <select
                   value={categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-neutral-900 text-sm"
+                  style={filterControlStyle}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white text-sm"
                 >
                   <option value="">Tất cả danh mục</option>
                   {categories.map((cat) => (
@@ -190,11 +238,12 @@ export default function RecipesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Độ khó</label>
+                <label style={filterLabelStyle} className="block text-sm font-semibold mb-1">Độ khó</label>
                 <select
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-neutral-900 text-sm"
+                  style={filterControlStyle}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white text-sm"
                 >
                   <option value="">Tất cả độ khó</option>
                   <option value="EASY">Dễ</option>
@@ -205,37 +254,75 @@ export default function RecipesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 mb-1">Max Calo (kcal)</label>
+                  <label style={filterLabelStyle} className="block text-xs font-semibold mb-1">Calo tối thiểu</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={minCalories}
+                    onChange={(e) => setMinCalories(e.target.value.replace(/^-/, ''))}
+                    placeholder="0 kcal"
+                    style={filterControlStyle}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 dark:text-white text-sm"
+                  />
+                </div>
+                <div>
+                  <label style={filterLabelStyle} className="block text-xs font-semibold mb-1">Calo tối đa</label>
                   <input
                     type="number"
                     min="0"
                     value={maxCalories}
                     onChange={(e) => setMaxCalories(e.target.value.replace(/^-/, ''))}
-                    placeholder="vd: 500"
-                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 text-sm"
+                    placeholder="500 kcal"
+                    style={filterControlStyle}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 dark:text-white text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label style={filterLabelStyle} className="block text-xs font-semibold mb-1">Thời gian tối thiểu</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={minCookTime}
+                    onChange={(e) => setMinCookTime(e.target.value.replace(/^-/, ''))}
+                    placeholder="0 phút"
+                    style={filterControlStyle}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 dark:text-white text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 mb-1">Max thời gian (phút)</label>
+                  <label style={filterLabelStyle} className="block text-xs font-semibold mb-1">Thời gian tối đa</label>
                   <input
                     type="number"
                     min="0"
                     value={maxCookTime}
                     onChange={(e) => setMaxCookTime(e.target.value.replace(/^-/, ''))}
-                    placeholder="vd: 60"
-                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 text-sm"
+                    placeholder="60 phút"
+                    style={filterControlStyle}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-orange-500 text-neutral-900 dark:text-white text-sm"
                   />
                 </div>
               </div>
 
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  className="w-full py-3 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors shadow-sm text-sm"
+              <div>
+                <label style={filterLabelStyle} className="block text-sm font-semibold mb-1">Sắp xếp theo</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={filterControlStyle}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white text-sm"
                 >
-                  Tìm kiếm & Áp dụng
-                </button>
+                  <option value="newest">Mới nhất</option>
+                  <option value="oldest">Cũ nhất</option>
+                  <option value="popular">Xem nhiều nhất</option>
+                  <option value="liked">Nhiều lượt thích</option>
+                  <option value="rated">Đánh giá cao</option>
+                  <option value="hot">Đang hot</option>
+                </select>
               </div>
+
             </form>
           </div>
         </div>
@@ -267,12 +354,12 @@ export default function RecipesPage() {
             <div className="space-y-8">
               
               {/* Recipe Cards Grid */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
                 {recipes.map((recipe) => (
                   <Link
                     href={`/recipes/${recipe.id}`}
                     key={String(recipe.id)}
-                    className="group flex flex-col bg-white rounded-3xl overflow-hidden border border-neutral-200/80 shadow-sm hover:shadow-xl hover:shadow-orange-500/10 hover:-translate-y-1 transition-all duration-300"
+                    className="group flex w-full flex-col bg-white rounded-3xl overflow-hidden border border-neutral-200/80 shadow-sm hover:shadow-xl hover:shadow-orange-500/10 hover:-translate-y-1 transition-all duration-300"
                   >
                     {/* Thumbnail Image */}
                     <div className="relative h-32 overflow-hidden bg-neutral-100 sm:h-48">
@@ -326,12 +413,6 @@ export default function RecipesPage() {
                           initialCount={Number(recipe.likeCount ?? recipe._count?.likes ?? 0)}
                         />
                       </div>
-
-                      {recipe.description && (
-                        <p className="mb-4 hidden text-xs text-neutral-500 line-clamp-2 sm:block">
-                          {recipe.description}
-                        </p>
-                      )}
 
                       {/* Card Footer: Author & Source */}
                       <div className="mt-auto pt-4 border-t border-neutral-100 flex items-center justify-between gap-2">

@@ -30,6 +30,12 @@ type SafeUser = {
   isVerified: boolean;
 };
 
+type LoginMetadata = {
+  ipAddress: string;
+  userAgent?: string;
+  loginMethod: 'PASSWORD' | 'GOOGLE';
+};
+
 @Injectable()
 export class AuthService {
   private readonly jwtSecret =
@@ -90,7 +96,7 @@ export class AuthService {
     };
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto, metadata?: LoginMetadata) {
     const email = dto.email?.trim().toLowerCase();
     const user = email ? await this.usersService.findByEmail(email) : null;
 
@@ -103,10 +109,10 @@ export class AuthService {
       );
     }
 
-    return this.createSession(user);
+    return this.createSession(user, metadata);
   }
 
-  async loginWithGoogle(credential: string) {
+  async loginWithGoogle(credential: string, metadata?: LoginMetadata) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     if (!clientId) {
       throw new UnauthorizedException('Google OAuth chưa được cấu hình');
@@ -172,7 +178,7 @@ export class AuthService {
       });
     }
 
-    return this.createSession(user);
+    return this.createSession(user, metadata);
   }
 
   async refreshSession(refreshToken: string) {
@@ -469,14 +475,27 @@ export class AuthService {
     }
   }
 
-  private async createSession(user: any) {
+  private async createSession(user: any, metadata?: LoginMetadata) {
     const refreshToken = randomBytes(48).toString('hex');
-    await this.prisma.refreshToken.create({
-      data: {
-        userId: user.id,
-        token: refreshToken,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.refreshToken.create({
+        data: {
+          userId: user.id,
+          token: refreshToken,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      });
+
+      if (metadata) {
+        await tx.loginHistory.create({
+          data: {
+            userId: user.id,
+            ipAddress: metadata.ipAddress,
+            userAgent: metadata.userAgent || null,
+            loginMethod: metadata.loginMethod,
+          },
+        });
+      }
     });
 
     return {

@@ -29,4 +29,28 @@ export class QueryRecipeDto {
   @IsOptional()
   @IsIn(['true', 'false', true, false])
   isPublic?: boolean | string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @Min(0)
+  minCalories?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @Min(0)
+  maxCalories?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @Min(0)
+  minCookTime?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @Min(0)
+  maxCookTime?: number;
+
+  @IsOptional()
+  @IsIn(['newest', 'oldest', 'popular', 'liked', 'rated', 'hot'])
+  sortBy?: string;
 }

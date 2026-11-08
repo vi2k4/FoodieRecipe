@@ -1,8 +1,25 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
-import { ThemeProvider } from 'next-themes';
+import { useEffect, useState, type ReactNode } from 'react';
+import { ThemeProvider, useTheme } from 'next-themes';
+
+function ThemeClassSync() {
+  const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    if (resolvedTheme !== 'light' && resolvedTheme !== 'dark') return;
+
+    const root = document.documentElement;
+    const isDark = resolvedTheme === 'dark';
+
+    root.classList.toggle('dark', isDark);
+    root.classList.toggle('light', !isDark);
+    root.style.colorScheme = resolvedTheme;
+  }, [resolvedTheme]);
+
+  return null;
+}
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -17,18 +34,9 @@ export function Providers({ children }: { children: ReactNode }) {
       })
   );
 
-  useState(() => {
-    if (typeof window === 'undefined') return null;
-    const savedTheme = window.localStorage.getItem('theme') || 'light';
-    const root = document.documentElement;
-    root.classList.toggle('dark', savedTheme === 'dark');
-    root.classList.toggle('light', savedTheme !== 'dark');
-    root.style.colorScheme = savedTheme === 'dark' ? 'dark' : 'light';
-    return null;
-  });
-
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+      <ThemeClassSync />
       <QueryClientProvider client={queryClient}>
         {children}
       </QueryClientProvider>

@@ -6,12 +6,13 @@ import {
   Headers,
   Patch,
   Post,
+  Req,
   Res,
   UnauthorizedException,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -36,9 +37,13 @@ export class AuthController {
   @Post('login')
   async login(
     @Body() dto: LoginDto,
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const session = await this.authService.login(dto);
+    const session = await this.authService.login(
+      dto,
+      this.getLoginMetadata(request, 'PASSWORD'),
+    );
     this.setRefreshCookie(response, session.refreshToken);
     return this.withoutRefreshToken(session);
   }
@@ -114,9 +119,13 @@ export class AuthController {
   @Post('google')
   async googleLogin(
     @Body() dto: GoogleLoginDto,
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const session = await this.authService.loginWithGoogle(dto.credential);
+    const session = await this.authService.loginWithGoogle(
+      dto.credential,
+      this.getLoginMetadata(request, 'GOOGLE'),
+    );
     this.setRefreshCookie(response, session.refreshToken);
     return this.withoutRefreshToken(session);
   }
@@ -157,6 +166,23 @@ export class AuthController {
       ?.split('=')
       .slice(1)
       .join('=');
+  }
+
+  private getLoginMetadata(request: Request, loginMethod: 'PASSWORD' | 'GOOGLE') {
+    const forwardedFor = request.headers['x-forwarded-for'];
+    const forwardedIp = Array.isArray(forwardedFor)
+      ? forwardedFor[0]
+      : forwardedFor?.split(',')[0]?.trim();
+    const ipAddress =
+      process.env.TRUST_PROXY === 'true'
+        ? forwardedIp || request.ip || request.socket.remoteAddress || 'unknown'
+        : request.socket.remoteAddress || request.ip || 'unknown';
+
+    return {
+      ipAddress,
+      userAgent: request.get('user-agent') || undefined,
+      loginMethod,
+    };
   }
 
   private withoutRefreshToken<T extends { refreshToken: string }>(session: T) {

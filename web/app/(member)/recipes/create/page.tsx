@@ -218,7 +218,7 @@ export default function CreateRecipePage() {
       }
 
       alert("Lưu công thức mới thành công!");
-      router.push(`/recipes/${recipeId}`);
+      router.push(`/my-recipes/pending?submitted=${recipeId}`);
     } catch (err: any) {
       console.error("Tạo công thức thất bại:", err);
       setErrorMsg(

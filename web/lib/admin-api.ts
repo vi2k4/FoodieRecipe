@@ -38,6 +38,23 @@ export async function deleteAdminUser(id: string) {
   return res.data;
 }
 
+export async function getAdminLoginHistory(params?: {
+  search?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const res = await apiClient.get('/admin/login-history', { params });
+  return res.data;
+}
+
+export async function getAdminUserLoginHistory(
+  userId: string,
+  params?: { page?: number; limit?: number },
+) {
+  const res = await apiClient.get(`/admin/users/${userId}/login-history`, { params });
+  return res.data;
+}
+
 // ─── Recipes ──────────────────────────────────────────────────────────────────
 
 export async function getAdminRecipes(params?: {

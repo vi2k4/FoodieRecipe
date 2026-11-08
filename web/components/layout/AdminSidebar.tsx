@@ -12,6 +12,7 @@ import {
   Layers,
   ChefHat,
   LogOut,
+  LogIn,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth.store";
@@ -19,6 +20,7 @@ import { useAuthStore } from "@/stores/auth.store";
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
   { label: "Người dùng", href: "/admin/users", icon: Users },
+  { label: "Lịch sử đăng nhập", href: "/admin/login-history", icon: LogIn },
   { label: "Công thức", href: "/admin/recipes", icon: BookOpen },
   { label: "Phê duyệt", href: "/admin/recipes/pending", icon: CheckCircle },
   { label: "Báo cáo", href: "/admin/reports", icon: Flag },

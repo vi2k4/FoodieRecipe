@@ -47,7 +47,7 @@ export default function AdminRecipesPage() {
   const fetchRecipes = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getAdminRecipes({ search: search || undefined, page, limit: 10 });
+      const data = await getAdminRecipes({ search: search || undefined, page, limit: 12 });
       setRecipes(data.data);
       setTotal(data.total);
       setTotalPages(data.totalPages);
@@ -116,7 +116,7 @@ export default function AdminRecipesPage() {
 
         {/* Recipe Grid */}
         {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="h-64 animate-pulse rounded-2xl" style={{ backgroundColor: "#f5f5f4" }} />
             ))}
@@ -127,11 +127,11 @@ export default function AdminRecipesPage() {
             <p style={{ color: "var(--text-secondary)" }}>Không tìm thấy công thức nào</p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
             {recipes.map((recipe) => (
               <div
                 key={recipe.id}
-                className="group overflow-hidden rounded-2xl transition-shadow duration-200 hover:shadow-lg"
+                className="group w-full min-w-0 overflow-hidden rounded-2xl transition-shadow duration-200 hover:shadow-lg"
                 style={{
                   backgroundColor: "var(--surface)",
                   border: "1px solid var(--border)",
