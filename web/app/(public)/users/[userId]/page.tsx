@@ -6,7 +6,6 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { socialApi } from "@/lib/social-api";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { 
@@ -23,9 +22,10 @@ import {
   UserPlus,
   AlertCircle,
   Eye,
-  ThumbsUp
+  ThumbsUp,
 } from "lucide-react";
 import { LikeButton } from "@/components/recipes/LikeButton";
+import { DifficultyDot } from "@/components/recipes/DifficultyDot";
 import { FollowButton } from "@/components/recipes/FollowButton";
 import { useTheme } from "next-themes";
 
@@ -324,9 +324,9 @@ export default function UserProfilePage() {
                         alt={recipe.title} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <Badge className="absolute top-4 right-4 bg-orange-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm hover:bg-orange-700 border-none">
-                        {recipe.difficulty === "EASY" ? "Dễ" : recipe.difficulty === "MEDIUM" ? "Vừa" : "Khó"}
-                      </Badge>
+                      <div className="absolute right-4 top-4">
+                        <DifficultyDot difficulty={recipe.difficulty} />
+                      </div>
                     </div>
 
                     {/* Card Content */}

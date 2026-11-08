@@ -5,6 +5,7 @@ import { Globe, LogIn, Search, UserRound, X } from "lucide-react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { getAdminLoginHistory, getAdminUserLoginHistory } from "@/lib/admin-api";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type LoginRecord = {
   id: string;
@@ -125,7 +126,15 @@ export default function AdminLoginHistoryPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={5} className="px-5 py-14 text-center" style={{ color: "var(--text-secondary)" }}>Đang tải lịch sử...</td></tr>
+                  Array.from({ length: 5 }, (_, index) => (
+                    <tr key={index} className="border-b" style={{ borderColor: "var(--border)" }}>
+                      {Array.from({ length: 5 }, (_, cellIndex) => (
+                        <td key={cellIndex} className="px-5 py-5">
+                          <Skeleton className="h-4 w-full max-w-32" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
                 ) : records.length === 0 ? (
                   <tr><td colSpan={5} className="px-5 py-14 text-center" style={{ color: "var(--text-secondary)" }}>Chưa có dữ liệu đăng nhập.</td></tr>
                 ) : records.map((record) => (

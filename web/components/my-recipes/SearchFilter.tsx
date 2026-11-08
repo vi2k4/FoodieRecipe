@@ -143,6 +143,8 @@ export default function SearchFilter({
         rounded-2xl
         border border-orange-100
         bg-white
+        dark:border-orange-900
+        dark:bg-[#29211d]
         shadow-sm
         p-6
         xl:sticky
@@ -150,7 +152,7 @@ export default function SearchFilter({
       "
     >
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+        <h2 className="flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-stone-100">
           <span className="text-orange-500">⌕</span> Tìm kiếm nâng cao
         </h2>
         {hasActiveFilters && (
@@ -164,13 +166,13 @@ export default function SearchFilter({
         )}
       </div>
 
-      <p className="text-sm text-gray-500 mb-5">
+      <p className="mb-5 text-sm text-gray-500 dark:text-stone-300">
         Lọc công thức của bạn theo nhiều điều kiện.
       </p>
 
       {/* Keyword */}
       <div className="mb-4">
-        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-stone-200">
           <SortAscending size={18} weight="duotone" className="text-orange-500" aria-hidden="true" />
           Từ khóa
         </label>
@@ -196,15 +198,19 @@ export default function SearchFilter({
               outline-none
               transition
               focus:border-orange-500 focus:ring-1 focus:ring-orange-500
+              dark:border-stone-700
+              dark:bg-stone-900
+              dark:text-stone-100
+              dark:placeholder:text-stone-500
             "
           />
         </div>
       </div>
 
       {searchHistory.length > 0 && (
-        <div className="mb-5 rounded-xl border border-orange-100 bg-orange-50/50 p-3">
+        <div className="mb-5 rounded-xl border border-orange-100 bg-orange-50/50 p-3 dark:border-orange-900 dark:bg-orange-950/30">
           <div className="mb-2 flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-stone-200">
               <History size={14} /> Tìm kiếm gần đây
             </span>
             <button
@@ -220,7 +226,7 @@ export default function SearchFilter({
             {searchHistory.map((item) => (
               <span
                 key={item.id}
-                className="inline-flex overflow-hidden rounded-full border border-orange-200 bg-white text-xs text-gray-600"
+                className="inline-flex overflow-hidden rounded-full border border-orange-200 bg-white text-xs text-gray-600 dark:border-orange-900 dark:bg-stone-800 dark:text-stone-200"
               >
                 <button
                   type="button"
@@ -246,7 +252,7 @@ export default function SearchFilter({
 
       {/* Category */}
       <div className="mb-4">
-        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-stone-200">
           <FunnelSimple size={18} weight="duotone" className="text-orange-500" aria-hidden="true" />
           Danh mục
         </label>
@@ -257,7 +263,7 @@ export default function SearchFilter({
             onClick={() => setCategoryOpen((open) => !open)}
             aria-haspopup="listbox"
             aria-expanded={categoryOpen}
-            className="flex w-full items-center justify-between rounded-xl border border-orange-100 bg-gradient-to-r from-orange-50/70 to-white px-4 py-3 text-left text-sm font-medium text-gray-700 shadow-sm transition hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+            className="flex w-full items-center justify-between rounded-xl border border-orange-100 bg-gradient-to-r from-orange-50/70 to-white px-4 py-3 text-left text-sm font-medium text-gray-700 shadow-sm transition hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-orange-900 dark:from-stone-800 dark:to-stone-900 dark:text-stone-200"
           >
             <span className="flex items-center gap-2">
               <CookingPot size={19} weight="duotone" className="text-orange-500" aria-hidden="true" />
@@ -267,7 +273,7 @@ export default function SearchFilter({
           </button>
 
           {categoryOpen && (
-            <div role="listbox" aria-label="Danh mục" className="absolute inset-x-0 top-full z-20 mt-2 max-h-56 overflow-y-auto rounded-xl border border-orange-100 bg-white p-1.5 shadow-xl shadow-orange-500/10">
+            <div role="listbox" aria-label="Danh mục" className="absolute inset-x-0 top-full z-20 mt-2 max-h-56 overflow-y-auto rounded-xl border border-orange-100 bg-white p-1.5 shadow-xl shadow-orange-500/10 dark:border-orange-900 dark:bg-stone-900">
               {[["", "Tất cả danh mục"], ...categories.map((cat) => [String(cat.id), cat.name])].map(([value, label]) => (
                 <button
                   key={value || "all"}
@@ -275,7 +281,7 @@ export default function SearchFilter({
                   role="option"
                   aria-selected={categoryId === value}
                   onClick={() => { setCategoryId(value); setCategoryOpen(false); }}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${categoryId === value ? "bg-orange-50 font-semibold text-orange-700" : "text-gray-600 hover:bg-orange-50/60 hover:text-orange-700"}`}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${categoryId === value ? "bg-orange-50 font-semibold text-orange-700 dark:bg-orange-950/60 dark:text-orange-200" : "text-gray-600 hover:bg-orange-50/60 hover:text-orange-700 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-orange-200"}`}
                 >
                   <CookingPot size={18} weight="duotone" className="text-orange-500" />
                   <span>{label}</span>

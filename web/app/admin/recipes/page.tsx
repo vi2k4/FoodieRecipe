@@ -7,6 +7,7 @@ import { AdminHeader } from "@/components/layout/AdminHeader";
 import { getAdminRecipes, deleteAdminRecipe } from "@/lib/admin-api";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "sonner";
+import { DifficultyDot } from "@/components/recipes/DifficultyDot";
 
 type Recipe = {
   id: string;
@@ -21,18 +22,6 @@ type Recipe = {
   createdAt: string;
   author: { id: string; username: string; email: string };
   category?: { id: string; name: string } | null;
-};
-
-
-const difficultyLabel: Record<string, string> = {
-  EASY: "Dễ",
-  MEDIUM: "Trung bình",
-  HARD: "Khó",
-};
-const difficultyColor: Record<string, string> = {
-  EASY: "#16a34a",
-  MEDIUM: "#eab308",
-  HARD: "#dc2626",
 };
 
 export default function AdminRecipesPage() {
@@ -159,11 +148,8 @@ export default function AdminRecipesPage() {
                       </span>
                     </div>
                   )}
-                  <span
-                    className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-xs font-medium text-white"
-                    style={{ backgroundColor: difficultyColor[recipe.difficulty] || "#78716c" }}
-                  >
-                    {difficultyLabel[recipe.difficulty] || recipe.difficulty}
+                  <span className="absolute left-2 top-2">
+                    <DifficultyDot difficulty={recipe.difficulty} />
                   </span>
                 </Link>
 

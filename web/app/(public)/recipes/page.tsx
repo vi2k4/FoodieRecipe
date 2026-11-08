@@ -8,10 +8,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { api } from '@/lib/api-client';
 import { BowlFood, Sparkle } from '@phosphor-icons/react';
-import { Eye, ThumbsUp, Flame, Clock, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { Eye, ThumbsUp, Flame, Clock, SlidersHorizontal, RotateCcw, Search } from 'lucide-react';
 import { FavoriteButton } from '@/components/recipes/FavoriteButton';
 import { LikeButton } from '@/components/recipes/LikeButton';
 import { LoginRequiredDialog } from '@/components/auth/LoginRequiredDialog';
+import { RecipeGridSkeleton } from '@/components/ui/loading-skeletons';
+import { DifficultyDot } from '@/components/recipes/DifficultyDot';
 
 export default function RecipesPage() {
   const { user } = useAuth();
@@ -174,18 +176,19 @@ export default function RecipesPage() {
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Filter Sidebar */}
-        <div className="w-full lg:w-72 shrink-0">
+        <div className="w-full lg:w-64 shrink-0">
           <div
             style={filterSurfaceStyle}
-            className="bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-sm sticky top-24 space-y-6"
+            className="sticky top-24 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+            <div className="border-b border-neutral-100 p-4 dark:border-neutral-800">
+              <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 style={filterLabelStyle} className="font-bold flex items-center gap-2">
-                  <SlidersHorizontal size={18} className="text-orange-500" />
+                <h3 style={filterLabelStyle} className="flex items-center gap-2 text-sm font-bold">
+                  <SlidersHorizontal size={16} className="text-orange-500" />
                   Bộ lọc tìm kiếm
                 </h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Tìm đúng món ăn theo nhu cầu của bạn</p>
+                <p className="mt-1 text-[11px] text-neutral-500 dark:text-neutral-400">Tìm đúng món ăn theo nhu cầu</p>
               </div>
               {hasFilters && (
                 <button
@@ -197,23 +200,27 @@ export default function RecipesPage() {
                   Đặt lại
                 </button>
               )}
+              </div>
             </div>
 
-            <form onSubmit={handleFilterSubmit} className="space-y-4">
+            <form onSubmit={handleFilterSubmit} className="space-y-4 p-4">
               <div>
-                <label style={filterLabelStyle} className="block text-sm font-semibold mb-1">Tên món ăn</label>
+                <label style={filterLabelStyle} className="mb-1.5 block text-xs font-semibold">Tên món ăn</label>
                 <div className="flex gap-2">
+                  <div className="relative min-w-0 flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-orange-500" />
                   <input
                     type="search"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Nhập tên món ăn..."
+                    placeholder="Ví dụ: phở bò..."
                     style={filterControlStyle}
-                    className="min-w-0 flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-400 dark:border-neutral-600 bg-white dark:bg-neutral-950 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500 text-neutral-900 dark:text-white placeholder:text-neutral-700 dark:placeholder:text-neutral-200 text-sm"
+                    className="w-full rounded-lg border border-neutral-200 bg-white py-2 pl-9 pr-3 text-xs text-neutral-900 outline-none transition placeholder:text-neutral-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 dark:border-neutral-700 dark:bg-neutral-950 dark:text-white dark:placeholder:text-neutral-500"
                   />
+                  </div>
                   <button
                     type="submit"
-                    className="shrink-0 rounded-xl bg-orange-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                    className="shrink-0 rounded-lg bg-orange-500 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
                   >
                     Tìm
                   </button>
@@ -221,12 +228,12 @@ export default function RecipesPage() {
               </div>
 
               <div>
-                <label style={filterLabelStyle} className="block text-sm font-semibold mb-1">Danh mục</label>
+                <label style={filterLabelStyle} className="mb-1.5 block text-xs font-semibold">Danh mục</label>
                 <select
                   value={categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
                   style={filterControlStyle}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white text-sm"
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-white"
                 >
                   <option value="">Tất cả danh mục</option>
                   {categories.map((cat) => (
@@ -238,12 +245,12 @@ export default function RecipesPage() {
               </div>
 
               <div>
-                <label style={filterLabelStyle} className="block text-sm font-semibold mb-1">Độ khó</label>
+                <label style={filterLabelStyle} className="mb-1.5 block text-xs font-semibold">Độ khó</label>
                 <select
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value)}
                   style={filterControlStyle}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white text-sm"
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-white"
                 >
                   <option value="">Tất cả độ khó</option>
                   <option value="EASY">Dễ</option>
@@ -307,12 +314,12 @@ export default function RecipesPage() {
               </div>
 
               <div>
-                <label style={filterLabelStyle} className="block text-sm font-semibold mb-1">Sắp xếp theo</label>
+                <label style={filterLabelStyle} className="mb-1.5 block text-xs font-semibold">Sắp xếp theo</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   style={filterControlStyle}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white text-sm"
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-white"
                 >
                   <option value="newest">Mới nhất</option>
                   <option value="oldest">Cũ nhất</option>
@@ -331,10 +338,7 @@ export default function RecipesPage() {
         <div className="flex-1 flex flex-col justify-between">
           
           {loading ? (
-            <div className="min-h-[50vh] flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-neutral-200">
-              <div className="text-4xl mb-3 animate-bounce">⏳</div>
-              <p className="font-medium text-neutral-600">Đang tải danh mục công thức...</p>
-            </div>
+            <RecipeGridSkeleton count={limit} />
           ) : recipes.length === 0 ? (
             <div className="p-16 text-center bg-white rounded-3xl border border-neutral-200 space-y-4">
               <BowlFood size={60} weight="duotone" className="mx-auto text-orange-400" aria-label="No image" />
@@ -376,9 +380,9 @@ export default function RecipesPage() {
                         </div>
                       )}
                       
-                      {/* Difficulty Badge */}
-                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-neutral-800 shadow-sm">
-                        {recipe.difficulty === 'EASY' ? 'Dễ' : recipe.difficulty === 'MEDIUM' ? 'Trung bình' : 'Khó'}
+                      {/* Difficulty indicator */}
+                      <div className="absolute left-3 top-3">
+                        <DifficultyDot difficulty={recipe.difficulty} />
                       </div>
 
                       {/* Category Badge */}

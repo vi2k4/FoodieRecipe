@@ -9,9 +9,9 @@ export default function RecipeGrid({ recipes }: Props) {
   if (recipes.length === 0) {
     return (
       <div className="rounded-2xl border bg-white p-12 text-center">
-        <h2 className="text-xl font-semibold">No recipes found</h2>
+        <h2 className="text-xl font-semibold">Không tìm thấy công thức</h2>
 
-        <p className="mt-2 text-gray-500">Try changing your search filters.</p>
+        <p className="mt-2 text-gray-500">Hãy thử thay đổi bộ lọc tìm kiếm.</p>
       </div>
     );
   }
