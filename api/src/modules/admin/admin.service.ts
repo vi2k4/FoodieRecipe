@@ -13,10 +13,75 @@ export class AdminService {
 
   async getPendingRecipes() {
     return this.prisma.recipe.findMany({
-      where: { isPublic: false, deletedAt: null },
+      where: { deletedAt: null, source: { in: ['USER', 'USER_APPROVED', 'USER_REJECTED'] } },
       orderBy: { createdAt: 'asc' },
       include: { author: { select: { id: true, username: true, email: true, avatarUrl: true } }, category: true },
     });
+  }
+
+  async getLoginHistory(search?: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const where: any = {};
+
+    if (search?.trim()) {
+      const keyword = search.trim();
+      where.OR = [
+        { ipAddress: { contains: keyword, mode: 'insensitive' } },
+        { user: { username: { contains: keyword, mode: 'insensitive' } } },
+        { user: { email: { contains: keyword, mode: 'insensitive' } } },
+      ];
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.loginHistory.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      }),
+      this.prisma.loginHistory.count({ where }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getUserLoginHistory(userId: bigint, page = 1, limit = 100) {
+    const skip = (page - 1) * limit;
+    const where = { userId };
+
+    const [data, total] = await Promise.all([
+      this.prisma.loginHistory.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.loginHistory.count({ where }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async reviewRecipe(id: bigint, approved: boolean) {
@@ -27,8 +92,8 @@ export class AdminService {
     if (!recipe) throw new NotFoundException('Không tìm thấy công thức đang chờ duyệt');
 
     const result = approved
-      ? await this.prisma.recipe.update({ where: { id }, data: { isPublic: true } })
-      : await this.prisma.recipe.update({ where: { id }, data: { deletedAt: new Date() } });
+      ? await this.prisma.recipe.update({ where: { id }, data: { isPublic: true, source: 'USER_APPROVED' } })
+      : await this.prisma.recipe.update({ where: { id }, data: { isPublic: false, source: 'USER_REJECTED' } });
 
     await this.notificationsService.createNotification({
       userId: recipe.author.id,

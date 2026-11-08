@@ -23,7 +23,7 @@ export default function RecipeGrid({ recipes }: Props) {
       grid-cols-1
       gap-6
       md:grid-cols-2
-      xl:grid-cols-3
+      xl:grid-cols-4
       "
     >
       {recipes.map((recipe) => (

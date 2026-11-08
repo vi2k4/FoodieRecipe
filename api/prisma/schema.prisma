@@ -74,6 +74,7 @@ model User {
 
   otpVerifications OTPVerification[]
   refreshTokens    RefreshToken[]
+  loginHistories   LoginHistory[]
   recipes          Recipe[]
 
   favorites   Favorite[]
@@ -134,6 +135,22 @@ model RefreshToken {
   @@index([expiresAt])
   @@index([revoked])
   @@map("refresh_tokens")
+}
+
+model LoginHistory {
+  id          BigInt   @id @default(autoincrement())
+  userId      BigInt   @map("user_id")
+  ipAddress   String   @map("ip_address") @db.VarChar(255)
+  userAgent   String?  @map("user_agent") @db.Text
+  loginMethod String   @default("PASSWORD") @map("login_method") @db.VarChar(30)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@index([ipAddress])
+  @@map("login_history")
 }
 
 // ======================================================

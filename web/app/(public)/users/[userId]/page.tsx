@@ -311,11 +311,11 @@ export default function UserProfilePage() {
                 <p className="text-neutral-500">Người dùng này chưa đăng công thức nào.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
                 {profile.recipes.map((recipe) => (
                   <div 
                     key={recipe.id}
-                    className="group bg-white rounded-3xl overflow-hidden border border-[#fed7aa]/30 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col"
+                    className="group flex w-full min-w-0 flex-col bg-white rounded-3xl overflow-hidden border border-[#fed7aa]/30 shadow-sm hover:shadow-md transition-all duration-300"
                   >
                     {/* Thumbnail */}
                     <div className="relative aspect-video overflow-hidden bg-neutral-50">

@@ -125,6 +125,11 @@ export class RecipesService {
       difficulty,
       isPublic,
       userId,
+      minCalories,
+      maxCalories,
+      minCookTime,
+      maxCookTime,
+      sortBy = 'newest',
     } = query;
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
@@ -139,6 +144,16 @@ export class RecipesService {
     }
     if (difficulty) {
       where.difficulty = difficulty as RecipeDifficulty;
+    }
+    if (minCalories !== undefined || maxCalories !== undefined) {
+      where.calories = {};
+      if (minCalories !== undefined) where.calories.gte = Number(minCalories);
+      if (maxCalories !== undefined) where.calories.lte = Number(maxCalories);
+    }
+    if (minCookTime !== undefined || maxCookTime !== undefined) {
+      where.cookTime = {};
+      if (minCookTime !== undefined) where.cookTime.gte = Number(minCookTime);
+      if (maxCookTime !== undefined) where.cookTime.lte = Number(maxCookTime);
     }
     if (!userId) {
       // Public recipe endpoints must never expose private recipes.
@@ -156,7 +171,17 @@ export class RecipesService {
         where,
         skip,
         take,
-        orderBy: { id: 'desc' },
+        orderBy:
+          sortBy === 'oldest' ? { createdAt: 'asc' } :
+          sortBy === 'hot' ? [
+            { viewCount: 'desc' },
+            { likeCount: 'desc' },
+            { averageRating: 'desc' },
+          ] :
+          sortBy === 'popular' ? { viewCount: 'desc' } :
+          sortBy === 'liked' ? { likeCount: 'desc' } :
+          sortBy === 'rated' ? { averageRating: 'desc' } :
+          { createdAt: 'desc' },
         include: {
           author: {
             select: { id: true, username: true, email: true, avatarUrl: true },

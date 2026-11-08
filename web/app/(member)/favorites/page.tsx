@@ -153,12 +153,12 @@ export default function FavoritesPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
             {favorites.map((recipe) => (
               <Link
                 key={recipe.id}
                 href={`/recipes/${recipe.id}`}
-                className="group bg-white rounded-3xl overflow-hidden border border-neutral-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col relative"
+                className="group flex w-full min-w-0 flex-col bg-white rounded-3xl overflow-hidden border border-neutral-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative"
               >
                 {/* Unfavorite Heart Button */}
                 <span

@@ -50,6 +50,8 @@ export default function RecipeCard({ recipe }: Props) {
     <article
       className="
       group
+      w-full
+      min-w-0
       overflow-hidden
       rounded-2xl
       border border-orange-100

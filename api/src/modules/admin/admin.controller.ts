@@ -54,6 +54,28 @@ export class AdminController {
     return this.adminService.getUsers(search, pageNum, limitNum);
   }
 
+  @Get('login-history')
+  async getLoginHistory(
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+    return this.adminService.getLoginHistory(search, pageNum, limitNum);
+  }
+
+  @Get('users/:id/login-history')
+  async getUserLoginHistory(
+    @Param('id') id: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 100;
+    return this.adminService.getUserLoginHistory(BigInt(id), pageNum, limitNum);
+  }
+
   @Patch('users/:id')
   async toggleUserLock(
     @Param('id') id: string,

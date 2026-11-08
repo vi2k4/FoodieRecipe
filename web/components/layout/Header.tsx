@@ -16,6 +16,7 @@ import {
   Sun,
   Search,
   Shield,
+  Clock3,
 } from "lucide-react";
 import { ChefHat } from "@phosphor-icons/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -163,7 +164,7 @@ export function Header() {
                   {session.user.username}
                 </span>
               </button>
-              {profileMenuOpen && <div className="absolute right-0 top-12 z-50 w-52 rounded-2xl border border-orange-100 bg-white p-2 shadow-xl dark:border-neutral-700 dark:bg-neutral-900"><Link href="/profile" onClick={() => setProfileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-orange-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><UserRound className="size-4" />Hồ sơ cá nhân</Link><Link href="/my-recipes" onClick={() => setProfileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-orange-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><ChefHatIcon className="size-4" />Công thức của tôi</Link>{session.user.role === "ADMIN" && <Link href="/admin" onClick={() => setProfileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-orange-600 hover:bg-orange-50"><Shield className="size-4" />Quản trị Admin</Link>}<button type="button" onClick={logout} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"><LogOut className="size-4" />Đăng xuất</button></div>}
+              {profileMenuOpen && <div className="absolute right-0 top-12 z-50 w-56 rounded-2xl border border-orange-100 bg-white p-2 shadow-xl dark:border-neutral-700 dark:bg-neutral-900"><Link href="/profile" onClick={() => setProfileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-orange-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><UserRound className="size-4" />Hồ sơ cá nhân</Link><Link href="/my-recipes" onClick={() => setProfileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-orange-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><ChefHatIcon className="size-4" />Công thức của tôi</Link><Link href="/my-recipes/pending" onClick={() => setProfileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-orange-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><Clock3 className="size-4" />Công thức chờ duyệt</Link>{session.user.role === "ADMIN" && <Link href="/admin" onClick={() => setProfileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-orange-600 hover:bg-orange-50"><Shield className="size-4" />Quản trị Admin</Link>}<button type="button" onClick={logout} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"><LogOut className="size-4" />Đăng xuất</button></div>}
               </div>
               <button
                 type="button"
