@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import {
   Clock
 } from "lucide-react";
 import { socialApi } from "@/lib/social-api";
+import { auth } from "@/lib/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface NotificationItem {
@@ -47,12 +48,9 @@ const formatTimeAgo = (dateString: string) => {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await socialApi.getNotifications();
@@ -62,7 +60,34 @@ export default function NotificationsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const syncSession = () => {
+      if (!mounted) return;
+      setAccessToken(auth.getSession()?.accessToken ?? null);
+    };
+
+    auth.bootstrap().then(syncSession).catch(syncSession);
+    window.addEventListener("foodirecipe:auth-change", syncSession);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("foodirecipe:auth-change", syncSession);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!accessToken) {
+      setNotifications([]);
+      setIsLoading(false);
+      return;
+    }
+
+    void fetchNotifications();
+  }, [accessToken, fetchNotifications]);
 
   const handleMarkAllRead = async () => {
     try {

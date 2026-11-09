@@ -26,7 +26,7 @@ export default function PendingRecipesPage() {
   const section = (title: string, items: Recipe[], empty: string) => <section className="mb-10"><h2 className="mb-4 text-xl font-bold text-stone-900 dark:text-stone-100">{title} <span className="text-sm font-medium text-stone-500 dark:text-stone-400">({items.length})</span></h2>{items.length ? <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">{items.map((recipe) => <RecipeCard key={String(recipe.id)} recipe={recipe} />)}</div> : <div className="rounded-2xl border border-dashed border-orange-200 bg-white p-8 text-center text-sm text-stone-500 dark:border-orange-900 dark:bg-[#29211d] dark:text-stone-300">{empty}</div>}</section>;
 
   return (
-    <main className="min-h-screen bg-[#fffaf5] px-4 py-8 sm:px-6 lg:px-8 dark:bg-[#171311]">
+    <main className="min-h-screen bg-[#fffaf5] px-4 py-8 text-stone-900 sm:px-6 lg:px-8 dark:bg-[#171311] dark:text-stone-100">
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex items-start gap-3">
           <div className="rounded-2xl bg-orange-100 p-3 text-orange-600 dark:bg-orange-950/60"><Clock3 className="size-6" /></div>

@@ -193,7 +193,7 @@ export default function MyRecipesPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="flex items-center gap-3 text-4xl font-bold">
+            <h1 className="flex items-center gap-3 text-4xl font-bold text-stone-900 dark:text-stone-100">
               <BookOpenText size={36} weight="duotone" className="text-orange-500" aria-hidden="true" />
               Bộ sưu tập công thức
             </h1>
