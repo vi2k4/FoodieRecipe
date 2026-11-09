@@ -135,24 +135,104 @@ const recipeNames = [
   'Nước ép dứa cần tây',
 ];
 
-const thumbnails = [
-  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1559843776-7b0db7f4f7e7?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=900&q=80',
-];
+const thumbnailSets = {
+  soup: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80',
+  noodles: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=900&q=80',
+  seafood: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=900&q=80',
+  salad: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80',
+  pizza: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=900&q=80',
+  vegetables: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=900&q=80',
+  dessert: 'https://images.unsplash.com/photo-1559843776-7b0db7f4f7e7?auto=format&fit=crop&w=900&q=80',
+  default: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=900&q=80',
+} as const;
+
+const getRecipeThumbnail = (title: string) => {
+  const normalizedTitle = title.toLowerCase();
+
+  if (/canh|cháo|súp|lẩu/.test(normalizedTitle)) return thumbnailSets.soup;
+  if (/mì|miến|bún|phở|hủ tiếu|udon|ramen|pasta|spaghetti/.test(normalizedTitle)) return thumbnailSets.noodles;
+  if (/cá|tôm|mực|ghẹ|nghêu|sò|hàu|bạch tuộc|hải sản/.test(normalizedTitle)) return thumbnailSets.seafood;
+  if (/salad|rau|bông cải|bắp cải|đậu que/.test(normalizedTitle)) return thumbnailSets.salad;
+  if (/pizza|bánh mì|lasagna|tacos/.test(normalizedTitle)) return thumbnailSets.pizza;
+  if (/đậu hũ|nấm|khoai|cà tím|xôi|cơm/.test(normalizedTitle)) return thumbnailSets.vegetables;
+  if (/bánh|chè|pancake|tiramisu|sinh tố|trà|nước ép/.test(normalizedTitle)) return thumbnailSets.dessert;
+
+  return thumbnailSets.default;
+};
 
 const categoryNames = [
   'Món chính',
-  'Món phụ',
+  'Món khai vị',
   'Món chay',
-  'Đồ uống',
-  'Tráng miệng',
+  'Nước uống',
+  'Đồ tráng miệng',
 ];
+
+const categoryAliases: Record<string, string[]> = {
+  'Món khai vị': ['Món phụ'],
+  'Nước uống': ['Đồ uống'],
+  'Đồ tráng miệng': ['Tráng miệng'],
+};
+
+async function ensureCategories(prisma: PrismaClient) {
+  const categories = [];
+
+  for (const name of categoryNames) {
+    const aliases = categoryAliases[name] ?? [];
+    const existingCategory = await prisma.recipeCategory.findUnique({
+      where: { name },
+    });
+
+    if (!existingCategory) {
+      const legacyCategories = await prisma.recipeCategory.findMany({
+        where: { name: { in: aliases } },
+        orderBy: { id: 'asc' },
+      });
+
+      if (legacyCategories.length > 0) {
+        await prisma.recipeCategory.update({
+          where: { id: legacyCategories[0].id },
+          data: { name },
+        });
+
+        for (const duplicateCategory of legacyCategories.slice(1)) {
+          await prisma.recipe.updateMany({
+            where: { categoryId: duplicateCategory.id },
+            data: { categoryId: legacyCategories[0].id },
+          });
+          await prisma.recipeCategory.delete({
+            where: { id: duplicateCategory.id },
+          });
+        }
+      }
+    } else if (aliases.length > 0) {
+      const legacyCategories = await prisma.recipeCategory.findMany({
+        where: { name: { in: aliases } },
+        select: { id: true },
+      });
+
+      for (const legacyCategory of legacyCategories) {
+        await prisma.recipe.updateMany({
+          where: { categoryId: legacyCategory.id },
+          data: { categoryId: existingCategory.id },
+        });
+        await prisma.recipeCategory.delete({
+          where: { id: legacyCategory.id },
+        });
+      }
+    }
+
+    categories.push(
+      await prisma.recipeCategory.upsert({
+        where: { name },
+        update: {},
+        create: { name, description: `Các công thức thuộc nhóm ${name}.` },
+      }),
+    );
+  }
+
+  return categories;
+}
 
 async function main() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -181,6 +261,7 @@ async function main() {
           data: {
             title: recipeNames[index % recipeNames.length],
             description: `Công thức ${recipeNames[index % recipeNames.length].toLowerCase()} với cách chế biến đơn giản, phù hợp cho bữa ăn gia đình.`,
+            thumbnail: getRecipeThumbnail(recipeNames[index % recipeNames.length]),
           },
         });
       }
@@ -189,13 +270,31 @@ async function main() {
       return;
     }
 
+    const categories = await ensureCategories(prisma);
     const existingSeedCount = await prisma.recipe.count({
       where: { source: 'SEED', deletedAt: null },
     });
 
     if (existingSeedCount > 0) {
+      const seededRecipes = await prisma.recipe.findMany({
+        where: { source: 'SEED', deletedAt: null },
+        orderBy: { id: 'asc' },
+        select: { id: true },
+      });
+
+      for (const [index, recipe] of seededRecipes.entries()) {
+        await prisma.recipe.update({
+          where: { id: recipe.id },
+          data: {
+            thumbnail: getRecipeThumbnail(
+              recipeNames[index % recipeNames.length],
+            ),
+          },
+        });
+      }
+
       console.log(
-        `Đã có ${existingSeedCount} công thức SEED. Dừng để tránh tạo dữ liệu trùng. Dùng --rename nếu cần cập nhật tên.`,
+        `Đã cập nhật ảnh Unsplash cho ${existingSeedCount} công thức SEED. Không tạo dữ liệu trùng.`,
       );
       return;
     }
@@ -210,17 +309,6 @@ async function main() {
     ]) {
       await prisma.$executeRawUnsafe(
         `SELECT setval(pg_get_serial_sequence('${table}', 'id'), COALESCE((SELECT MAX(id) FROM ${table}), 0) + 1, false)`,
-      );
-    }
-
-    const categories = [];
-    for (const name of categoryNames) {
-      categories.push(
-        await prisma.recipeCategory.upsert({
-          where: { name },
-          update: {},
-          create: { name, description: `Các công thức thuộc nhóm ${name}.` },
-        }),
       );
     }
 
@@ -243,7 +331,7 @@ async function main() {
           cookTime: 15 + (index % 8) * 10,
           difficulty,
           servings: 2 + (index % 5),
-          thumbnail: thumbnails[index % thumbnails.length],
+          thumbnail: getRecipeThumbnail(title),
           source: 'SEED',
           isPublic: true,
           viewCount: BigInt(20 + index * 7),
