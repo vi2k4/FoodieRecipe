@@ -142,7 +142,7 @@ export default function SearchFilter({
       className="
         rounded-2xl
         border border-orange-100
-        bg-white
+        bg-white text-stone-900
         dark:border-orange-900
         dark:bg-[#29211d]
         shadow-sm
@@ -319,7 +319,7 @@ export default function SearchFilter({
 
       {/* Visibility */}
       <div className="mb-4">
-        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-stone-200">
           {visibility === "PRIVATE" ? <LockKey size={18} weight="duotone" className="text-slate-500" aria-hidden="true" /> : <Globe size={18} weight="duotone" className="text-emerald-500" aria-hidden="true" />}
           Quyền riêng tư
         </label>
@@ -330,7 +330,7 @@ export default function SearchFilter({
             onClick={() => setVisibilityOpen((open) => !open)}
             aria-haspopup="listbox"
             aria-expanded={visibilityOpen}
-            className="flex w-full items-center justify-between rounded-xl border border-orange-100 bg-gradient-to-r from-orange-50/70 to-white px-4 py-3 text-left text-sm font-medium text-gray-700 shadow-sm transition hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+            className="flex w-full items-center justify-between rounded-xl border border-orange-100 bg-gradient-to-r from-orange-50/70 to-white px-4 py-3 text-left text-sm font-medium text-gray-700 shadow-sm transition hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-orange-900 dark:from-stone-800 dark:to-stone-900 dark:text-stone-200"
           >
             <span className="flex items-center gap-2">
               {visibility === "PRIVATE" ? <LockKey size={19} weight="duotone" className="text-slate-500" /> : <Globe size={19} weight="duotone" className="text-emerald-500" />}
@@ -340,7 +340,7 @@ export default function SearchFilter({
           </button>
 
           {visibilityOpen && (
-            <div role="listbox" aria-label="Quyền riêng tư" className="absolute inset-x-0 top-full z-20 mt-2 overflow-hidden rounded-xl border border-orange-100 bg-white p-1.5 shadow-xl shadow-orange-500/10">
+            <div role="listbox" aria-label="Quyền riêng tư" className="absolute inset-x-0 top-full z-20 mt-2 overflow-hidden rounded-xl border border-orange-100 bg-white p-1.5 text-stone-900 shadow-xl shadow-orange-500/10 dark:border-orange-900 dark:bg-stone-900 dark:text-stone-100">
               {[["", "Tất cả"], ["PUBLIC", "Công khai"], ["PRIVATE", "Riêng tư"]].map(([value, label]) => (
                 <button
                   key={value || "all"}
@@ -348,7 +348,7 @@ export default function SearchFilter({
                   role="option"
                   aria-selected={visibility === value}
                   onClick={() => { setVisibility(value); setVisibilityOpen(false); }}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${visibility === value ? "bg-orange-50 font-semibold text-orange-700" : "text-gray-600 hover:bg-orange-50/60 hover:text-orange-700"}`}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${visibility === value ? "bg-orange-50 font-semibold text-orange-700 dark:bg-orange-950/60 dark:text-orange-200" : "text-gray-600 hover:bg-orange-50/60 hover:text-orange-700 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-orange-200"}`}
                 >
                   {value === "PRIVATE" ? <LockKey size={18} weight="duotone" className="text-slate-500" /> : <Globe size={18} weight="duotone" className="text-emerald-500" />}
                   <span>{label}</span>
@@ -384,7 +384,7 @@ export default function SearchFilter({
 
       {/* Calories */}
       <div className="mb-4">
-        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-stone-200">
           <Fire size={18} weight="duotone" className="text-red-500" aria-hidden="true" />
           Lượng calo (kcal)
         </label>

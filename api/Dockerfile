@@ -62,5 +62,6 @@ COPY package.json ./package.json
 
 EXPOSE 3001
 
-# Tự chạy migration rồi mới khởi động NestJS
-CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && exec node dist/main.js"]
+# Tự chạy migration, seed recipes rồi mới khởi động NestJS.
+# seed-recipes có kiểm tra dữ liệu SEED nên an toàn khi container restart.
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && ./node_modules/.bin/tsx prisma/seed-recipes.ts && exec node dist/main.js"]
