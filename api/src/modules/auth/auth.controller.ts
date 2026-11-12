@@ -169,14 +169,9 @@ export class AuthController {
   }
 
   private getLoginMetadata(request: Request, loginMethod: 'PASSWORD' | 'GOOGLE') {
-    const forwardedFor = request.headers['x-forwarded-for'];
-    const forwardedIp = Array.isArray(forwardedFor)
-      ? forwardedFor[0]
-      : forwardedFor?.split(',')[0]?.trim();
-    const ipAddress =
-      process.env.TRUST_PROXY === 'true'
-        ? forwardedIp || request.ip || request.socket.remoteAddress || 'unknown'
-        : request.socket.remoteAddress || request.ip || 'unknown';
+    const realIp = request.headers['x-real-ip'];
+    const realIpAddress = Array.isArray(realIp) ? realIp[0] : realIp?.trim();
+    const ipAddress = realIpAddress || request.ip || request.socket.remoteAddress || 'unknown';
 
     return {
       ipAddress,
