@@ -9,6 +9,13 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // The API is behind one reverse proxy in production. This lets Express
+  // resolve the client's address from the proxy headers safely.
+  app.getHttpAdapter().getInstance().set(
+    'trust proxy',
+    process.env.TRUST_PROXY === 'true' ? 1 : false,
+  );
+
   // Cho phép upload JSON tối đa 5MB
   app.use(json({ limit: '5mb' }));
 
